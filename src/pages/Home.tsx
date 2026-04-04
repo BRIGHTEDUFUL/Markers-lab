@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, ArrowRight, ShieldCheck, Globe, MessageSquare } from "lucide-react";
 import { motion } from "motion/react";
-import api from "../lib/api";
+import { fetchFeaturedGallery } from "../lib/makers-data";
 import { useTheme } from "../contexts/ThemeContext";
 
 export const Home = () => {
@@ -15,12 +15,8 @@ export const Home = () => {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const response = await api.get("/public/gallery");
-        // Filter for featured projects and take top 2
-        const featured = Array.isArray(response.data) 
-          ? response.data.filter((p: any) => p.featured).slice(0, 2)
-          : [];
-        setFeaturedProjects(featured);
+        const data = await fetchFeaturedGallery();
+        setFeaturedProjects(Array.isArray(data) ? data.slice(0, 2) : []);
       } catch (error) {
         console.error("Error fetching featured projects:", error);
       } finally {

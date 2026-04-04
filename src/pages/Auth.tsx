@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import api from "../lib/api";
+import { insforge, insforgeConfigured } from "../lib/insforge-client";
+import { fetchSessionUser } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
-import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, ShieldCheck, Globe, Zap, Cpu, ArrowLeft } from "lucide-react";
+import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, Globe, Zap, Cpu, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -14,6 +15,10 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<"auth" | "verify">("auth");
+  const [otp, setOtp] = useState("");
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [pendingName, setPendingName] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,18 +28,75 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
     else setMode("login");
   }, [location.pathname]);
 
+  const redirectTo = `${window.location.origin}/login`;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
-      const payload = mode === "login" ? { email, password } : { name, email, password };
-      const { data } = await api.post(endpoint, payload);
-      login(data.user);
-      navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.response?.data?.error || `${mode === "login" ? "Login" : "Registration"} failed`);
+      if (!insforgeConfigured) {
+        setError("Configure VITE_INSFORGE_OSS_HOST and VITE_INSFORGE_ANON_KEY in .env");
+        return;
+      }
+      if (mode === "login") {
+        const { data, error: signErr } = await insforge.auth.signInWithPassword({ email, password });
+        if (signErr) {
+          setError(signErr.message || "Login failed");
+          return;
+        }
+        if (data?.user) {
+          const u = await fetchSessionUser();
+          if (u) login(u);
+          navigate("/dashboard");
+        }
+        return;
+      }
+      const { data, error: regErr } = await insforge.auth.signUp({
+        email,
+        password,
+        name,
+        redirectTo,
+      });
+      if (regErr) {
+        setError(regErr.message || "Registration failed");
+        return;
+      }
+      if (data?.requireEmailVerification) {
+        setPendingEmail(email);
+        setPendingName(name);
+        setStep("verify");
+        return;
+      }
+      if (data?.accessToken && data.user) {
+        const u = await fetchSessionUser();
+        if (u) login(u);
+        navigate("/dashboard");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      if (!insforgeConfigured) return;
+      const { data, error: vErr } = await insforge.auth.verifyEmail({
+        email: pendingEmail,
+        otp,
+      });
+      if (vErr) {
+        setError(vErr.message || "Invalid or expired code");
+        return;
+      }
+      if (data?.user) {
+        const u = await fetchSessionUser();
+        if (u) login(u);
+        navigate("/dashboard");
+      }
     } finally {
       setLoading(false);
     }
@@ -223,6 +285,56 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                 </h2>
               </div>
 
+              {step === "verify" ? (
+                <form className="space-y-6" onSubmit={handleVerify}>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="bg-red-500/10 text-red-500 p-4 text-[10px] font-bold uppercase tracking-widest border border-red-500/20"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                  <p className={`text-xs ${theme === "light" ? "text-slate-600" : "text-white/60"}`}>
+                    Enter the 6-digit code sent to <strong>{pendingEmail}</strong>
+                  </p>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className={`block w-full px-4 py-4 border text-sm text-center tracking-[0.5em] font-mono outline-none rounded-none ${theme === "light" ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10 text-white"}`}
+                    placeholder="000000"
+                    maxLength={6}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || otp.length < 6}
+                    className={`w-full py-5 text-[10px] font-bold uppercase tracking-[0.3em] rounded-none ${theme === "light" ? "bg-slate-900 text-white" : "bg-white text-black"}`}
+                  >
+                    {loading ? <Loader2 className="animate-spin h-4 w-4 mx-auto" /> : "Verify email"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await insforge.auth.resendVerificationEmail({ email: pendingEmail, redirectTo });
+                    }}
+                    className="w-full text-[10px] font-bold uppercase tracking-widest text-indigo-500"
+                  >
+                    Resend code
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep("auth")}
+                    className="w-full text-[10px] font-bold uppercase tracking-widest opacity-60"
+                  >
+                    Back
+                  </button>
+                </form>
+              ) : (
               <form className="space-y-6" onSubmit={handleSubmit}>
                 {error && (
                   <motion.div 
@@ -297,32 +409,9 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     )}
                   </button>
 
-                  {mode === "login" && (
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEmail("admin@makerslab.com");
-                          setPassword("admin123");
-                        }}
-                        className={`w-full py-3 border text-[10px] font-bold uppercase tracking-widest transition-all ${theme === 'light' ? 'bg-white border-slate-200 text-slate-400 hover:text-slate-900 hover:bg-slate-50' : 'border-white/5 text-gray-500 hover:text-white hover:bg-white/5'}`}
-                      >
-                        Admin Override
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEmail("user@makerslab.com");
-                          setPassword("password123");
-                        }}
-                        className={`w-full py-3 border text-[10px] font-bold uppercase tracking-widest transition-all ${theme === 'light' ? 'bg-white border-slate-200 text-slate-400 hover:text-slate-900 hover:bg-slate-50' : 'border-white/5 text-gray-500 hover:text-white hover:bg-white/5'}`}
-                      >
-                        Demo User
-                      </button>
-                    </div>
-                  )}
                 </div>
               </form>
+              )}
 
               <div className={`text-center pt-6 border-t transition-colors duration-500 ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
                 <p className={`text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>

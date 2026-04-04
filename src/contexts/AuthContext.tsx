@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import api, { socket } from "../lib/api";
+import { insforge, insforgeConfigured } from "../lib/insforge-client";
+import { fetchSessionUser } from "../lib/makers-data";
 import { User } from "../types";
 
 interface AuthContextType {
@@ -8,7 +9,7 @@ interface AuthContextType {
   login: (user: User) => void;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
-  setUser: (user: User | null) => void;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,14 +20,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAuth = async () => {
     try {
-      const { data } = await api.get("/auth/me");
-      setUser(data.user);
-      socket.connect();
-      socket.emit("join", data.user.id);
-      if (data.user.role === "ADMIN") {
-        socket.emit("join-admin");
+      if (!insforgeConfigured) {
+        setUser(null);
+        return;
       }
-    } catch (err) {
+      const u = await fetchSessionUser();
+      setUser(u);
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -37,19 +37,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const login = (user: User) => {
-    setUser(user);
-    socket.connect();
-    socket.emit("join", user.id);
-    if (user.role === "ADMIN") {
-      socket.emit("join-admin");
-    }
+  const login = (u: User) => {
+    setUser(u);
   };
 
   const logout = async () => {
-    await api.post("/auth/logout");
+    await insforge.auth.signOut();
     setUser(null);
-    socket.disconnect();
   };
 
   return (

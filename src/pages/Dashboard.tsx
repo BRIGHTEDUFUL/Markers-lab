@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api, { socket } from "../lib/api";
+import { fetchMyProjects, deleteMyProject } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
 import { 
   FileText, Clock, ChevronRight, Loader2, Plus, XCircle, 
@@ -143,10 +143,14 @@ export const Dashboard: React.FC = () => {
 
   const fetchProjects = async () => {
     try {
-      const { data } = await api.get("/projects");
+      if (!user?.id) {
+        setProjects([]);
+        return;
+      }
+      const data = await fetchMyProjects(user.id);
       setProjects(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      console.error("Failed to fetch projects:", err.response?.data?.error || err.message);
+    } catch (err: unknown) {
+      console.error("Failed to fetch projects:", err);
     } finally {
       setLoading(false);
     }
@@ -154,15 +158,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchProjects();
-
-    socket.on("projectStatusChanged", ({ projectId, status }) => {
-      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status } : p));
-    });
-
-    return () => {
-      socket.off("projectStatusChanged");
-    };
-  }, []);
+  }, [user?.id]);
 
   const handleDelete = (id: string) => {
     setConfirmModal({
@@ -171,7 +167,7 @@ export const Dashboard: React.FC = () => {
       message: "Are you sure you want to delete this project? This action cannot be undone.",
       onConfirm: async () => {
         try {
-          await api.delete(`/projects/${id}`);
+          if (user?.id) await deleteMyProject(id, user.id);
           fetchProjects();
         } catch (err) {
           console.error("Failed to delete project");
@@ -597,7 +593,7 @@ export const Dashboard: React.FC = () => {
                         {selectedProject.files.map((file: any) => (
                           <a
                             key={file.id}
-                            href={`/api/files/${file.id}`}
+                            href={file.path}
                             className={`flex items-center justify-between p-4 sm:p-5 border rounded-xl sm:rounded-2xl transition-all group ${theme === 'light' ? 'bg-slate-50 border-slate-100 hover:border-slate-300 hover:bg-slate-100' : 'bg-white/2 border-white/5 hover:border-white/20 hover:bg-white/5'}`}
                           >
                             <div className="flex items-center space-x-3 sm:space-x-4 overflow-hidden">

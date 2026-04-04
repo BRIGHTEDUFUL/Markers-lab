@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import api from "../lib/api";
-import { User, Camera, Lock, Save, Loader2, AlertCircle, CheckCircle2, Rocket, Clock, CheckCircle } from "lucide-react";
+import { fetchMyProjects, updateMyProfile, fetchSessionUser } from "../lib/makers-data";
+import { User, Camera, Save, Loader2, AlertCircle, CheckCircle2, Rocket, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -11,9 +11,6 @@ export const Profile: React.FC = () => {
   const { theme } = useTheme();
   const { user, setUser } = useAuth();
   const [name, setName] = useState(user?.name || "");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatarUrl || null);
   const [loading, setLoading] = useState(false);
@@ -25,17 +22,18 @@ export const Profile: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data } = await api.get("/projects");
+        if (!user?.id) return;
+        const data = await fetchMyProjects(user.id);
         const total = data.length;
-        const pending = data.filter((p: any) => p.status === "PENDING").length;
-        const approved = data.filter((p: any) => p.status === "APPROVED").length;
+        const pending = data.filter((p) => p.status === "PENDING").length;
+        const approved = data.filter((p) => p.status === "APPROVED").length;
         setStats({ total, pending, approved });
       } catch (err) {
         console.error("Failed to fetch project stats");
       }
     };
     fetchStats();
-  }, []);
+  }, [user?.id]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,31 +52,15 @@ export const Profile: React.FC = () => {
     setError(null);
     setSuccess(null);
 
-    if (newPassword && newPassword !== confirmPassword) {
-      setError("New passwords do not match");
-      return;
-    }
-
     setLoading(true);
-    const formData = new FormData();
-    formData.append("name", name);
-    if (avatar) formData.append("avatar", avatar);
-    if (newPassword) {
-      formData.append("currentPassword", currentPassword);
-      formData.append("newPassword", newPassword);
-    }
-
     try {
-      const response = await api.patch("/auth/profile", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setUser(response.data.user);
+      await updateMyProfile(name, avatar);
+      const u = await fetchSessionUser();
+      if (u) setUser(u);
       setSuccess("Profile updated successfully");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to update profile");
+      setAvatar(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -204,53 +186,9 @@ export const Profile: React.FC = () => {
                 </div>
               </div>
 
-              {/* Password Change */}
-              <div className={`space-y-4 sm:space-y-6 pt-8 sm:pt-10 border-t transition-colors duration-500 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-                <h4 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Security Protocols</h4>
-                <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                  <div className="space-y-2 sm:space-y-3">
-                    <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Current Password</label>
-                    <div className="relative">
-                      <Lock className={`absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`} />
-                      <input
-                        type="password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        className={`w-full pl-11 sm:pl-16 pr-5 sm:pr-6 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border focus:ring-1 transition-all outline-none text-xs sm:text-sm font-sans ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-300 focus:ring-slate-300' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:ring-white/30'}`}
-                        placeholder="Required to change password"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <div className="space-y-2 sm:space-y-3">
-                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>New Password</label>
-                      <div className="relative">
-                        <Lock className={`absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`} />
-                        <input
-                          type="password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className={`w-full pl-11 sm:pl-16 pr-5 sm:pr-6 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border focus:ring-1 transition-all outline-none text-xs sm:text-sm font-sans ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-300 focus:ring-slate-300' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:ring-white/30'}`}
-                          placeholder="New password"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2 sm:space-y-3">
-                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Confirm New Password</label>
-                      <div className="relative">
-                        <Lock className={`absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`} />
-                        <input
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className={`w-full pl-11 sm:pl-16 pr-5 sm:pr-6 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border focus:ring-1 transition-all outline-none text-xs sm:text-sm font-sans ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-300 focus:ring-slate-300' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:ring-white/30'}`}
-                          placeholder="Confirm new password"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <p className={`text-[10px] pt-6 border-t ${theme === "light" ? "border-slate-200 text-slate-500" : "border-white/5 text-white/40"}`}>
+                Password changes use InsForge: sign out and use “Forgot password” on the login page, or your workspace password policy.
+              </p>
             </div>
 
             <div className="pt-2 sm:pt-8">

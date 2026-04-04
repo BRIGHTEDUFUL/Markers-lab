@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from "react";
-import api, { socket } from "../lib/api";
+import {
+  fetchAdminProjects,
+  fetchAdminAnalytics,
+  fetchAdminUsers,
+  fetchAdminTestimonials,
+  adminUpdateProject,
+  adminDeleteProject,
+  adminBulkUpdateProjects,
+  adminBulkDeleteProjects,
+  adminSetUserRole,
+  adminDeleteUserProfile,
+  adminSetTestimonialApproved,
+  adminDeleteTestimonial,
+} from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { 
@@ -69,51 +82,40 @@ export const AdminDashboard: React.FC = () => {
     onConfirm: () => {},
   });
 
-  const fetchData = async () => {
+  const fetchData = async (): Promise<Project[] | undefined> => {
     try {
-      const [projectsRes, analyticsRes, usersRes, testimonialsRes] = await Promise.all([
-        api.get("/admin/projects"),
-        api.get("/admin/analytics"),
-        api.get("/admin/users"),
-        api.get("/admin/testimonials"),
+      const [p, a, u, t] = await Promise.all([
+        fetchAdminProjects(),
+        fetchAdminAnalytics(),
+        fetchAdminUsers(),
+        fetchAdminTestimonials(),
       ]);
-      setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : []);
-      setAnalytics(analyticsRes.data || null);
-      setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
-      setTestimonials(Array.isArray(testimonialsRes.data) ? testimonialsRes.data : []);
+      setProjects(Array.isArray(p) ? p : []);
+      setAnalytics(a || null);
+      setUsers(Array.isArray(u) ? u : []);
+      setTestimonials(Array.isArray(t) ? t : []);
+      return p;
     } catch (err) {
       console.error("Failed to fetch admin data");
     } finally {
       setLoading(false);
     }
+    return undefined;
   };
 
   useEffect(() => {
     fetchData();
-
-    socket.on("newProject", (project) => {
-      setProjects(prev => [project, ...prev]);
-      fetchData(); // Refresh analytics
-    });
-
-    return () => {
-      socket.off("newProject");
-    };
   }, []);
 
   const handleUpdateStatus = async (projectId: string, status: string, closeModal = true) => {
     setIsUpdating(true);
     try {
-      const res = await api.patch(`/admin/projects/${projectId}`, { status, adminNote });
-      const updatedProject = res.data;
-      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...updatedProject } : p));
+      await adminUpdateProject(projectId, { status, adminNote }, user?.id);
       setAdminNote("");
-      if (closeModal) {
-        setSelectedProject(null);
-      } else {
-        setSelectedProject(prev => prev ? { ...prev, ...updatedProject } : null);
-      }
-      fetchData(); // Refresh analytics
+      const list = await fetchData();
+      const updatedProject = list?.find((p) => p.id === projectId);
+      if (closeModal) setSelectedProject(null);
+      else if (updatedProject) setSelectedProject(updatedProject);
     } catch (err) {
       console.error("Failed to update status");
     } finally {
@@ -123,12 +125,10 @@ export const AdminDashboard: React.FC = () => {
 
   const handleToggleFeatured = async (projectId: string, featured: boolean) => {
     try {
-      const res = await api.patch(`/admin/projects/${projectId}`, { featured });
-      const updatedProject = res.data;
-      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...updatedProject } : p));
-      if (selectedProject?.id === projectId) {
-        setSelectedProject(prev => prev ? { ...prev, ...updatedProject } : null);
-      }
+      await adminUpdateProject(projectId, { featured }, user?.id);
+      const list = await fetchData();
+      const updatedProject = list?.find((p) => p.id === projectId);
+      if (selectedProject?.id === projectId && updatedProject) setSelectedProject(updatedProject);
     } catch (err) {
       console.error("Failed to toggle featured");
     }
@@ -141,8 +141,8 @@ export const AdminDashboard: React.FC = () => {
       message: "ARE YOU SURE YOU WANT TO DELETE THIS PROJECT? THIS ACTION CANNOT BE UNDONE.",
       onConfirm: async () => {
         try {
-          await api.delete(`/admin/projects/${projectId}`);
-          setProjects(prev => prev.filter(p => p.id !== projectId));
+          await adminDeleteProject(projectId);
+          setProjects((prev) => prev.filter((p) => p.id !== projectId));
           fetchData();
         } catch (err) {
           console.error("Failed to delete project");
@@ -165,8 +165,8 @@ export const AdminDashboard: React.FC = () => {
       message: `ARE YOU SURE YOU WANT TO CHANGE THIS USER'S ROLE TO ${role}?`,
       onConfirm: async () => {
         try {
-          await api.patch(`/admin/users/${userId}`, { role });
-          setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: role as User["role"] } : u));
+          await adminSetUserRole(userId, role as "USER" | "ADMIN");
+          setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: role as User["role"] } : u)));
           toast.success(`USER ROLE UPDATED TO ${role}`);
         } catch (err) {
           console.error("Failed to update user role");
@@ -185,8 +185,8 @@ export const AdminDashboard: React.FC = () => {
       message: "ARE YOU SURE YOU WANT TO DELETE THIS USER? ALL THEIR PROJECTS WILL BE REMOVED.",
       onConfirm: async () => {
         try {
-          await api.delete(`/admin/users/${userId}`);
-          setUsers(prev => prev.filter(u => u.id !== userId));
+          await adminDeleteUserProfile(userId);
+          setUsers((prev) => prev.filter((u) => u.id !== userId));
           toast.success("USER DELETED SUCCESSFULLY");
           fetchData();
         } catch (err) {
@@ -201,13 +201,16 @@ export const AdminDashboard: React.FC = () => {
 
   const handleBulkStatusUpdate = async () => {
     if (!bulkStatus || selectedProjects.length === 0) return;
+    const n = selectedProjects.length;
     setIsUpdating(true);
     try {
-      await api.patch("/admin/projects/bulk", { ids: selectedProjects, status: bulkStatus });
-      setProjects(prev => prev.map(p => selectedProjects.includes(p.id) ? { ...p, status: bulkStatus as Project["status"] } : p));
+      await adminBulkUpdateProjects(selectedProjects, { status: bulkStatus });
+      setProjects((prev) =>
+        prev.map((p) => (selectedProjects.includes(p.id) ? { ...p, status: bulkStatus as Project["status"] } : p))
+      );
       setSelectedProjects([]);
       setBulkStatus("");
-      toast.success(`UPDATED ${selectedProjects.length} PROJECTS TO ${bulkStatus}`);
+      toast.success(`UPDATED ${n} PROJECTS TO ${bulkStatus}`);
       fetchData();
     } catch (err) {
       console.error("Failed to update projects in bulk");
@@ -224,11 +227,13 @@ export const AdminDashboard: React.FC = () => {
       title: `DELETE ${selectedProjects.length} PROJECTS?`,
       message: "ARE YOU SURE YOU WANT TO DELETE THESE PROJECTS? THIS ACTION CANNOT BE UNDONE.",
       onConfirm: async () => {
+        const n = selectedProjects.length;
+        const ids = [...selectedProjects];
         try {
-          await api.delete("/admin/projects/bulk", { data: { ids: selectedProjects } });
-          setProjects(prev => prev.filter(p => !selectedProjects.includes(p.id)));
+          await adminBulkDeleteProjects(ids);
+          setProjects((prev) => prev.filter((p) => !ids.includes(p.id)));
           setSelectedProjects([]);
-          toast.success(`DELETED ${selectedProjects.length} PROJECTS`);
+          toast.success(`DELETED ${n} PROJECTS`);
           fetchData();
         } catch (err) {
           console.error("Failed to delete projects in bulk");
@@ -242,8 +247,8 @@ export const AdminDashboard: React.FC = () => {
 
   const handleUpdateTestimonialStatus = async (testimonialId: string, isApproved: boolean) => {
     try {
-      await api.patch(`/admin/testimonials/${testimonialId}`, { isApproved });
-      setTestimonials(prev => prev.map(t => t.id === testimonialId ? { ...t, isApproved } : t));
+      await adminSetTestimonialApproved(testimonialId, isApproved);
+      setTestimonials((prev) => prev.map((t) => (t.id === testimonialId ? { ...t, isApproved } : t)));
       toast.success(isApproved ? "TESTIMONIAL APPROVED" : "TESTIMONIAL UNAPPROVED");
     } catch (err) {
       console.error("Failed to update testimonial status");
@@ -258,8 +263,8 @@ export const AdminDashboard: React.FC = () => {
       message: "ARE YOU SURE YOU WANT TO DELETE THIS TESTIMONIAL?",
       onConfirm: async () => {
         try {
-          await api.delete(`/admin/testimonials/${testimonialId}`);
-          setTestimonials(prev => prev.filter(t => t.id !== testimonialId));
+          await adminDeleteTestimonial(testimonialId);
+          setTestimonials((prev) => prev.filter((t) => t.id !== testimonialId));
           toast.success("TESTIMONIAL DELETED");
         } catch (err) {
           console.error("Failed to delete testimonial");
@@ -274,8 +279,8 @@ export const AdminDashboard: React.FC = () => {
   const handleExportData = () => {
     const data = projects.map(p => ({
       Title: p.title,
-      User: p.user.name,
-      Email: p.user.email,
+      User: p.user?.name ?? "",
+      Email: p.user?.email ?? "",
       Status: p.status,
       Category: p.category,
       Budget: p.budget,
@@ -1486,7 +1491,7 @@ export const AdminDashboard: React.FC = () => {
                       <h3 className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-6 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Attachments</h3>
                       <div className="space-y-3">
                         {selectedProject.files.map((file: any) => (
-                          <a key={file.id} href={`/api/files/${file.id}`} className={`flex items-center justify-between p-4 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                          <a key={file.id} href={file.path} className={`flex items-center justify-between p-4 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors ${
                             theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-500 hover:bg-slate-100' : 'bg-white/2 border-white/5 text-white/40 hover:bg-white/5'
                           }`}>
                             <span className="truncate max-w-[150px]">{file.originalName}</span>

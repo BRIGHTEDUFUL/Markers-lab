@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../lib/api";
+import { fetchFeaturedGallery, fetchApprovedTestimonials } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
 import { Star, Quote, Rocket, ExternalLink, ArrowRight, CheckCircle, Users, Briefcase, Award, Search } from "lucide-react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
@@ -83,12 +83,9 @@ export const PublicGallery: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [projectsRes, testimonialsRes] = await Promise.all([
-          api.get("/public/gallery"),
-          api.get("/public/testimonials"),
-        ]);
-        setProjects(Array.isArray(projectsRes.data) ? projectsRes.data : []);
-        setTestimonials(Array.isArray(testimonialsRes.data) ? testimonialsRes.data : []);
+        const [p, t] = await Promise.all([fetchFeaturedGallery(), fetchApprovedTestimonials()]);
+        setProjects(Array.isArray(p) ? p : []);
+        setTestimonials(Array.isArray(t) ? t : []);
       } catch (err) {
         console.error("Failed to fetch public data");
       } finally {

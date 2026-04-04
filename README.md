@@ -1,86 +1,56 @@
-# Maker’s Lab - Project Management PWA
+# Maker’s Lab
 
-Where ideas merge with execution.
+Project management PWA backed by [InsForge](https://insforge.dev): Postgres, auth, storage, and row-level security. The UI is a React (Vite) SPA that talks to InsForge with `@insforge/sdk`.
 
 ## Features
 
-- **User Dashboard**: Submit and track projects with real-time status updates.
-- **Admin Console**: Manage all projects, update statuses, add internal notes, and feature projects.
-- **Real-time Messaging**: Direct chat between users and admins.
-- **Public Gallery**: Showcase featured projects and approved testimonials.
-- **PWA Support**: Installable on mobile and desktop with offline support.
-- **Secure Auth**: JWT-based authentication with HTTP-only cookies.
+- User dashboard: submit and track projects; file uploads to InsForge storage.
+- Admin console: projects, users, testimonials, analytics (requires `ADMIN` in `public.profiles`).
+- Public gallery: featured projects and approved testimonials.
+- PWA: installable with offline shell (Vite PWA plugin).
 
-## Tech Stack
+## Prerequisites
 
-- **Frontend**: React (Vite), Tailwind CSS, Lucide Icons, Framer Motion.
-- **Backend**: Node.js, Express, Socket.IO.
-- **Database**: SQLite with Prisma ORM.
-- **Real-time**: Socket.IO for instant updates.
+- Node.js 20+
+- An InsForge project linked to this repo (`npx @insforge/cli link --project-id <uuid>`).
+- Database tables and storage bucket provisioned (see `insforge/bootstrap.sql` and InsForge CLI docs).
 
-## Getting Started
+## Setup
 
-### Local Development Setup
+1. Clone and install:
 
-Follow these steps to get the application running on your local machine:
+   ```bash
+   git clone https://github.com/BRIGHTEDUFUL/Marker-Lab-.git
+   cd Marker-Lab-
+   npm install
+   ```
 
-1.  **Clone the Repository**:
-    ```bash
-    git clone https://github.com/BRIGHTEDUFUL/Marker-Lab-.git
-    cd Marker-Lab-
-    ```
+2. Environment — copy `.env.example` to `.env` and set:
 
-2.  **Install Dependencies**:
-    ```bash
-    npm install
-    ```
+   - `VITE_INSFORGE_OSS_HOST` — e.g. `https://<appkey>.<region>.insforge.app`
+   - `VITE_INSFORGE_ANON_KEY` — from `npx @insforge/cli current --json`
 
-3.  **Configure Environment Variables**:
-    Create a `.env` file in the root directory and copy the contents from `.env.example`:
-    ```bash
-    cp .env.example .env
-    ```
-    Then, update the `.env` file with your specific configuration (e.g., `GEMINI_API_KEY`, `JWT_SECRET`).
+3. Run the dev server (port 3000):
 
-4.  **Initialize the Database**:
-    This project uses Prisma with SQLite for easy local setup. Run the following command to create the database and generate the Prisma client:
-    ```bash
-    npx prisma db push
-    ```
+   ```bash
+   npm run dev
+   ```
 
-5.  **Start the Development Server**:
-    ```bash
-    npm run dev
-    ```
-    The application will be available at `http://localhost:3000`.
+4. **Admin role:** after your first sign-in (so a `profiles` row exists), promote yourself in Postgres, e.g.:
 
-### Default Credentials
+   ```sql
+   UPDATE public.profiles SET role = 'ADMIN' WHERE email = 'you@example.com';
+   ```
 
-- **Admin Account**: `admin@makerslab.com` / `admin123`
-- **Demo User Account**: `user@makerslab.com` / `password123`
-- **New Users**: You can register a new account directly from the login page.
+## Scripts
+
+| Command        | Description              |
+| -------------- | ------------------------ |
+| `npm run dev`  | Vite dev server          |
+| `npm run build`| Production build → `dist`|
+| `npm run preview` / `start` | Preview production build |
+| `npm run lint` | `tsc --noEmit`           |
 
 ## Deployment
 
-### Production Build
-
-1. **Build the Frontend**:
-   ```bash
-   npm run build
-   ```
-
-2. **Start the Server**:
-   ```bash
-   NODE_ENV=production npm start
-   ```
-
-### Database Migration (Production)
-
-For production environments, it is recommended to use a more robust database like PostgreSQL. To switch:
-1. Update the `provider` and `url` in `prisma/schema.prisma`.
-2. Provide a valid `DATABASE_URL` in your production environment variables.
-3. Run `npx prisma migrate deploy` to apply migrations.
-
-## File Storage
-
-By default, uploaded files are stored in the local `uploads/` directory. For production deployments, it is highly recommended to use a cloud storage provider (like AWS S3, Google Cloud Storage, or Cloudinary) by modifying the `multer` configuration in `server.ts`.
+Build static assets with `npm run build` and host `dist/` on any static host (configure SPA fallback to `index.html`). Ensure production origins are allowed for InsForge auth and CORS as required by your InsForge project settings.

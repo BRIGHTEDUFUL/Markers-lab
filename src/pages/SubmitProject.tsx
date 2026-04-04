@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../lib/api";
+import { createProjectWithFiles } from "../lib/makers-data";
+import { useAuth } from "../contexts/AuthContext";
 import { 
   Rocket, Upload, X, Plus, Info, DollarSign, Calendar, 
   Link as LinkIcon, Loader2, CheckCircle, Globe, 
@@ -56,6 +57,7 @@ const TIMELINES = [
 ];
 
 export const SubmitProject: React.FC = () => {
+  const { user } = useAuth();
   const { theme } = useTheme();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -149,47 +151,32 @@ export const SubmitProject: React.FC = () => {
     setUploadProgress(0);
 
     try {
-      // 1. Upload files one by one to get IDs and track individual progress
-      const uploadedFileIds: string[] = [];
-      
-      if (files.length > 0) {
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const fileFormData = new FormData();
-          fileFormData.append("file", file);
-
-          const fileResponse = await api.post("/files/upload", fileFormData, {
-            onUploadProgress: (progressEvent) => {
-              if (progressEvent.total) {
-                const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                setFileProgress(prev => ({ ...prev, [i]: percent }));
-              }
-            }
-          });
-          uploadedFileIds.push(fileResponse.data.id);
-        }
+      if (!user?.id) {
+        throw new Error("You must be signed in");
       }
+      for (let i = 0; i < files.length; i++) {
+        setFileProgress((prev) => ({ ...prev, [i]: 40 }));
+      }
+      setUploadProgress(20);
 
-      // 2. Submit project data with file IDs
-      const projectData = {
-        title,
-        description,
-        category,
-        tags: JSON.stringify(tags),
-        budget,
-        timeline,
-        repoUrl,
-        fileIds: JSON.stringify(uploadedFileIds)
-      };
+      await createProjectWithFiles(
+        user.id,
+        {
+          title,
+          description,
+          category,
+          tags: JSON.stringify(tags),
+          budget,
+          timeline,
+          repoUrl: repoUrl || undefined,
+        },
+        files
+      );
 
-      await api.post("/projects", projectData, {
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percentCompleted);
-          }
-        }
-      });
+      for (let i = 0; i < files.length; i++) {
+        setFileProgress((prev) => ({ ...prev, [i]: 100 }));
+      }
+      setUploadProgress(100);
 
       setSuccess(true);
       toast.success("Project submitted successfully!");

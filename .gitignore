@@ -6,3 +6,21 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Agent skills lock (local tooling)
+skills-lock.json
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf
