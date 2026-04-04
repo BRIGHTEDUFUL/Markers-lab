@@ -30,16 +30,18 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
     (variant === "hero" || variant === "page" || variant === "authPanel" || isGlobal);
 
   const imgMotion = pulse
-    ? { scale: [1, 1.035, 1] as const }
+    ? { scale: isGlobal ? ([1, 1.018, 1] as const) : ([1, 1.035, 1] as const) }
     : isLight && !reduceMotion && !isAmbient
-      ? { scale: [1, 1.012, 1] as const }
+      ? { scale: isGlobal ? ([1, 1.008, 1] as const) : ([1, 1.012, 1] as const) }
       : false;
 
   const transition = pulse
-    ? { duration: 14, repeat: Infinity, ease: "easeInOut" as const }
+    ? { duration: isGlobal ? 16 : 14, repeat: Infinity, ease: "easeInOut" as const }
     : { duration: 18, repeat: Infinity, ease: "easeInOut" as const };
 
-  const imgClass = `h-full w-full object-cover object-center select-none transition-opacity duration-700 ${
+  const objectFit = isGlobal ? "object-contain" : "object-cover";
+
+  const imgClass = `h-full w-full ${objectFit} object-center select-none transition-opacity duration-700 ${
     isLight
       ? isGlobal
         ? "opacity-[0.5] mix-blend-screen sm:opacity-[0.58] md:opacity-[0.52]"
@@ -87,7 +89,7 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
         <motion.div
           className={
             isGlobal
-              ? "absolute left-1/2 top-1/2 h-[min(280vw,300vh)] w-[min(280vw,300vh)] -translate-x-1/2 -translate-y-1/2 sm:h-[min(240vw,260vh)] sm:w-[min(240vw,260vh)] lg:h-[min(200vw,220vh)] lg:w-[min(200vw,220vh)]"
+              ? "absolute left-1/2 top-1/2 aspect-square w-[min(81vmin,100vw,97dvh)] -translate-x-1/2 -translate-y-1/2 sm:w-[min(74vmin,100vw,94dvh)] lg:w-[min(67vmin,736px,90dvh)]"
               : "absolute left-1/2 top-1/2 h-[min(220vw,240vh)] w-[min(220vw,240vh)] -translate-x-1/2 -translate-y-1/2 sm:h-[min(180vw,200vh)] sm:w-[min(180vw,200vh)] lg:h-[min(160vw,180vh)] lg:w-[min(160vw,180vh)]"
           }
           animate={imgMotion || undefined}
