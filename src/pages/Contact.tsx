@@ -1,25 +1,55 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { Mail, MapPin, Phone, Send, Loader2, CheckCircle, ArrowRight } from "lucide-react";
+import { Mail, MapPin, Phone, Send, Loader2, CheckCircle } from "lucide-react";
 import PageHero from "../components/PageHero";
 import { useTheme } from "../contexts/ThemeContext";
+import { toast } from "sonner";
+
+const CONTACT_EMAIL = "hello@makerslab.com";
 
 export const Contact: React.FC = () => {
   const { theme } = useTheme();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedMessage = message.trim();
+    if (!trimmedName || !trimmedEmail || !trimmedMessage) {
+      toast.error("Please complete all fields with real content.");
+      return;
+    }
     setLoading(true);
+    const subject = encodeURIComponent(`Maker’s Lab inquiry from ${trimmedName}`);
+    const body = encodeURIComponent(
+      `Name: ${trimmedName}\nEmail: ${trimmedEmail}\n\n---\n\n${trimmedMessage}`
+    );
+    const mailto = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+    try {
+      window.location.assign(mailto);
+    } catch {
+      window.open(mailto, "_blank", "noopener,noreferrer");
+    }
     setTimeout(() => {
       setLoading(false);
       setSuccess(true);
-    }, 2000);
+    }, 400);
+  };
+
+  const resetForm = () => {
+    setSuccess(false);
+    setName("");
+    setEmail("");
+    setMessage("");
   };
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-700 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div className="page-shell">
       <PageHero 
         title={`Initiate <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${theme === 'light' ? '#0f172a' : 'white'}'>Contact</span>`}
         subtitle="We are open for elite collaborations. Transmit your inquiry and our team will respond within 24 hours."
@@ -37,7 +67,7 @@ export const Contact: React.FC = () => {
           >
             <div className="space-y-8">
               {[
-                { icon: Mail, label: "Inquiries", value: "hello@makerslab.com" },
+                { icon: Mail, label: "Inquiries", value: CONTACT_EMAIL },
                 { icon: MapPin, label: "Location", value: "Silicon Valley, CA" },
                 { icon: Phone, label: "Direct Line", value: "+1 (555) 000-MAKER" }
               ].map((item, i) => (
@@ -75,10 +105,14 @@ export const Contact: React.FC = () => {
                 </div>
                 <div className="space-y-4">
                   <h2 className={`text-3xl font-display uppercase transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Transmission <br /> Received</h2>
-                  <p className={`font-sans leading-relaxed transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Your inquiry has been successfully transmitted to our terminal. We will respond shortly.</p>
+                  <p className={`font-sans leading-relaxed transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                    Your default email app should open with this message ready to send. If nothing opened, email us at{" "}
+                    <a href={`mailto:${CONTACT_EMAIL}`} className="text-indigo-500 hover:underline">{CONTACT_EMAIL}</a>.
+                  </p>
                 </div>
                 <button 
-                  onClick={() => setSuccess(false)}
+                  type="button"
+                  onClick={resetForm}
                   className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-white transition-colors"
                 >
                   Send Another Transmission
@@ -92,6 +126,10 @@ export const Contact: React.FC = () => {
                     <input 
                       type="text" 
                       required 
+                      name="name"
+                      autoComplete="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. ALEXANDER VANCE"
                       className={`w-full px-6 py-5 rounded-2xl border focus:ring-1 transition-all outline-none font-sans ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-300 focus:ring-slate-300' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:ring-white/30'}`}
                     />
@@ -101,6 +139,10 @@ export const Contact: React.FC = () => {
                     <input 
                       type="email" 
                       required 
+                      name="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="alexander@vance.com"
                       className={`w-full px-6 py-5 rounded-2xl border focus:ring-1 transition-all outline-none font-sans ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-300 focus:ring-slate-300' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:ring-white/30'}`}
                     />
@@ -109,7 +151,10 @@ export const Contact: React.FC = () => {
                     <label className={`text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Inquiry Brief</label>
                     <textarea 
                       required 
+                      name="message"
                       rows={5}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
                       placeholder="Describe your project vision or inquiry..."
                       className={`w-full px-6 py-5 rounded-2xl border focus:ring-1 transition-all outline-none resize-none font-sans ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-300 focus:ring-slate-300' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:ring-white/30'}`}
                     />

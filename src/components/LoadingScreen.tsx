@@ -7,7 +7,9 @@ const LoadingScreen: React.FC = () => {
   const { theme } = useTheme();
   
   return (
-    <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-colors duration-700 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div
+      className={`fixed inset-0 z-[90] flex flex-col items-center justify-center backdrop-blur-md transition-colors duration-700 ${theme === "light" ? "bg-slate-50/40" : "bg-[#030303]/45"}`}
+    >
       <div className="relative">
         <motion.div
           animate={{ 

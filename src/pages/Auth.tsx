@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { insforge, insforgeConfigured } from "../lib/insforge-client";
-import { fetchSessionUser } from "../lib/makers-data";
+import { fetchSessionUser, userFromAuthUser } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, Globe, Zap, Cpu, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
+import { starSpec } from "../lib/star-field";
 
 export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ initialMode = "login" }) => {
   const { theme } = useTheme();
@@ -22,7 +23,10 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
+  const authStars = useMemo(
+    () => Array.from({ length: 50 }, (_, i) => starSpec(i, theme, 2000)),
+    [theme]
+  );
   useEffect(() => {
     if (location.pathname === "/register") setMode("register");
     else setMode("login");
@@ -46,9 +50,16 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
           return;
         }
         if (data?.user) {
-          const u = await fetchSessionUser();
+          let u = await fetchSessionUser();
+          if (!u) u = userFromAuthUser(data.user);
           if (u) login(u);
+          else {
+            setError("Signed in but profile could not be loaded. Check VITE_INSFORGE_* env and database policies.");
+            return;
+          }
           navigate("/dashboard");
+        } else {
+          setError("No user returned from server. Check InsForge configuration.");
         }
         return;
       }
@@ -69,7 +80,8 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
       if (data?.accessToken && data.user) {
-        const u = await fetchSessionUser();
+        let u = await fetchSessionUser();
+        if (!u) u = userFromAuthUser(data.user);
         if (u) login(u);
         navigate("/dashboard");
       }
@@ -93,7 +105,8 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
       if (data?.user) {
-        const u = await fetchSessionUser();
+        let u = await fetchSessionUser();
+        if (!u) u = userFromAuthUser(data.user);
         if (u) login(u);
         navigate("/dashboard");
       }
@@ -103,67 +116,45 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   };
 
   return (
-    <div className={`min-h-screen flex overflow-hidden relative transition-colors duration-700 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
-      {/* Background Scene */}
-      <div className="absolute inset-0 z-0 opacity-60">
-        {/* Realistic Animated Stars */}
-        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          {[...Array(50)].map((_, i) => {
-            const size = Math.random() * 2 + 1;
-            const isLarge = size > 2.5;
-            const starColor = theme === 'light' ? '#6366f1' : ['#ffffff', '#e0e7ff', '#fff7ed'][Math.floor(Math.random() * 3)];
-            
-            return (
-              <motion.div
-                key={i}
-                initial={{ 
-                  opacity: Math.random() * 0.4 + 0.1,
-                  scale: Math.random() * 0.5 + 0.5
-                }}
-                animate={{ 
-                  opacity: theme === 'light' ? [0.1, 0.4, 0.1] : [0.1, 0.8, 0.1],
-                  scale: isLarge ? [1, 1.2, 1] : [1, 1.5, 1],
-                }}
-                transition={{ 
-                  duration: Math.random() * 5 + 4, 
-                  repeat: Infinity, 
-                  ease: "easeInOut",
-                  delay: Math.random() * 15
-                }}
-                className="absolute rounded-full"
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  backgroundColor: starColor,
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  boxShadow: isLarge ? `0 0 ${size * 4}px ${starColor}` : `0 0 ${size * 2}px ${starColor}`,
-                  filter: `blur(${size * 0.2}px)`
-                }}
-              />
-            );
-          })}
+    <div className="page-shell flex">
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 pointer-events-none z-[1] overflow-hidden opacity-50 sm:opacity-70">
+          {authStars.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{
+                opacity: s.initialOpacity,
+                scale: s.initialScale,
+              }}
+              animate={{
+                opacity: theme === "light" ? [0.06, 0.28, 0.06] : [0.06, 0.45, 0.06],
+                scale: s.isLarge ? [1, 1.2, 1] : [1, 1.5, 1],
+              }}
+              transition={{
+                duration: s.duration,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: s.delay,
+              }}
+              className="absolute rounded-full"
+              style={{
+                width: `${s.size}px`,
+                height: `${s.size}px`,
+                backgroundColor: s.starColor,
+                left: s.leftPct,
+                top: s.topPct,
+                boxShadow: s.isLarge ? `0 0 ${s.size * 4}px ${s.starColor}` : `0 0 ${s.size * 2}px ${s.starColor}`,
+                filter: `blur(${s.size * 0.2}px)`,
+              }}
+            />
+          ))}
         </div>
-        {/* Moon Background Image for overall atmosphere */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: theme === 'light' ? [0.1, 0.2, 0.1] : [0.3, 0.5, 0.3] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-0 pointer-events-none"
-        >
-          <img 
-            src="/moon-image.jpeg" 
-            alt="Atmosphere"
-            className={`w-full h-full object-cover mix-blend-overlay ${theme === 'light' ? 'opacity-20' : 'opacity-70'}`}
-            referrerPolicy="no-referrer"
-          />
-        </motion.div>
       </div>
 
       {/* Back to Home */}
       <Link 
         to="/" 
-        className={`fixed top-8 left-8 z-50 flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest transition-colors group ${theme === 'light' ? 'text-slate-400 hover:text-slate-900' : 'text-white/40 hover:text-white'}`}
+        className={`fixed top-20 left-4 sm:left-8 z-50 flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest transition-colors group ${theme === 'light' ? 'text-slate-400 hover:text-slate-900' : 'text-white/40 hover:text-white'}`}
       >
         <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
         <span>Return Home</span>
@@ -171,30 +162,9 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
 
       {/* Left Side: Branding & Hero */}
       <div className={`hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center p-12 overflow-hidden border-r transition-colors duration-700 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-        <div className="absolute inset-0 z-0">
-          {/* Moon Background Image */}
-          <motion.div
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ 
-              opacity: theme === 'light' ? [0.2, 0.3, 0.2] : [0.5, 0.7, 0.5],
-              scale: [1, 1.05, 1],
-            }}
-            transition={{ 
-              duration: 40, 
-              repeat: Infinity, 
-              ease: "linear" 
-            }}
-            className="absolute inset-0 pointer-events-none z-0"
-          >
-            <img 
-              src="/moon-image.jpeg" 
-              alt="Moon Background"
-              className={`w-full h-full object-cover filter contrast-125 saturate-150 ${theme === 'light' ? 'brightness-150 opacity-40' : 'brightness-110 opacity-90'}`}
-              referrerPolicy="no-referrer"
-            />
-          </motion.div>
-          <div className={`absolute inset-0 bg-gradient-to-r transition-colors duration-700 ${theme === 'light' ? 'from-slate-50 via-transparent to-transparent opacity-60' : 'from-[#050505] via-transparent to-transparent opacity-40'}`} />
-          <div className={`absolute top-0 left-0 w-full h-full bg-grid-white mask-radial transition-opacity duration-700 ${theme === 'light' ? 'opacity-5' : 'opacity-10'}`} />
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <div className={`absolute inset-0 bg-gradient-to-r transition-colors duration-700 ${theme === "light" ? "from-white/90 via-white/40 to-transparent" : "from-black/70 via-black/35 to-transparent"}`} />
+          <div className={`absolute top-0 left-0 h-full w-full bg-grid-white mask-radial transition-opacity duration-700 ${theme === "light" ? "opacity-[0.06]" : "opacity-[0.08]"}`} />
         </div>
 
         <div className="relative z-10 w-full max-w-lg space-y-12">

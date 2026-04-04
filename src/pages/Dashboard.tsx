@@ -13,6 +13,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTheme } from "../contexts/ThemeContext";
 import PageHero from "../components/PageHero";
+import { toast } from "sonner";
 import { 
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, 
   BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid 
@@ -168,9 +169,11 @@ export const Dashboard: React.FC = () => {
       onConfirm: async () => {
         try {
           if (user?.id) await deleteMyProject(id, user.id);
-          fetchProjects();
+          await fetchProjects();
+          toast.success("Project removed");
         } catch (err) {
-          console.error("Failed to delete project");
+          const msg = err instanceof Error ? err.message : "Could not delete project";
+          toast.error(msg);
         } finally {
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
@@ -179,13 +182,13 @@ export const Dashboard: React.FC = () => {
   };
 
   if (loading) return (
-    <div className={`flex items-center justify-center h-screen transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div className="page-shell-flex h-screen">
       <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
     </div>
   );
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-700 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div className="page-shell">
       <PageHero 
         category="Terminal / Project Management"
         title={`My <br /><span class='text-transparent' style='-webkit-text-stroke: 1px ${theme === 'light' ? '#0f172a' : 'rgba(255,255,255,0.3)'}'>Projects</span>`}

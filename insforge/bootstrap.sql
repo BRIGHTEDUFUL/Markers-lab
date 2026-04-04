@@ -6,8 +6,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   display_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'USER',
   avatar_url TEXT,
+  email TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Existing projects (before email column): run once if upgrade
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
 
 CREATE TABLE IF NOT EXISTS public.projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

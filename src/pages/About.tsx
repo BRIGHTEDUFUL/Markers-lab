@@ -1,274 +1,415 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Globe, Users, Award, Rocket, ArrowRight, Twitter, Linkedin, Github } from "lucide-react";
+import { Globe, Users, Rocket, ArrowRight, Sparkles } from "lucide-react";
 import PageHero from "../components/PageHero";
 import { useTheme } from "../contexts/ThemeContext";
 
 const team = [
   {
-    name: "Amani Richards",
-    role: "CEO & Founder",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800",
-    bio: "Visionary leader with 15+ years in digital architecture and avant-garde design.",
-    socials: { twitter: "#", linkedin: "#", github: "#" }
+    name: "Bright Eduful",
+    role: "Founder & Developer",
+    image: "/team/bright-eduful.png",
+    bio: "Founder of Maker’s Lab. Owns product direction and end-to-end engineering—shipping polished, production-ready experiences from architecture to deployment.",
   },
   {
-    name: "Kofi Mensah",
-    role: "Chief Technology Officer",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800",
-    bio: "Specialist in distributed systems and high-performance computing architectures.",
-    socials: { twitter: "#", linkedin: "#", github: "#" }
+    name: "Ralph Andy Menz",
+    role: "Software Developer",
+    image: "/team/ralph-andy-menz.png",
+    bio: "Builds scalable features and integrations with a focus on clarity, performance, and long-term maintainability.",
   },
   {
-    name: "Jaden Smith",
-    role: "Head of Product",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800",
-    bio: "Pioneering new ways to integrate neural networks into everyday creative workflows.",
-    socials: { twitter: "#", linkedin: "#", github: "#" }
-  }
+    name: "Abene",
+    role: "Marketing & Advertising",
+    image: "/team/abene.png",
+    bio: "Drives brand, campaigns, and messaging—connecting Maker’s Lab with the audiences who need elite digital execution.",
+  },
 ];
 
 export const About: React.FC = () => {
   const { theme } = useTheme();
+  const isLight = theme === "light";
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-700 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
-      <PageHero 
-        title={`Architects of <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${theme === 'light' ? '#0f172a' : 'white'}'>Digital</span> Culture`}
-        subtitle="Maker’s Lab is a high-end creative platform where ideas merge with execution. We blend technical excellence with avant-garde design to build software that resonates."
-        category="The Philosophy"
-      />
+    <div className="page-shell">
+      {/* Ambient mesh — sits above global hero, below content */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[1] opacity-90"
+        aria-hidden
+      >
+        <div
+          className={`absolute -left-1/4 top-0 h-[min(80vh,900px)] w-[min(80vw,900px)] rounded-full blur-[120px] ${
+            isLight ? "bg-indigo-400/25" : "bg-violet-600/20"
+          }`}
+        />
+        <div
+          className={`absolute -right-1/4 bottom-[10%] h-[min(70vh,700px)] w-[min(70vw,700px)] rounded-full blur-[100px] ${
+            isLight ? "bg-cyan-400/20" : "bg-indigo-500/15"
+          }`}
+        />
+        <div
+          className={`absolute left-1/2 top-1/3 h-px w-[min(100%,72rem)] -translate-x-1/2 bg-gradient-to-r from-transparent via-current to-transparent opacity-[0.07] ${
+            isLight ? "text-slate-900" : "text-white"
+          }`}
+        />
+      </div>
 
-      <div className="relative z-10">
-        {/* Mission Section */}
-        <section className="py-32 px-4 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-            <div className="lg:col-span-7 space-y-12">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="space-y-6"
-              >
-                <span className="text-indigo-500 text-[11px] font-bold uppercase tracking-[0.5em]">Our Mission</span>
-                <h2 className={`text-4xl sm:text-5xl md:text-7xl font-display uppercase leading-[0.9] tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                  Redefining the <br /> <span className="italic">Standard</span> of Digital Craft
-                </h2>
-              </motion.div>
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className={`text-xl font-light leading-relaxed max-w-2xl ${theme === 'light' ? 'text-slate-600' : 'text-white/60'}`}
-              >
-                We believe that software should not just be functional—it should be an experience. Our mission is to bridge the gap between complex engineering and human-centric design, creating tools that empower and inspire.
-              </motion.p>
-              <div className="grid grid-cols-2 gap-8 pt-8">
-                <div>
-                  <h4 className={`text-4xl font-display mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>150+</h4>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">Projects Delivered</p>
-                </div>
-                <div>
-                  <h4 className={`text-4xl font-display mb-2 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>24</h4>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">Global Awards</p>
-                </div>
-              </div>
-            </div>
-            <div className="lg:col-span-5 relative aspect-square">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className={`absolute inset-0 rounded-[3rem] border overflow-hidden ${theme === 'light' ? 'border-slate-200 shadow-2xl shadow-slate-200/50' : 'border-white/10 shadow-2xl shadow-indigo-500/5'}`}
-              >
-                <img 
-                  src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070" 
-                  alt="Team Collaboration" 
-                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
-                  referrerPolicy="no-referrer"
-                />
-              </motion.div>
-              <div className="absolute -bottom-8 -left-8 w-48 h-48 bg-indigo-500 rounded-full mix-blend-multiply blur-3xl opacity-20 animate-pulse" />
-            </div>
-          </div>
-        </section>
+      <div className="relative z-[2]">
+        <PageHero
+          title={`People behind <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${isLight ? "#0f172a" : "white"}'>Maker’s Lab</span>`}
+          subtitle="A lean, senior team blending engineering discipline with brand craft—built around Bright’s vision and backed by Ralph and Abene."
+          category="The Studio"
+        />
 
-        {/* Philosophy Grid */}
-        <section className={`grid grid-cols-1 md:grid-cols-2 border-y transition-colors duration-700 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-          <div className={`p-12 md:p-24 border-r transition-colors duration-700 flex flex-col justify-center ${theme === 'light' ? 'border-slate-200 bg-white' : 'border-white/5 bg-white/2'}`}>
-            <motion.div
-              initial={{ opacity: 0, x: -40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="space-y-10"
-            >
-              <h2 className={`text-4xl sm:text-5xl md:text-7xl font-display uppercase leading-[0.9] tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                Uncompromising <br /> Precision
-              </h2>
-              <p className={`font-sans leading-relaxed text-xl font-light transition-colors duration-500 ${theme === 'light' ? 'text-slate-600' : 'text-white/40'}`}>
-                Every line of code is a brushstroke. We don't just build features; we architect systems that are as beautiful internally as they are externally. Our commitment to technical excellence is absolute.
-              </p>
-              <div className="flex items-center space-x-6 text-indigo-500">
-                <div className="h-[1px] w-16 bg-indigo-500" />
-                <span className="text-[12px] font-bold uppercase tracking-[0.4em]">Technical Mastery</span>
-              </div>
-            </motion.div>
-          </div>
-          <div className="relative h-[500px] md:h-auto overflow-hidden group">
-            <img 
-              src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=2072" 
-              alt="Maker’s Lab" 
-              className={`absolute inset-0 w-full h-full object-cover grayscale transition-all duration-[2s] group-hover:scale-110 group-hover:grayscale-0 ${theme === 'light' ? 'opacity-90' : 'opacity-70'}`}
-              referrerPolicy="no-referrer"
+        <div className="relative z-10">
+          {/* Team */}
+          <section
+            className={`relative border-b px-4 py-20 sm:py-28 md:py-32 transition-colors duration-700 ${
+              isLight ? "border-slate-200/80" : "border-white/[0.06]"
+            }`}
+          >
+            <div
+              className={`pointer-events-none absolute inset-0 opacity-[0.35] mask-radial ${isLight ? "bg-grid-slate-900" : "bg-grid-white"}`}
+              aria-hidden
             />
-            <div className={`absolute inset-0 bg-gradient-to-r transition-colors duration-700 ${theme === 'light' ? 'from-white via-white/20 to-transparent' : 'from-[#050505] via-[#050505]/20 to-transparent'}`} />
-            <div className="absolute inset-0 bg-indigo-500/10 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-          </div>
-        </section>
 
-        {/* Values Section */}
-        <section className="py-48 px-4 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-20">
-            {[
-              { 
-                title: "Innovation First", 
-                desc: "We explore the bleeding edge of technology to provide our clients with a competitive advantage in an ever-evolving landscape.",
-                icon: Rocket 
-              },
-              { 
-                title: "Global Reach", 
-                desc: "Maker’s Lab operates at the intersection of global trends, bringing a diverse perspective to every project we undertake.",
-                icon: Globe 
-              },
-              { 
-                title: "Elite Talent", 
-                desc: "A collective of senior engineers and visionary designers dedicated to pushing the boundaries of what's possible.",
-                icon: Users 
-              }
-            ].map((value, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.2, duration: 0.8 }}
-                className="space-y-8 group"
-              >
-                <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center border transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50 group-hover:border-indigo-500/50' : 'bg-white/5 border-white/10 group-hover:border-indigo-500/50'}`}>
-                  <value.icon className={`h-8 w-8 transition-colors duration-500 ${theme === 'light' ? 'text-slate-400 group-hover:text-indigo-600' : 'text-white/40 group-hover:text-indigo-400'}`} />
+            <div className="relative mx-auto max-w-7xl">
+              <div className="mb-14 flex flex-col justify-between gap-8 md:mb-20 md:flex-row md:items-end md:gap-12">
+                <div className="max-w-2xl space-y-5">
+                  <div className="inline-flex items-center gap-2">
+                    <span
+                      className={`font-mono text-[10px] font-medium uppercase tracking-[0.35em] ${
+                        isLight ? "text-indigo-600" : "text-indigo-400"
+                      }`}
+                    >
+                      Core team
+                    </span>
+                    <span className={`h-px w-8 ${isLight ? "bg-indigo-300/80" : "bg-indigo-500/40"}`} />
+                    <Sparkles className={`h-3.5 w-3.5 ${isLight ? "text-indigo-500" : "text-indigo-400"}`} />
+                  </div>
+                  <h2
+                    className={`font-display text-[clamp(2.25rem,5vw,4.5rem)] uppercase leading-[0.92] tracking-tighter ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                  >
+                    Execution,{" "}
+                    <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600 bg-clip-text font-serif text-4xl italic normal-case tracking-normal text-transparent sm:text-5xl md:text-6xl dark:from-indigo-400 dark:via-violet-400 dark:to-cyan-400">
+                      by design
+                    </span>
+                  </h2>
                 </div>
-                <h3 className={`text-2xl font-display uppercase tracking-tight transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{value.title}</h3>
-                <p className={`font-sans leading-relaxed text-lg font-light transition-colors duration-500 ${theme === 'light' ? 'text-slate-600' : 'text-white/40'}`}>{value.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* Team Section */}
-        <section className={`py-48 px-4 border-t transition-colors duration-700 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-32 gap-12">
-              <div className="max-w-2xl">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  className="text-indigo-500 text-[11px] font-bold uppercase tracking-[0.5em] mb-6"
+                <p
+                  className={`max-w-md font-heading text-base font-light leading-relaxed md:text-lg ${
+                    isLight ? "text-slate-600" : "text-white/50"
+                  }`}
                 >
-                  The Collective
-                </motion.div>
-                <motion.h2
+                  Real faces, real roles. A tight crew so every engagement gets direct attention from people who ship.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-3 lg:gap-8 xl:gap-10">
+                {team.map((member, i) => (
+                  <motion.article
+                    key={member.name}
+                    initial={{ opacity: 0, y: 32 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-40px" }}
+                    transition={{ delay: i * 0.1, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                    className="group relative flex flex-col"
+                  >
+                    <div className="relative">
+                      <div
+                        className={`absolute -inset-px rounded-[1.75rem] bg-gradient-to-br opacity-60 blur-sm transition-opacity duration-500 group-hover:opacity-100 sm:rounded-[2rem] ${
+                          isLight
+                            ? "from-indigo-400/40 via-violet-400/20 to-transparent"
+                            : "from-indigo-500/30 via-violet-500/20 to-transparent"
+                        }`}
+                        aria-hidden
+                      />
+                      <div
+                        className={`relative aspect-[3/4] w-full overflow-hidden rounded-[1.75rem] sm:rounded-[2rem] ${
+                          isLight
+                            ? "bg-white shadow-[0_24px_80px_-24px_rgba(15,23,42,0.2)] ring-1 ring-slate-200/90"
+                            : "bg-white/[0.04] shadow-[0_32px_100px_-32px_rgba(0,0,0,0.85)] ring-1 ring-white/[0.08]"
+                        }`}
+                      >
+                        <div
+                          className={`pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/50 via-transparent to-white/5 opacity-80 mix-blend-overlay dark:from-black/70 dark:to-transparent dark:mix-blend-normal`}
+                        />
+                        <img
+                          src={member.image}
+                          alt={member.name}
+                          className="h-full w-full object-cover object-top transition-transform duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
+                        <div
+                          className={`absolute left-4 top-4 z-[2] flex h-9 w-9 items-center justify-center rounded-full font-mono text-[11px] font-semibold backdrop-blur-md ${
+                            isLight
+                              ? "border border-white/60 bg-white/75 text-slate-800 shadow-sm"
+                              : "border border-white/15 bg-black/40 text-white/90"
+                          }`}
+                        >
+                          {String(i + 1).padStart(2, "0")}
+                        </div>
+                      </div>
+
+                      <div
+                        className={`relative z-[2] -mt-14 mx-3 rounded-2xl border p-6 shadow-2xl backdrop-blur-2xl sm:-mt-16 sm:mx-4 sm:rounded-[1.35rem] sm:p-7 ${
+                          isLight
+                            ? "border-slate-200/90 bg-white/85 shadow-slate-900/10"
+                            : "border-white/[0.1] bg-[#0a0a0f]/75 shadow-black/60"
+                        }`}
+                      >
+                        <h3
+                          className={`font-display text-lg uppercase tracking-tight sm:text-xl ${isLight ? "text-slate-900" : "text-white"}`}
+                        >
+                          {member.name}
+                        </h3>
+                        <p
+                          className={`mt-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.2em] ${
+                            isLight ? "text-indigo-600" : "text-indigo-400"
+                          }`}
+                        >
+                          {member.role}
+                        </p>
+                        <p
+                          className={`mt-4 border-t pt-4 text-sm font-light leading-relaxed ${
+                            isLight ? "border-slate-200/80 text-slate-600" : "border-white/[0.08] text-white/45"
+                          }`}
+                        >
+                          {member.bio}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.article>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Mission */}
+          <section className="relative mx-auto max-w-7xl px-4 py-20 sm:py-28 md:py-32">
+            <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-12 lg:gap-16">
+              <div className="space-y-8 lg:col-span-7">
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className={`text-5xl sm:text-6xl md:text-8xl font-display uppercase leading-[0.85] tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}
+                  className="space-y-4"
                 >
-                  Visionaries behind <br /> the <span className={`italic text-transparent transition-all duration-500`} style={{ WebkitTextStroke: theme === 'light' ? "1px #0f172a" : "1px white" }}>Execution</span>
-                </motion.h2>
-              </div>
-              <motion.p
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                className={`font-sans max-w-sm leading-relaxed text-lg font-light transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}
-              >
-                A curated group of specialists dedicated to redefining digital boundaries through technical mastery and artistic vision.
-              </motion.p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-              {team.map((member, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 40 }}
+                  <span
+                    className={`font-mono text-[10px] font-medium uppercase tracking-[0.35em] ${
+                      isLight ? "text-indigo-600" : "text-indigo-400"
+                    }`}
+                  >
+                    Mission
+                  </span>
+                  <h2
+                    className={`font-display text-[clamp(2rem,4.5vw,3.75rem)] uppercase leading-[0.95] tracking-tighter ${
+                      isLight ? "text-slate-900" : "text-white"
+                    }`}
+                  >
+                    Software as{" "}
+                    <span className="font-serif text-3xl italic normal-case text-indigo-600 sm:text-4xl md:text-5xl dark:text-indigo-400">
+                      experience
+                    </span>
+                  </h2>
+                </motion.div>
+                <motion.p
+                  initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, duration: 0.8 }}
-                  className="group relative"
+                  transition={{ delay: 0.08 }}
+                  className={`max-w-xl font-heading text-base font-light leading-relaxed md:text-lg ${
+                    isLight ? "text-slate-600" : "text-white/55"
+                  }`}
                 >
-                  <motion.div
-                    whileHover={{ y: -15 }}
-                    className={`relative aspect-[3/4] overflow-hidden rounded-[2.5rem] border transition-all duration-700 ${theme === 'light' ? 'bg-white border-slate-200 shadow-2xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}
-                  >
-                    {/* Glow Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-indigo-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                    
-                    <motion.img
-                      whileHover={{ scale: 1.15 }}
-                      transition={{ duration: 0.8 }}
-                      src={member.image}
-                      alt={member.name}
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000"
-                      referrerPolicy="no-referrer"
-                    />
+                  Maker’s Lab merges serious engineering with refined design. Led by Bright Eduful, every engagement is a partnership—not a ticket queue.
+                </motion.p>
 
-                    {/* Social Links Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center gap-6 opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-8 group-hover:translate-y-0">
-                      {[
-                        { icon: Twitter, href: member.socials.twitter },
-                        { icon: Linkedin, href: member.socials.linkedin },
-                        { icon: Github, href: member.socials.github }
-                      ].map((social, idx) => (
-                        <a 
-                          key={idx}
-                          href={social.href} 
-                          className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xl flex items-center justify-center text-white hover:bg-indigo-500 hover:scale-110 transition-all duration-500 border border-white/10"
-                        >
-                          <social.icon className="h-5 w-5" />
-                        </a>
-                      ))}
+                <div className="flex flex-wrap gap-3 pt-2">
+                  {[
+                    { k: "Stack", v: "Modern · typed · observable" },
+                    { k: "Delivery", v: "Design systems → prod" },
+                  ].map((chip) => (
+                    <div
+                      key={chip.k}
+                      className={`rounded-full border px-4 py-2.5 backdrop-blur-md ${
+                        isLight
+                          ? "border-slate-200/90 bg-white/60 text-slate-800"
+                          : "border-white/[0.1] bg-white/[0.04] text-white/80"
+                      }`}
+                    >
+                      <p className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400">
+                        {chip.k}
+                      </p>
+                      <p className="mt-0.5 text-xs font-light">{chip.v}</p>
                     </div>
-                  </motion.div>
+                  ))}
+                </div>
 
-                  <div className="mt-8 space-y-2 px-4">
-                    <h3 className={`text-2xl font-display uppercase tracking-tight transition-colors duration-500 group-hover:text-indigo-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{member.name}</h3>
-                    <p className="text-[11px] font-bold text-indigo-500 uppercase tracking-[0.3em] mb-2">{member.role}</p>
-                    <p className={`text-xs font-light leading-relaxed transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
-                      {member.bio}
-                    </p>
+                <div className="grid grid-cols-2 gap-4 pt-4 sm:max-w-lg">
+                  {[
+                    { t: "Build", s: "Products & platforms" },
+                    { t: "Grow", s: "Brand & reach" },
+                  ].map((item) => (
+                    <div
+                      key={item.t}
+                      className={`rounded-2xl border p-5 transition-colors duration-300 ${
+                        isLight
+                          ? "border-slate-200/90 bg-gradient-to-br from-white to-slate-50/80 hover:border-indigo-200/80"
+                          : "border-white/[0.08] bg-gradient-to-br from-white/[0.06] to-transparent hover:border-indigo-500/25"
+                      }`}
+                    >
+                      <h4 className={`font-display text-2xl uppercase ${isLight ? "text-slate-900" : "text-white"}`}>
+                        {item.t}
+                      </h4>
+                      <p className="mt-2 font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-indigo-500 dark:text-indigo-400">
+                        {item.s}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.97 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+                className="relative lg:col-span-5"
+              >
+                <div
+                  className={`relative aspect-[4/5] overflow-hidden rounded-[1.75rem] sm:aspect-square sm:rounded-[2rem] ${
+                    isLight
+                      ? "shadow-[0_40px_100px_-40px_rgba(79,70,229,0.35)] ring-1 ring-slate-200/90"
+                      : "shadow-[0_40px_120px_-40px_rgba(99,102,241,0.25)] ring-1 ring-white/[0.1]"
+                  }`}
+                >
+                  <div
+                    className={`absolute inset-0 z-[1] bg-gradient-to-tr opacity-90 mix-blend-soft-light ${
+                      isLight ? "from-indigo-500/20 via-transparent to-cyan-500/15" : "from-violet-600/25 via-transparent to-indigo-600/20"
+                    }`}
+                  />
+                  <img
+                    src="/team/bright-eduful.png"
+                    alt="Bright Eduful, Founder & Developer"
+                    className="h-full w-full object-cover object-top"
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                  />
+                </div>
+                <div
+                  className={`absolute -bottom-4 -right-4 hidden rounded-2xl border px-4 py-3 backdrop-blur-xl sm:flex sm:items-center sm:gap-3 ${
+                    isLight ? "border-slate-200/90 bg-white/90" : "border-white/10 bg-black/50"
+                  }`}
+                >
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
+                  <span className={`font-mono text-[10px] uppercase tracking-widest ${isLight ? "text-slate-600" : "text-white/60"}`}>
+                    Accepting partners
+                  </span>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* Values */}
+          <section
+            className={`relative border-y px-4 py-20 sm:py-28 ${
+              isLight ? "border-slate-200/80 bg-white/35" : "border-white/[0.06] bg-white/[0.02]"
+            }`}
+          >
+            <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-5">
+              {[
+                {
+                  title: "Innovation first",
+                  desc: "Right tools, clear patterns, measurable outcomes—not hype for its own sake.",
+                  icon: Rocket,
+                },
+                {
+                  title: "Global mindset",
+                  desc: "Remote-first collaboration with the discipline of a product studio.",
+                  icon: Globe,
+                },
+                {
+                  title: "Small team, high bar",
+                  desc: "Direct access to the people who design, build, and ship your work.",
+                  icon: Users,
+                },
+              ].map((value, i) => (
+                <motion.div
+                  key={value.title}
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                  className={`group relative overflow-hidden rounded-2xl border p-8 transition-all duration-500 md:p-9 ${
+                    isLight
+                      ? "border-slate-200/90 bg-gradient-to-b from-white/90 to-slate-50/50 hover:border-indigo-300/60 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.2)]"
+                      : "border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-transparent hover:border-indigo-500/30 hover:shadow-[0_24px_80px_-30px_rgba(99,102,241,0.15)]"
+                  }`}
+                >
+                  <div
+                    className={`mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-transform duration-500 group-hover:scale-105 ${
+                      isLight
+                        ? "from-indigo-500/15 to-violet-500/10 text-indigo-600 shadow-indigo-500/10"
+                        : "from-indigo-500/25 to-violet-600/10 text-indigo-300 shadow-indigo-900/40"
+                    }`}
+                  >
+                    <value.icon className="h-7 w-7" />
                   </div>
+                  <h3 className={`font-display text-lg uppercase tracking-tight md:text-xl ${isLight ? "text-slate-900" : "text-white"}`}>
+                    {value.title}
+                  </h3>
+                  <p className={`mt-4 font-heading text-sm font-light leading-relaxed md:text-base ${isLight ? "text-slate-600" : "text-white/45"}`}>
+                    {value.desc}
+                  </p>
                 </motion.div>
               ))}
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* CTA Section */}
-        <section className={`py-32 sm:py-48 border-t transition-colors duration-700 text-center space-y-12 sm:space-y-16 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-          <h2 className={`text-5xl sm:text-6xl md:text-9xl font-display uppercase leading-none tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-            Ready to <br />
-            <span className={`italic text-transparent transition-all duration-700`} style={{ WebkitTextStroke: theme === 'light' ? "1px #0f172a" : "1px white" }}>Collaborate?</span>
-          </h2>
-          <motion.button
-            whileHover={{ scale: 1.05, y: -5 }}
-            whileTap={{ scale: 0.95 }}
-            className={`px-12 sm:px-20 py-6 sm:py-10 font-bold uppercase tracking-[0.4em] text-[10px] sm:text-[11px] transition-all duration-700 shadow-2xl ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600' : 'bg-white text-black hover:bg-indigo-500 hover:text-white'}`}
-          >
-            Initiate Project
-          </motion.button>
-        </section>
+          {/* CTA */}
+          <section className="relative px-4 py-20 text-center sm:space-y-12 sm:py-28 md:py-32">
+            <div
+              className={`pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-indigo-500/25 to-transparent dark:via-indigo-400/20`}
+              aria-hidden
+            />
+            <h2
+              className={`relative font-display text-[clamp(2.5rem,8vw,6.5rem)] uppercase leading-[0.9] tracking-tighter ${
+                isLight ? "text-slate-900" : "text-white"
+              }`}
+            >
+              Ready to{" "}
+              <br className="sm:hidden" />
+              <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500 bg-clip-text text-transparent dark:from-indigo-400 dark:via-fuchsia-400 dark:to-cyan-400">
+                collaborate?
+              </span>
+            </h2>
+            <div className="relative mt-10 flex flex-col items-center justify-center gap-4 sm:mt-12 sm:flex-row sm:gap-5">
+              <Link
+                to="/contact"
+                className={`inline-flex items-center gap-3 rounded-full px-10 py-4 text-[10px] font-bold uppercase tracking-[0.32em] shadow-lg transition-all duration-300 sm:px-12 sm:py-5 sm:text-[11px] ${
+                  isLight
+                    ? "bg-slate-900 text-white shadow-slate-900/25 hover:bg-gradient-to-r hover:from-indigo-600 hover:to-violet-600 hover:shadow-indigo-500/30"
+                    : "bg-white text-slate-950 shadow-white/10 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-violet-600 hover:text-white hover:shadow-indigo-500/25"
+                }`}
+              >
+                Initiate contact
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                to="/register"
+                className={`rounded-full border px-9 py-4 text-[10px] font-bold uppercase tracking-[0.28em] backdrop-blur-md transition-all duration-300 sm:px-11 sm:py-5 sm:text-[11px] ${
+                  isLight
+                    ? "border-slate-300/90 bg-white/50 text-slate-900 hover:border-indigo-400/60 hover:bg-white/80"
+                    : "border-white/20 bg-white/[0.04] text-white hover:border-white/40 hover:bg-white/[0.08]"
+                }`}
+              >
+                Join Maker’s Lab
+              </Link>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

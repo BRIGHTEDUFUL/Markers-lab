@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import NProgress from "nprogress";
@@ -8,8 +8,8 @@ import { LayoutDashboard, Settings, LogOut, Menu, X, Rocket, User as UserIcon, M
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { Toaster } from "sonner";
 
-import PageHero from "./PageHero";
 import PWAInstallPrompt from "./PWAInstallPrompt";
+import HeroRingBackdrop from "./HeroRingBackdrop";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
@@ -84,6 +84,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     !item.roles || item.roles.includes(user?.role || "GUEST")
   );
 
+  const footerPlatformLinks = useMemo(() => {
+    const items: { name: string; path: string }[] = [{ name: "Public Gallery", path: "/gallery" }];
+    if (user) {
+      items.push({ name: "Dashboard", path: "/dashboard" }, { name: "Submit Project", path: "/submit-project" });
+      if (user.role === "ADMIN") items.push({ name: "Admin Panel", path: "/admin" });
+    }
+    return items;
+  }, [user]);
+
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
@@ -99,7 +108,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+    <div className="relative min-h-screen min-h-[100dvh] text-foreground flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+      <HeroRingBackdrop theme={theme} variant="global" />
       <Helmet>
         <title>Maker’s Lab | Where Ideas Merge with Execution</title>
         <meta name="description" content="A high-end creative platform for developers and designers to showcase their best work." />
@@ -124,7 +134,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         )}
       </AnimatePresence>
 
-      <motion.nav 
+      <motion.nav
         style={{ 
           backgroundColor: navBackground,
           borderColor: navBorder,
@@ -433,14 +443,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </AnimatePresence>
       </motion.nav>
 
-      <main className="flex-grow">
+      <main className="relative z-[1] flex flex-grow flex-col">
         {children}
       </main>
 
       <Toaster position="top-right" theme={theme as 'light' | 'dark'} richColors />
       <PWAInstallPrompt />
 
-      <footer className={`border-t py-12 sm:py-24 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-card border-border'}`}>
+      <footer className={`relative z-[1] border-t py-12 sm:py-24 backdrop-blur-md ${theme === 'light' ? 'border-slate-200/80 bg-slate-50/40' : 'border-border/80 bg-card/45'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 mb-16">
             <div className="col-span-1 sm:col-span-2 space-y-6">
@@ -457,7 +467,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div className="sm:col-span-1">
               <h4 className="text-foreground text-[10px] font-bold uppercase tracking-[0.3em] mb-6">Platform</h4>
               <ul className="space-y-4">
-                {navItems.slice(0, 3).map(item => (
+                {footerPlatformLinks.map((item) => (
                   <li key={item.path}>
                     <Link to={item.path} className="text-muted-foreground hover:text-foreground text-[10px] font-bold uppercase tracking-widest transition-colors">{item.name}</Link>
                   </li>

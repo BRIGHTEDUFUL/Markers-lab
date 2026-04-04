@@ -145,6 +145,14 @@ export const SubmitProject: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim()) {
+      toast.error("Please enter a project title.");
+      return;
+    }
+    if (!description.trim()) {
+      toast.error("Please add a project description.");
+      return;
+    }
     setLoading(true);
     setError("");
     setFileProgress({});
@@ -181,8 +189,13 @@ export const SubmitProject: React.FC = () => {
       setSuccess(true);
       toast.success("Project submitted successfully!");
       setTimeout(() => navigate("/dashboard"), 2000);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || "Failed to submit project";
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err && typeof (err as { message: string }).message === "string"
+            ? (err as { message: string }).message
+            : "Failed to submit project";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -196,7 +209,7 @@ export const SubmitProject: React.FC = () => {
       : 0;
 
     return (
-      <div className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+      <div className="page-shell-flex">
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -268,7 +281,7 @@ export const SubmitProject: React.FC = () => {
 
   if (success) {
     return (
-      <div className={`min-h-[70vh] flex items-center justify-center ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+      <div className="page-shell-short">
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -289,10 +302,10 @@ export const SubmitProject: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div className="page-shell duration-500">
       <PageHero 
         category="Project Submission Terminal"
-        title="Launch Your <br /><span class='text-transparent' style='-webkit-text-stroke: 1px rgba(255,255,255,0.3)'>Vision</span>"
+        title={`Launch Your <br /><span class='text-transparent' style='-webkit-text-stroke: 1px ${theme === "light" ? "#0f172a" : "rgba(255,255,255,0.35)"}'>Vision</span>`}
         subtitle="Provide the technical specifications for your next digital masterpiece. Our team will analyze your requirements and architect a bespoke solution."
       />
 

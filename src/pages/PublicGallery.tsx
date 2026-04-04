@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { fetchFeaturedGallery, fetchApprovedTestimonials } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
+import { mediaSrc } from "../lib/media-url";
 import { Star, Quote, Rocket, ExternalLink, ArrowRight, CheckCircle, Users, Briefcase, Award, Search } from "lucide-react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
 import ReactMarkdown from "react-markdown";
@@ -103,7 +104,7 @@ export const PublicGallery: React.FC = () => {
     : projects.filter(p => p.category === activeCategory);
 
   if (loading) return (
-    <div className={`flex items-center justify-center h-screen transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div className="page-shell-flex h-screen">
       <div className="relative">
         <div className="animate-spin h-16 w-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full"></div>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -114,7 +115,7 @@ export const PublicGallery: React.FC = () => {
   );
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-700 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div className="page-shell">
       <PageHero 
         title={`Digital<br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${theme === 'light' ? '#0f172a' : 'white'}'>Masterpieces</span>`}
         subtitle="A curated showcase of our most ambitious projects, technical breakthroughs, and creative experiments."
@@ -136,8 +137,11 @@ export const PublicGallery: React.FC = () => {
               {/* Spotlight Background */}
               <div className="absolute inset-0">
                 {(() => {
-                  const coverImage = spotlightProject.files?.find((f: any) => f.mimeType.startsWith("image/"));
-                  const imageUrl = coverImage ? `/${coverImage.path}` : `https://picsum.photos/seed/${spotlightProject.id}/1920/1080?blur=2`;
+                  const coverImage = spotlightProject.files?.find((f) => f.mimeType?.startsWith("image/"));
+                  const imageUrl = mediaSrc(
+                    coverImage?.path,
+                    `https://picsum.photos/seed/${spotlightProject.id}/1920/1080?blur=2`
+                  );
                   return (
                     <img 
                       src={imageUrl} 
@@ -178,10 +182,10 @@ export const PublicGallery: React.FC = () => {
                 <div className="flex items-center space-x-12 pt-10">
                   <div className="flex items-center space-x-5">
                     <div className={`h-16 w-16 rounded-3xl border flex items-center justify-center font-bold text-xl transition-all duration-500 group-hover:rotate-6 ${theme === 'light' ? 'bg-slate-100 border-slate-200 text-slate-900' : 'bg-white/10 border-white/10 text-white'}`}>
-                      {spotlightProject.user.name.charAt(0)}
+                      {(spotlightProject.user?.name || "?").charAt(0)}
                     </div>
                     <div className="flex flex-col">
-                      <span className={`text-[12px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{spotlightProject.user.name}</span>
+                      <span className={`text-[12px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{spotlightProject.user?.name ?? "Creator"}</span>
                       <span className={`text-[10px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>Lead Architect</span>
                     </div>
                   </div>
@@ -226,8 +230,11 @@ export const PublicGallery: React.FC = () => {
           {/* Projects Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
             {filteredProjects.map((project, i) => {
-              const coverImage = project.files?.find((f: any) => f.mimeType.startsWith("image/"));
-              const imageUrl = coverImage ? `/${coverImage.path}` : `https://picsum.photos/seed/${project.id}/1200/800?blur=2`;
+              const coverImage = project.files?.find((f) => f.mimeType?.startsWith("image/"));
+              const imageUrl = mediaSrc(
+                coverImage?.path,
+                `https://picsum.photos/seed/${project.id}/1200/800?blur=2`
+              );
 
               return (
                 <motion.div
@@ -280,16 +287,21 @@ export const PublicGallery: React.FC = () => {
                             {project.title}
                           </h3>
                           {project.repoUrl && (
-                            <motion.div 
+                            <motion.a
+                              href={project.repoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               whileHover={{ rotate: 45 }}
+                              onClick={(e) => e.stopPropagation()}
                               className={`p-4 rounded-2xl border transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 text-slate-900 border-slate-200' : 'bg-white/5 text-white border-white/10'}`}
+                              title="Open repository"
                             >
                               <ExternalLink className="h-5 w-5" />
-                            </motion.div>
+                            </motion.a>
                           )}
                         </div>
                         <div className="flex flex-wrap gap-3">
-                          {project.tags.map((tag: string) => (
+                          {(project.tags || []).map((tag: string) => (
                             <span key={tag} className={`text-[10px] font-bold uppercase tracking-[0.2em] border px-3 py-1 rounded-lg transition-all duration-500 ${theme === 'light' ? 'text-indigo-600 border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100' : 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10'}`}>
                               #{tag}
                             </span>
@@ -304,17 +316,17 @@ export const PublicGallery: React.FC = () => {
                       <div className={`pt-10 flex items-center justify-between border-t transition-colors duration-700 ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
                         <div className="flex items-center space-x-4">
                           <div className={`h-14 w-14 rounded-2xl border flex items-center justify-center text-lg font-bold group-hover:bg-indigo-500 group-hover:border-indigo-500 group-hover:text-white transition-all duration-700 ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-white/5 border-white/10 text-white'}`}>
-                            {project.user.name.charAt(0)}
+                            {(project.user?.name || "?").charAt(0)}
                           </div>
                           <div className="flex flex-col">
-                            <span className={`text-[11px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{project.user.name}</span>
+                            <span className={`text-[11px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{project.user?.name ?? "Creator"}</span>
                             <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>Lead Architect</span>
                           </div>
                         </div>
                         <div className="flex items-center space-x-10">
                           <div className="flex flex-col items-end">
                             <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>Valuation</span>
-                            <span className={`text-sm font-bold transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>${project.budget}</span>
+                            <span className={`text-sm font-bold transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{project.budget}</span>
                           </div>
                           <div className="flex flex-col items-end">
                             <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>Cycle</span>
@@ -383,11 +395,11 @@ export const PublicGallery: React.FC = () => {
                   </div>
                   <div className={`flex items-center space-x-5 pt-12 border-t transition-colors duration-700 ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
                     <div className="h-16 w-16 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-2xl transition-transform duration-500 group-hover:scale-110">
-                      {t.user.name.charAt(0)}
+                      {(t.user?.name || "?").charAt(0)}
                     </div>
                     <div>
-                      <div className={`text-[12px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{t.user.name}</div>
-                      <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-indigo-500 mt-2">{t.project.title}</div>
+                      <div className={`text-[12px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{t.user?.name ?? "Client"}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-indigo-500 mt-2">{t.project?.title ?? "Project"}</div>
                     </div>
                   </div>
                 </motion.div>
@@ -416,14 +428,14 @@ export const PublicGallery: React.FC = () => {
             >
               {user ? "Submit Project" : "Initiate Contact"}
             </motion.button>
-            <motion.button 
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate("/dashboard")}
-              className={`px-20 py-10 border font-bold uppercase tracking-[0.4em] text-[11px] transition-all duration-700 ${theme === 'light' ? 'border-slate-200 text-slate-900 hover:bg-slate-900 hover:text-white' : 'border-white/20 text-white hover:bg-white hover:text-black'}`}
-            >
-              Access Terminal
-            </motion.button>
+            <motion.div whileHover={{ scale: 1.05, y: -5 }} whileTap={{ scale: 0.95 }}>
+              <Link
+                to={user ? "/dashboard" : "/login"}
+                className={`inline-block px-20 py-10 border font-bold uppercase tracking-[0.4em] text-[11px] transition-all duration-700 ${theme === 'light' ? 'border-slate-200 text-slate-900 hover:bg-slate-900 hover:text-white' : 'border-white/20 text-white hover:bg-white hover:text-black'}`}
+              >
+                {user ? "Access Terminal" : "Sign In"}
+              </Link>
+            </motion.div>
           </div>
         </section>
 
@@ -453,8 +465,11 @@ export const PublicGallery: React.FC = () => {
                   {/* Image Section */}
                   <div className="relative aspect-square lg:aspect-auto bg-slate-900 overflow-hidden">
                     {(() => {
-                      const coverImage = selectedProject.files?.find((f: any) => f.mimeType.startsWith("image/"));
-                      const imageUrl = coverImage ? `/${coverImage.path}` : `https://picsum.photos/seed/${selectedProject.id}/1080/1080`;
+                      const coverImage = selectedProject.files?.find((f) => f.mimeType?.startsWith("image/"));
+                      const imageUrl = mediaSrc(
+                        coverImage?.path,
+                        `https://picsum.photos/seed/${selectedProject.id}/1080/1080`
+                      );
                       return (
                         <img 
                           src={imageUrl} 
@@ -488,11 +503,11 @@ export const PublicGallery: React.FC = () => {
                     <div className="space-y-8">
                       <div className="flex items-center space-x-6">
                         <div className="h-16 w-16 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-2xl">
-                          {selectedProject.user.name.charAt(0)}
+                          {(selectedProject.user?.name || "?").charAt(0)}
                         </div>
                         <div>
                           <div className={`text-[12px] font-bold uppercase tracking-[0.3em] ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                            {selectedProject.user.name}
+                            {selectedProject.user?.name ?? "Creator"}
                           </div>
                           <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-indigo-500 mt-2">
                             Project Architect

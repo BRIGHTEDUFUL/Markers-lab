@@ -1,16 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, ArrowRight, ShieldCheck, Globe, MessageSquare } from "lucide-react";
 import { motion } from "motion/react";
 import { fetchFeaturedGallery } from "../lib/makers-data";
 import { useTheme } from "../contexts/ThemeContext";
+import { mediaSrc } from "../lib/media-url";
+import { starSpec } from "../lib/star-field";
+import { Project } from "../types";
 
 export const Home = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const [featuredProjects, setFeaturedProjects] = useState<any[]>([]);
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const heroStars = useMemo(
+    () => Array.from({ length: 80 }, (_, i) => starSpec(i, theme, 1000)),
+    [theme]
+  );
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -27,7 +34,7 @@ export const Home = () => {
   }, []);
 
   return (
-    <div className={`relative min-h-screen overflow-hidden transition-colors duration-700 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div className="page-shell">
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0">
         <div className={`absolute top-0 left-0 w-full h-full mask-radial opacity-20 transition-colors duration-700 ${theme === 'light' ? 'bg-grid-slate-900' : 'bg-grid-white'}`} />
@@ -53,72 +60,36 @@ export const Home = () => {
 
       {/* Hero Section */}
       <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 pt-20 text-center overflow-hidden">
-        {/* Advanced Moon Background Element - Now Full Section Background */}
-        <motion.div
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ 
-            opacity: theme === 'light' ? [0.4, 0.5, 0.4] : [0.8, 1, 0.8],
-            scale: [1.1, 1.12, 1.1],
-            y: [0, -10, 0]
-          }}
-          transition={{ 
-            duration: 30, 
-            repeat: Infinity, 
-            ease: "easeInOut" 
-          }}
-          className="absolute inset-0 pointer-events-none z-0"
-        >
-          <img 
-            src="/moon-image.jpeg" 
-            alt="Moon Background"
-            className={`w-full h-full object-cover object-top filter transition-all duration-700 ${theme === 'light' ? 'brightness-110 contrast-110 saturate-100 opacity-90' : 'brightness-125 contrast-125 saturate-150 opacity-100'}`}
-            referrerPolicy="no-referrer"
-          />
-          {/* Overlays for depth and readability */}
-          <div className={`absolute inset-0 transition-colors duration-700 ${theme === 'light' ? 'bg-gradient-to-b from-slate-50/20 via-transparent to-slate-50/20' : 'bg-gradient-to-b from-[#050505]/20 via-transparent to-[#050505]/20'}`} />
-          <div className={`absolute inset-0 transition-colors duration-700 ${theme === 'light' ? 'bg-gradient-to-r from-slate-50/10 via-transparent to-slate-50/10' : 'bg-gradient-to-r from-[#050505]/10 via-transparent to-[#050505]/10'}`} />
-          <div className={`absolute inset-0 transition-opacity duration-700 ${theme === 'light' ? 'bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.1)_0%,transparent_80%)] opacity-40' : 'bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.2)_0%,transparent_80%)]'}`} />
-        </motion.div>
-
-        {/* Realistic Animated Stars */}
-        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-          {[...Array(80)].map((_, i) => {
-            const size = Math.random() * 2 + 1;
-            const isLarge = size > 2.5;
-            const starColor = theme === 'light' 
-              ? ['#818cf8', '#6366f1', '#4f46e5'][Math.floor(Math.random() * 3)]
-              : ['#ffffff', '#e0e7ff', '#fff7ed'][Math.floor(Math.random() * 3)];
-            
-            return (
-              <motion.div
-                key={i}
-                initial={{ 
-                  opacity: Math.random() * 0.4 + 0.1,
-                  scale: Math.random() * 0.5 + 0.5
-                }}
-                animate={{ 
-                  opacity: [0.1, 0.8, 0.1],
-                  scale: isLarge ? [1, 1.2, 1] : [1, 1.5, 1],
-                }}
-                transition={{ 
-                  duration: Math.random() * 5 + 4, 
-                  repeat: Infinity, 
-                  ease: "easeInOut",
-                  delay: Math.random() * 15
-                }}
-                className="absolute rounded-full"
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  backgroundColor: starColor,
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  boxShadow: isLarge ? `0 0 ${size * 4}px ${starColor}` : `0 0 ${size * 2}px ${starColor}`,
-                  filter: `blur(${size * 0.2}px)`
-                }}
-              />
-            );
-          })}
+        <div className="absolute inset-0 pointer-events-none z-[1] overflow-hidden">
+          {heroStars.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{
+                opacity: s.initialOpacity,
+                scale: s.initialScale,
+              }}
+              animate={{
+                opacity: theme === "light" ? [0.05, 0.32, 0.05] : [0.08, 0.5, 0.08],
+                scale: s.isLarge ? [1, 1.2, 1] : [1, 1.5, 1],
+              }}
+              transition={{
+                duration: s.duration,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: s.delay,
+              }}
+              className="absolute rounded-full"
+              style={{
+                width: `${s.size}px`,
+                height: `${s.size}px`,
+                backgroundColor: s.starColor,
+                left: s.leftPct,
+                top: s.topPct,
+                boxShadow: s.isLarge ? `0 0 ${s.size * 4}px ${s.starColor}` : `0 0 ${s.size * 2}px ${s.starColor}`,
+                filter: `blur(${s.size * 0.2}px)`,
+              }}
+            />
+          ))}
         </div>
 
         <motion.div
@@ -136,7 +107,7 @@ export const Home = () => {
             initial={{ opacity: 0, scale: 0.9, filter: "blur(20px)" }}
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className={`font-display text-[16vw] sm:text-[15vw] md:text-[13vw] leading-[0.82] uppercase tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900 drop-shadow-[0_0_30px_rgba(255,255,255,0.8)]' : 'text-white drop-shadow-[0_0_40px_rgba(0,0,0,0.8)]'}`}
+            className={`font-display text-[16vw] sm:text-[15vw] md:text-[13vw] leading-[0.82] uppercase tracking-tighter transition-colors duration-500 ${theme === "light" ? "text-slate-900 drop-shadow-[0_2px_40px_rgba(255,255,255,0.9)]" : "text-white drop-shadow-[0_4px_48px_rgba(0,0,0,0.85)]"}`}
           >
             <motion.span 
               animate={{ rotate: [-1.5, 1.5] }}
@@ -221,11 +192,11 @@ export const Home = () => {
 
       {/* Features - Brutalist Grid */}
       <section className={`relative z-10 grid grid-cols-1 md:grid-cols-3 border-b transition-colors duration-500 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-        {[
-          { title: "Bespoke Websites", desc: "Digital experiences that tell your brand's story with uncompromising precision and elite motion design.", icon: Globe, color: "indigo" },
-          { title: "High-End Web Apps", desc: "Scalable, high-performance applications built with cutting-edge tech stacks and fluid UX.", icon: Rocket, color: "purple" },
-          { title: "And More", desc: "From immersive 3D environments to custom digital tools, we build beyond the traditional browser limits.", icon: ShieldCheck, color: "blue" },
-        ].map((feature, i) => (
+        {([
+          { title: "Bespoke Websites", desc: "Digital experiences that tell your brand's story with uncompromising precision and elite motion design.", icon: Globe, gradient: "from-indigo-500/5" },
+          { title: "High-End Web Apps", desc: "Scalable, high-performance applications built with cutting-edge tech stacks and fluid UX.", icon: Rocket, gradient: "from-purple-500/5" },
+          { title: "And More", desc: "From immersive 3D environments to custom digital tools, we build beyond the traditional browser limits.", icon: ShieldCheck, gradient: "from-blue-500/5" },
+        ] as const).map((feature, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0 }}
@@ -234,7 +205,7 @@ export const Home = () => {
             transition={{ delay: i * 0.2 }}
             className={`p-10 sm:p-16 md:p-24 border-b md:border-b-0 md:border-r transition-all duration-700 group relative overflow-hidden ${theme === 'light' ? 'border-slate-200 hover:bg-slate-100' : 'border-white/5 hover:bg-white/5'} last:border-b-0 md:last:border-r-0`}
           >
-            <div className={`absolute inset-0 bg-gradient-to-br from-${feature.color}-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
+            <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
             <div className="mb-10 text-indigo-500 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 relative z-10">
               <feature.icon className="h-14 w-14" />
             </div>
@@ -284,8 +255,11 @@ export const Home = () => {
               ))
             ) : featuredProjects.length > 0 ? (
               featuredProjects.map((project, i) => {
-                const coverImage = project.files?.find((f: any) => f.mimeType.startsWith("image/"));
-                const imageUrl = coverImage ? `/${coverImage.path}` : `https://picsum.photos/seed/${project.id}/1200/800?blur=2`;
+                const coverImage = project.files?.find((f) => f.mimeType?.startsWith("image/"));
+                const imageUrl = mediaSrc(
+                  coverImage?.path,
+                  `https://picsum.photos/seed/${project.id}/1200/800?blur=2`
+                );
                 
                 return (
                   <motion.div
@@ -308,7 +282,7 @@ export const Home = () => {
                       <div className="space-y-3 sm:space-y-6">
                         <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] text-indigo-500 bg-indigo-500/10 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full w-fit">{project.category}</span>
                         <h3 className={`text-3xl sm:text-5xl md:text-7xl font-display uppercase tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{project.title}</h3>
-                        <p className={`font-sans text-xs sm:text-base max-w-sm opacity-0 group-hover:opacity-100 transition-all duration-700 delay-100 ${theme === 'light' ? 'text-slate-600' : 'text-gray-400'}`}>
+                        <p className={`font-sans text-xs sm:text-base max-w-sm line-clamp-3 opacity-0 group-hover:opacity-100 transition-all duration-700 delay-100 ${theme === 'light' ? 'text-slate-600' : 'text-gray-400'}`}>
                           {project.description}
                         </p>
                       </div>

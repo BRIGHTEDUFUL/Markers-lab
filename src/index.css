@@ -49,6 +49,22 @@
 }
 
 @layer utilities {
+  /**
+   * Translucent page shells so Layout’s fixed HeroRingBackdrop (z-0) stays visible.
+   * Cards and panels keep their own opaque / frosted surfaces for readability.
+   */
+  .page-shell {
+    @apply relative min-h-screen min-h-[100dvh] overflow-hidden bg-slate-50/30 backdrop-blur-md transition-colors duration-700 dark:bg-[#030303]/38;
+  }
+
+  .page-shell-flex {
+    @apply flex min-h-screen min-h-[100dvh] items-center justify-center bg-slate-50/30 backdrop-blur-md transition-colors duration-500 dark:bg-[#030303]/38;
+  }
+
+  .page-shell-short {
+    @apply flex min-h-[70vh] items-center justify-center bg-slate-50/30 backdrop-blur-md transition-colors duration-500 dark:bg-[#030303]/38;
+  }
+
   .text-glow {
     text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
   }

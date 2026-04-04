@@ -140,25 +140,54 @@ function profileToUser(p: ProfileRow): User {
   };
 }
 
+/** Map InsForge auth user payload to app User when profile row is missing or still syncing. */
+export function userFromAuthUser(raw: unknown): User | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const id = o.id;
+  if (typeof id !== "string") return null;
+  const email = typeof o.email === "string" ? o.email : "";
+  let name = email || "Member";
+  if (typeof o.name === "string" && o.name.trim()) name = o.name;
+  else if (o.user_metadata && typeof o.user_metadata === "object") {
+    const m = o.user_metadata as Record<string, unknown>;
+    if (typeof m.name === "string" && m.name.trim()) name = m.name;
+    else if (typeof m.full_name === "string" && m.full_name.trim()) name = m.full_name;
+  }
+  return {
+    id,
+    email,
+    name,
+    role: "USER",
+  };
+}
+
 export async function fetchSessionUser(): Promise<User | null> {
   const { data: session, error } = await insforge.auth.getCurrentUser();
   if (error || !session?.user) return null;
   const u = session.user;
-  await ensureProfile(
-    u.id,
-    (u as { name?: string }).name || u.email || "Member",
-    u.email || ""
-  );
-  const { data: prof } = await insforge.database
+  try {
+    await ensureProfile(
+      u.id,
+      (u as { name?: string }).name || u.email || "Member",
+      u.email || ""
+    );
+  } catch (e) {
+    console.warn("[makers-data] ensureProfile failed (login may still work):", e);
+  }
+  const { data: prof, error: profErr } = await insforge.database
     .from("profiles")
     .select("*")
     .eq("id", u.id)
     .maybeSingle();
+  if (profErr) console.warn("[makers-data] profiles select:", profErr.message);
   const pr = prof as ProfileRow | null;
+  const base = userFromAuthUser(u);
+  if (!base) return null;
   return {
-    id: u.id,
-    email: u.email || pr?.email || "",
-    name: pr?.display_name || (u as { name?: string }).name || u.email || "Member",
+    ...base,
+    email: base.email || pr?.email || "",
+    name: pr?.display_name || base.name,
     role: pr?.role === "ADMIN" ? "ADMIN" : "USER",
     avatarUrl: pr?.avatar_url || undefined,
     createdAt: pr?.created_at,
@@ -166,16 +195,21 @@ export async function fetchSessionUser(): Promise<User | null> {
 }
 
 async function ensureProfile(userId: string, displayName: string, email: string) {
-  const { data: existing } = await insforge.database
+  const { data: existing, error: selErr } = await insforge.database
     .from("profiles")
     .select("id")
     .eq("id", userId)
     .maybeSingle();
-  if (existing) {
-    await insforge.database.from("profiles").update({ email }).eq("id", userId);
+  if (selErr) {
+    console.warn("[makers-data] profiles lookup:", selErr.message);
     return;
   }
-  await insforge.database.from("profiles").insert([
+  if (existing) {
+    const { error: upErr } = await insforge.database.from("profiles").update({ email }).eq("id", userId);
+    if (upErr) console.warn("[makers-data] profiles update email:", upErr.message);
+    return;
+  }
+  const { error: insErr } = await insforge.database.from("profiles").insert([
     {
       id: userId,
       display_name: displayName || email || "Member",
@@ -183,6 +217,7 @@ async function ensureProfile(userId: string, displayName: string, email: string)
       email,
     },
   ]);
+  if (insErr) console.warn("[makers-data] profiles insert:", insErr.message);
 }
 
 async function profilesByIds(ids: string[]): Promise<Map<string, ProfileRow>> {
@@ -399,7 +434,20 @@ export async function adminUpdateProject(id: string, patch: Record<string, unkno
   }
 }
 
+async function removeStorageKeys(rows: { storage_key: string; bucket?: string | null }[]) {
+  for (const f of rows) {
+    const bucket = f.bucket || BUCKET;
+    const { error } = await insforge.storage.from(bucket).remove(f.storage_key);
+    if (error) console.warn("Storage remove:", f.storage_key, error.message);
+  }
+}
+
 export async function adminDeleteProject(id: string) {
+  const { data: files } = await insforge.database
+    .from("project_files")
+    .select("storage_key,bucket")
+    .eq("project_id", id);
+  await removeStorageKeys((files || []) as { storage_key: string; bucket?: string | null }[]);
   const { error } = await insforge.database.from("projects").delete().eq("id", id);
   if (error) throw error;
 }
@@ -418,9 +466,63 @@ export async function adminBulkUpdateProjects(ids: string[], patch: { status?: s
 
 export async function adminBulkDeleteProjects(ids: string[]) {
   for (const id of ids) {
-    const { error } = await insforge.database.from("projects").delete().eq("id", id);
-    if (error) throw error;
+    await adminDeleteProject(id);
   }
+}
+
+export async function adminDeleteProjectFile(fileId: string) {
+  const { data: row, error: fe } = await insforge.database
+    .from("project_files")
+    .select("storage_key,bucket")
+    .eq("id", fileId)
+    .single();
+  if (fe) throw fe;
+  const f = row as { storage_key: string; bucket?: string | null };
+  await removeStorageKeys([f]);
+  const { error } = await insforge.database.from("project_files").delete().eq("id", fileId);
+  if (error) throw error;
+}
+
+export async function adminDeleteAdminNote(noteId: string) {
+  const { error } = await insforge.database.from("admin_notes").delete().eq("id", noteId);
+  if (error) throw error;
+}
+
+export async function adminUpdateUserProfile(
+  userId: string,
+  patch: { display_name?: string; email?: string | null; role?: "USER" | "ADMIN" }
+) {
+  const row: Record<string, unknown> = {};
+  if (patch.display_name !== undefined) row.display_name = patch.display_name;
+  if (patch.email !== undefined) row.email = patch.email;
+  if (patch.role !== undefined) row.role = patch.role;
+  if (Object.keys(row).length === 0) return;
+  const { error } = await insforge.database.from("profiles").update(row).eq("id", userId);
+  if (error) throw error;
+}
+
+export async function adminReassignProject(projectId: string, newUserId: string) {
+  const { error } = await insforge.database.from("projects").update({ user_id: newUserId }).eq("id", projectId);
+  if (error) throw error;
+}
+
+export async function adminCreateTestimonial(input: {
+  project_id: string;
+  user_id: string;
+  rating: number;
+  text: string;
+  is_approved?: boolean;
+}) {
+  const { error } = await insforge.database.from("testimonials").insert([
+    {
+      project_id: input.project_id,
+      user_id: input.user_id,
+      rating: input.rating,
+      text: input.text,
+      is_approved: input.is_approved ?? false,
+    },
+  ]);
+  if (error) throw error;
 }
 
 export async function fetchAdminTestimonials(): Promise<Testimonial[]> {
@@ -478,8 +580,10 @@ export async function adminSetUserRole(userId: string, role: "USER" | "ADMIN") {
 }
 
 export async function adminDeleteUserProfile(userId: string) {
-  const { error: e1 } = await insforge.database.from("projects").delete().eq("user_id", userId);
-  if (e1) throw e1;
+  const { data: plist } = await insforge.database.from("projects").select("id").eq("user_id", userId);
+  for (const p of (plist || []) as { id: string }[]) {
+    await adminDeleteProject(p.id);
+  }
   const { error } = await insforge.database.from("profiles").delete().eq("id", userId);
   if (error) throw error;
 }

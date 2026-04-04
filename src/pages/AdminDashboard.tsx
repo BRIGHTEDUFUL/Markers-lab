@@ -12,6 +12,10 @@ import {
   adminDeleteUserProfile,
   adminSetTestimonialApproved,
   adminDeleteTestimonial,
+  adminDeleteProjectFile,
+  adminDeleteAdminNote,
+  adminUpdateUserProfile,
+  adminReassignProject,
 } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -81,6 +85,10 @@ export const AdminDashboard: React.FC = () => {
     message: "",
     onConfirm: () => {},
   });
+  const [userBeingEdited, setUserBeingEdited] = useState<User | null>(null);
+  const [editUserName, setEditUserName] = useState("");
+  const [editUserEmail, setEditUserEmail] = useState("");
+  const [reassignUserId, setReassignUserId] = useState("");
 
   const fetchData = async (): Promise<Project[] | undefined> => {
     try {
@@ -106,6 +114,10 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (selectedProject?.userId) setReassignUserId(selectedProject.userId);
+  }, [selectedProject?.id, selectedProject?.userId]);
 
   const handleUpdateStatus = async (projectId: string, status: string, closeModal = true) => {
     setIsUpdating(true);
@@ -256,6 +268,82 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const refreshSelectedProject = async (projectId: string) => {
+    const list = await fetchData();
+    const updated = list?.find((p) => p.id === projectId);
+    if (updated) setSelectedProject(updated);
+  };
+
+  const handleAdminDeleteFile = (fileId: string, projectId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "DELETE FILE?",
+      message: "Remove this attachment from storage and the database?",
+      onConfirm: async () => {
+        try {
+          await adminDeleteProjectFile(fileId);
+          await refreshSelectedProject(projectId);
+          toast.success("FILE REMOVED");
+        } catch {
+          toast.error("FAILED TO DELETE FILE");
+        } finally {
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
+  };
+
+  const handleDeleteAdminNote = (noteId: string, projectId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "DELETE NOTE?",
+      message: "Remove this internal note permanently?",
+      onConfirm: async () => {
+        try {
+          await adminDeleteAdminNote(noteId);
+          await refreshSelectedProject(projectId);
+          toast.success("NOTE DELETED");
+        } catch {
+          toast.error("FAILED TO DELETE NOTE");
+        } finally {
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
+  };
+
+  const handleReassignProject = async () => {
+    if (!selectedProject || !reassignUserId) return;
+    try {
+      await adminReassignProject(selectedProject.id, reassignUserId);
+      await refreshSelectedProject(selectedProject.id);
+      toast.success("PROJECT REASSIGNED");
+    } catch {
+      toast.error("FAILED TO REASSIGN");
+    }
+  };
+
+  const openUserEdit = (u: User) => {
+    setUserBeingEdited(u);
+    setEditUserName(u.name);
+    setEditUserEmail(u.email);
+  };
+
+  const saveUserEdit = async () => {
+    if (!userBeingEdited) return;
+    try {
+      await adminUpdateUserProfile(userBeingEdited.id, {
+        display_name: editUserName,
+        email: editUserEmail || null,
+      });
+      toast.success("USER PROFILE UPDATED");
+      setUserBeingEdited(null);
+      fetchData();
+    } catch {
+      toast.error("FAILED TO UPDATE USER");
+    }
+  };
+
   const handleDeleteTestimonial = (testimonialId: string) => {
     setConfirmModal({
       isOpen: true,
@@ -358,7 +446,7 @@ export const AdminDashboard: React.FC = () => {
   }, [search, statusFilter, featuredFilter, itemsPerPage]);
 
   if (loading) return (
-    <div className={`flex items-center justify-center h-screen ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div className="page-shell-flex h-screen">
       <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
     </div>
   );
@@ -371,9 +459,7 @@ export const AdminDashboard: React.FC = () => {
   });
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-300 ${
-      theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'
-    }`}>
+    <div className="page-shell duration-300">
       <PageHero 
         title={`Admin <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${theme === 'light' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'}'>Console</span>`}
         subtitle="Global project oversight and management terminal."
@@ -1037,15 +1123,28 @@ export const AdminDashboard: React.FC = () => {
                           {format(new Date(u.createdAt), "MMM d, yyyy")}
                         </td>
                         <td className="px-8 py-6 text-right">
-                          <button
-                            onClick={() => handleDeleteUser(u.id)}
-                            disabled={u.id === user?.id}
-                            className={`p-3 rounded-xl transition-all disabled:opacity-0 ${
-                              theme === 'light' ? 'text-red-400 hover:text-red-600 hover:bg-red-50' : 'text-red-500/20 hover:text-red-500 hover:bg-red-500/10'
-                            }`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => openUserEdit(u)}
+                              className={`p-3 rounded-xl transition-all ${
+                                theme === 'light' ? 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50' : 'text-white/30 hover:text-white hover:bg-white/5'
+                              }`}
+                              title="Edit profile"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUser(u.id)}
+                              disabled={u.id === user?.id}
+                              className={`p-3 rounded-xl transition-all disabled:opacity-0 ${
+                                theme === 'light' ? 'text-red-400 hover:text-red-600 hover:bg-red-50' : 'text-red-500/20 hover:text-red-500 hover:bg-red-500/10'
+                              }`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1479,28 +1578,87 @@ export const AdminDashboard: React.FC = () => {
                         <div className={`h-12 w-12 rounded-xl border flex items-center justify-center font-bold text-lg ${
                           theme === 'light' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
                         }`}>
-                          {selectedProject.user.name.charAt(0)}
+                          {(selectedProject.user?.name || "?").charAt(0)}
                         </div>
                         <div>
-                          <div className={`text-sm font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedProject.user.name}</div>
-                          <div className={`text-[10px] uppercase tracking-widest ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>{selectedProject.user.email}</div>
+                          <div className={`text-sm font-bold ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedProject.user?.name ?? "—"}</div>
+                          <div className={`text-[10px] uppercase tracking-widest ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>{selectedProject.user?.email ?? ""}</div>
                         </div>
                       </div>
                     </section>
                     <section>
                       <h3 className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-6 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Attachments</h3>
                       <div className="space-y-3">
-                        {selectedProject.files.map((file: any) => (
-                          <a key={file.id} href={file.path} className={`flex items-center justify-between p-4 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                            theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-500 hover:bg-slate-100' : 'bg-white/2 border-white/5 text-white/40 hover:bg-white/5'
-                          }`}>
-                            <span className="truncate max-w-[150px]">{file.originalName}</span>
-                            <Download className={`h-4 w-4 ${theme === 'light' ? 'text-slate-300' : 'text-white/20'}`} />
-                          </a>
-                        ))}
+                        {(selectedProject.files || []).length === 0 ? (
+                          <p className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-400' : 'text-white/30'}`}>No files</p>
+                        ) : (
+                          (selectedProject.files || []).map((file: { id: string; path: string; originalName: string }) => (
+                            <div
+                              key={file.id}
+                              className={`flex items-center gap-2 p-4 border rounded-xl ${
+                                theme === 'light' ? 'bg-slate-50 border-slate-100' : 'bg-white/2 border-white/5'
+                              }`}
+                            >
+                              <a
+                                href={file.path}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`flex flex-1 items-center justify-between min-w-0 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                                  theme === 'light' ? 'text-slate-500 hover:text-slate-800' : 'text-white/40 hover:text-white/70'
+                                }`}
+                              >
+                                <span className="truncate max-w-[140px]">{file.originalName}</span>
+                                <Download className={`h-4 w-4 shrink-0 ${theme === 'light' ? 'text-slate-300' : 'text-white/20'}`} />
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => handleAdminDeleteFile(file.id, selectedProject.id)}
+                                className={`p-2 rounded-lg shrink-0 transition-colors ${
+                                  theme === 'light' ? 'text-red-400 hover:bg-red-50' : 'text-red-400/80 hover:bg-red-500/10'
+                                }`}
+                                title="Remove file"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </section>
                   </div>
+
+                  <section>
+                    <h3 className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-6 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Reassign owner</h3>
+                    <div className={`flex flex-col sm:flex-row gap-3 p-6 rounded-2xl border ${
+                      theme === 'light' ? 'bg-slate-50 border-slate-100' : 'bg-white/2 border-white/5'
+                    }`}>
+                      <select
+                        value={reassignUserId}
+                        onChange={(e) => setReassignUserId(e.target.value)}
+                        className={`flex-1 border rounded-xl px-4 py-3 text-[10px] font-bold uppercase tracking-widest outline-none transition-all ${
+                          theme === 'light'
+                            ? 'bg-white border-slate-200 text-slate-900 focus:ring-slate-200'
+                            : 'bg-white/5 border-white/10 text-white focus:ring-white/30'
+                        }`}
+                      >
+                        {users.map((u) => (
+                          <option key={u.id} value={u.id} className={theme === 'light' ? 'bg-white' : 'bg-[#1a1a1a]'}>
+                            {u.name} — {u.email}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={handleReassignProject}
+                        disabled={!reassignUserId || reassignUserId === selectedProject.userId}
+                        className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all disabled:opacity-40 disabled:pointer-events-none ${
+                          theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600' : 'bg-white text-black hover:bg-indigo-500 hover:text-white'
+                        }`}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </section>
 
                   <section>
                     <h3 className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-6 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Admin Actions</h3>
@@ -1572,16 +1730,28 @@ export const AdminDashboard: React.FC = () => {
                   <section>
                     <h3 className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-6 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>History</h3>
                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                      {selectedProject.adminNotes.map((note: any) => (
+                      {(selectedProject.adminNotes || []).map((note: { id: string; note: string; createdAt: string }) => (
                         <div key={note.id} className={`p-5 border rounded-2xl space-y-3 ${
                           theme === 'light' ? 'bg-white border-slate-100' : 'bg-white/2 border-white/5'
                         }`}>
                           <p className={`text-xs leading-relaxed font-sans ${theme === 'light' ? 'text-slate-600' : 'text-white/60'}`}>{note.note}</p>
-                          <div className={`flex items-center justify-between text-[8px] font-bold uppercase tracking-widest ${
+                          <div className={`flex items-center justify-between gap-2 text-[8px] font-bold uppercase tracking-widest ${
                             theme === 'light' ? 'text-slate-400' : 'text-white/20'
                           }`}>
                             <span>Admin</span>
-                            <span>{format(new Date(note.createdAt), "MMM d, HH:mm")}</span>
+                            <div className="flex items-center gap-2">
+                              <span>{format(new Date(note.createdAt), "MMM d, HH:mm")}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteAdminNote(note.id, selectedProject.id)}
+                                className={`p-1.5 rounded-lg transition-colors ${
+                                  theme === 'light' ? 'text-red-400 hover:bg-red-50' : 'text-red-400/80 hover:bg-red-500/10'
+                                }`}
+                                title="Delete note"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1593,6 +1763,77 @@ export const AdminDashboard: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {userBeingEdited && (
+          <div className="fixed inset-0 z-[65] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`rounded-[2rem] border shadow-2xl w-full max-w-md p-8 space-y-6 ${
+                theme === 'light' ? 'bg-white border-slate-200' : 'bg-[#0a0a0a] border-white/10'
+              }`}
+            >
+              <div className="flex justify-between items-center">
+                <h2 className={`text-xl font-display uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Edit user</h2>
+                <button
+                  type="button"
+                  onClick={() => setUserBeingEdited(null)}
+                  className={`p-2 rounded-full ${theme === 'light' ? 'hover:bg-slate-100 text-slate-400' : 'hover:bg-white/5 text-white/40'}`}
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-[10px] font-bold uppercase tracking-widest mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>Display name</label>
+                  <input
+                    type="text"
+                    value={editUserName}
+                    onChange={(e) => setEditUserName(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm outline-none ${
+                      theme === 'light' ? 'bg-white border-slate-200 text-slate-900' : 'bg-white/5 border-white/10 text-white'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-[10px] font-bold uppercase tracking-widest mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>Email (profile)</label>
+                  <input
+                    type="email"
+                    value={editUserEmail}
+                    onChange={(e) => setEditUserEmail(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm outline-none ${
+                      theme === 'light' ? 'bg-white border-slate-200 text-slate-900' : 'bg-white/5 border-white/10 text-white'
+                    }`}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setUserBeingEdited(null)}
+                  className={`flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${
+                    theme === 'light' ? 'border-slate-200 text-slate-600 hover:bg-slate-50' : 'border-white/10 text-white/60 hover:bg-white/5'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={saveUserEdit}
+                  className={`flex-1 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest ${
+                    theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600' : 'bg-white text-black hover:bg-indigo-500 hover:text-white'
+                  }`}
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Project Preview Side Panel */}
       <AnimatePresence>
         {previewProject && (

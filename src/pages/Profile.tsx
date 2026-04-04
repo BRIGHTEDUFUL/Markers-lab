@@ -20,6 +20,11 @@ export const Profile: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (user?.name != null) setName(user.name);
+    if (user?.avatarUrl) setAvatarPreview(user.avatarUrl);
+  }, [user?.id, user?.name, user?.avatarUrl]);
+
+  useEffect(() => {
     const fetchStats = async () => {
       try {
         if (!user?.id) return;
@@ -67,7 +72,7 @@ export const Profile: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-700 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+    <div className="page-shell">
       <PageHero 
         title={`Profile <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${theme === 'light' ? '#0f172a' : 'white'}'>Settings</span>`}
         subtitle="Manage your account information and security protocols."
@@ -77,11 +82,11 @@ export const Profile: React.FC = () => {
       <div className="max-w-2xl mx-auto py-8 sm:py-24 px-4 relative z-10">
         {/* Project Stats Summary */}
         <div className="grid grid-cols-3 gap-4 mb-12 sm:mb-16">
-          {[
-            { label: "Total Projects", value: stats.total, icon: Rocket, color: "indigo" },
-            { label: "Pending Review", value: stats.pending, icon: Clock, color: "amber" },
-            { label: "Approved Assets", value: stats.approved, icon: CheckCircle, color: "green" }
-          ].map((stat, i) => (
+          {([
+            { label: "Total Projects", value: stats.total, icon: Rocket, boxLight: "bg-indigo-50 text-indigo-600", boxDark: "bg-indigo-500/20 text-indigo-400" },
+            { label: "Pending Review", value: stats.pending, icon: Clock, boxLight: "bg-amber-50 text-amber-600", boxDark: "bg-amber-500/20 text-amber-400" },
+            { label: "Approved Assets", value: stats.approved, icon: CheckCircle, boxLight: "bg-emerald-50 text-emerald-600", boxDark: "bg-emerald-500/20 text-emerald-400" },
+          ] as const).map((stat, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -89,7 +94,7 @@ export const Profile: React.FC = () => {
               transition={{ delay: i * 0.1 }}
               className={`p-6 rounded-3xl border text-center space-y-3 transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl' : 'bg-white/5 border-white/10'}`}
             >
-              <div className={`h-10 w-10 rounded-2xl mx-auto flex items-center justify-center bg-${stat.color}-500/10 text-${stat.color}-500`}>
+              <div className={`h-10 w-10 rounded-2xl mx-auto flex items-center justify-center ${theme === "light" ? stat.boxLight : stat.boxDark}`}>
                 <stat.icon className="h-5 w-5" />
               </div>
               <div className={`text-2xl font-display uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
