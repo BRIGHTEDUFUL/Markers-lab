@@ -1,0 +1,8 @@
+{
+  "name": "Maker’s Lab",
+  "description": "Where ideas merge with execution.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

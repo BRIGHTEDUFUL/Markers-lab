@@ -1,0 +1,102 @@
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: "USER" | "ADMIN";
+  avatarUrl?: string;
+  createdAt?: string;
+  _count?: {
+    projects: number;
+  };
+}
+
+export type Category = 
+  | "Website"
+  | "E-commerce"
+  | "Portfolio"
+  | "Web Application"
+  | "Mobile App"
+  | "Desktop Software"
+  | "AI / Machine Learning"
+  | "Blockchain / Web3"
+  | "Cloud Infrastructure"
+  | "Cybersecurity"
+  | "Other";
+
+export type Timeline = 
+  | "Less than 1 month"
+  | "1-3 months"
+  | "3-6 months"
+  | "6+ months"
+  | "Flexible";
+
+export type BudgetRange =
+  | "Under $5,000"
+  | "$5,000 - $10,000"
+  | "$10,000 - $25,000"
+  | "$25,000 - $50,000"
+  | "$50,000+"
+  | "GH₵ 300 - GH₵ 1,000"
+  | "GH₵ 1,000 - GH₵ 5,000"
+  | "GH₵ 5,000 - GH₵ 10,000"
+  | "GH₵ 10,000 - GH₵ 25,000"
+  | "GH₵ 25,000+";
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  category: Category;
+  tags: string[];
+  budget: BudgetRange;
+  timeline: Timeline;
+  status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "IN_PROGRESS" | "COMPLETED";
+  repoUrl?: string;
+  featured: boolean;
+  userId: string;
+  user?: User;
+  files?: File[];
+  adminNotes?: AdminNote[];
+  testimonial?: Testimonial;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface File {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  path: string;
+  type: string;
+  projectId?: string;
+  createdAt: string;
+}
+
+export interface Testimonial {
+  id: string;
+  rating: number;
+  text: string;
+  isApproved: boolean;
+  userId: string;
+  projectId: string;
+  user?: User;
+  project?: Project;
+  createdAt: string;
+}
+
+export interface AdminNote {
+  id: string;
+  note: string;
+  projectId: string;
+  adminId: string;
+  createdAt: string;
+  admin?: User;
+}
+
+export interface Analytics {
+  totalProjects: number;
+  totalUsers: number;
+  statusCounts: { status: string; _count: number }[];
+  categoryCounts: { category: string; _count: number }[];
+}

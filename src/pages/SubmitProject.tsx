@@ -1,0 +1,829 @@
+import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../lib/api";
+import { 
+  Rocket, Upload, X, Plus, Info, DollarSign, Calendar, 
+  Link as LinkIcon, Loader2, CheckCircle, Globe, 
+  Smartphone, Monitor, Cpu, Database, Cloud, Shield,
+  ChevronDown, Search, ShoppingCart, User, Layout,
+  FileText, Send
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import PageHero from "../components/PageHero";
+import { useTheme } from "../contexts/ThemeContext";
+import { Category, Timeline, BudgetRange } from "../types";
+
+const CATEGORIES = [
+  { id: "Website", icon: Globe, description: "Business, Landing Pages, Blogs" },
+  { id: "E-commerce", icon: ShoppingCart, description: "Online Stores, Payment Gateways" },
+  { id: "Portfolio", icon: User, description: "Personal, Creative, Showcases" },
+  { id: "Web Application", icon: Layout, description: "SaaS, Portals, Dashboards" },
+  { id: "Mobile App", icon: Smartphone, description: "iOS, Android, Cross-platform" },
+  { id: "Desktop Software", icon: Monitor, description: "Windows, macOS, Linux" },
+  { id: "AI / Machine Learning", icon: Cpu, description: "LLMs, Computer Vision, Data" },
+  { id: "Blockchain / Web3", icon: Database, description: "DApps, Smart Contracts, DeFi" },
+  { id: "Cloud Infrastructure", icon: Cloud, description: "DevOps, Serverless, Scaling" },
+  { id: "Cybersecurity", icon: Shield, description: "Audits, Pentesting, Hardening" },
+  { id: "Other", icon: Plus, description: "Custom technical solutions" }
+];
+
+const BUDGET_RANGES = {
+  USD: [
+    "Under $5,000",
+    "$5,000 - $10,000",
+    "$10,000 - $25,000",
+    "$25,000 - $50,000",
+    "$50,000+"
+  ],
+  GHS: [
+    "GH₵ 300 - GH₵ 1,000",
+    "GH₵ 1,000 - GH₵ 5,000",
+    "GH₵ 5,000 - GH₵ 10,000",
+    "GH₵ 10,000 - GH₵ 25,000",
+    "GH₵ 25,000+"
+  ]
+};
+
+const TIMELINES = [
+  "Less than 1 month",
+  "1-3 months",
+  "3-6 months",
+  "6+ months",
+  "Flexible"
+];
+
+export const SubmitProject: React.FC = () => {
+  const { theme } = useTheme();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<Category>(CATEGORIES[0].id as Category);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [currency, setCurrency] = useState<"USD" | "GHS">("USD");
+  const [budget, setBudget] = useState<BudgetRange>(BUDGET_RANGES.USD[0] as BudgetRange);
+  const [timeline, setTimeline] = useState<Timeline>(TIMELINES[0] as Timeline);
+  const [repoUrl, setRepoUrl] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileProgress, setFileProgress] = useState<{ [key: number]: number }>({});
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [showDescriptionPreview, setShowDescriptionPreview] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
+  const handleAddTag = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && tagInput.trim()) {
+      e.preventDefault();
+      if (!tags.includes(tagInput.trim())) {
+        setTags([...tags, tagInput.trim()]);
+      }
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(t => t !== tagToRemove));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files).filter(file => {
+        if (file.size > 50 * 1024 * 1024) {
+          toast.error(`File ${file.name} exceeds 50MB limit`);
+          return false;
+        }
+        return true;
+      });
+      if (newFiles.length > 0) {
+        setFiles([...files, ...newFiles]);
+        toast.success(`Added ${newFiles.length} file(s)`);
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files) {
+      const newFiles = Array.from(e.dataTransfer.files).filter(file => {
+        if (file.size > 50 * 1024 * 1024) {
+          toast.error(`File ${file.name} exceeds 50MB limit`);
+          return false;
+        }
+        return true;
+      });
+      if (newFiles.length > 0) {
+        setFiles([...files, ...newFiles]);
+        toast.success(`Dropped ${newFiles.length} file(s)`);
+      }
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(files.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setFileProgress({});
+    setUploadProgress(0);
+
+    try {
+      // 1. Upload files one by one to get IDs and track individual progress
+      const uploadedFileIds: string[] = [];
+      
+      if (files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const fileFormData = new FormData();
+          fileFormData.append("file", file);
+
+          const fileResponse = await api.post("/files/upload", fileFormData, {
+            onUploadProgress: (progressEvent) => {
+              if (progressEvent.total) {
+                const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setFileProgress(prev => ({ ...prev, [i]: percent }));
+              }
+            }
+          });
+          uploadedFileIds.push(fileResponse.data.id);
+        }
+      }
+
+      // 2. Submit project data with file IDs
+      const projectData = {
+        title,
+        description,
+        category,
+        tags: JSON.stringify(tags),
+        budget,
+        timeline,
+        repoUrl,
+        fileIds: JSON.stringify(uploadedFileIds)
+      };
+
+      await api.post("/projects", projectData, {
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        }
+      });
+
+      setSuccess(true);
+      toast.success("Project submitted successfully!");
+      setTimeout(() => navigate("/dashboard"), 2000);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || "Failed to submit project";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    const totalFileProgress = files.length > 0 
+      ? Math.round((Object.values(fileProgress).reduce((a, b) => a + b, 0) / (files.length * 100)) * 100)
+      : 0;
+
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-12 max-w-md w-full px-6"
+        >
+          <div className="relative flex justify-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              className="w-32 h-32 sm:w-48 sm:h-48 rounded-full border-t-2 border-indigo-500/30 border-r-2 border-indigo-500"
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                animate={{ 
+                  y: [0, -10, 0],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Rocket className="h-10 w-10 sm:h-16 sm:w-16 text-indigo-500" />
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className={`text-2xl sm:text-4xl font-display uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+              Transmitting Vision
+            </h2>
+            <p className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.4em] ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>
+              Architecting your digital masterpiece...
+            </p>
+          </div>
+
+          {files.length > 0 && (
+            <div className="space-y-4">
+              <div className={`h-1.5 w-full rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-white/5'}`}>
+                <motion.div 
+                  className="h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${totalFileProgress}%` }}
+                  transition={{ type: "spring", bounce: 0, duration: 0.5 }}
+                />
+              </div>
+              <div className="flex justify-between items-center">
+                <p className={`text-[9px] font-black uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                  Asset Synchronization
+                </p>
+                <p className={`text-[9px] font-black uppercase tracking-widest text-indigo-500`}>
+                  {totalFileProgress}%
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-center gap-2">
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                animate={{ opacity: [0.2, 1, 0.2] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                className="w-1.5 h-1.5 rounded-full bg-indigo-500"
+              />
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className={`min-h-[70vh] flex items-center justify-center ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`text-center space-y-6 max-w-md p-12 backdrop-blur-3xl rounded-[2.5rem] border shadow-2xl ${
+            theme === 'light' ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'
+          }`}
+        >
+          <div className={`inline-flex items-center justify-center p-6 rounded-full border ${
+            theme === 'light' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-green-500/10 text-green-400 border-green-500/20'
+          }`}>
+            <CheckCircle className="h-16 w-16" />
+          </div>
+          <h2 className={`text-4xl font-display uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Project Initiated</h2>
+          <p className={`font-sans ${theme === 'light' ? 'text-slate-500' : 'text-white/60'}`}>Your proposal has been successfully transmitted to our creative terminal. Redirecting to dashboard...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`min-h-screen relative overflow-hidden transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50' : 'bg-[#050505]'}`}>
+      <PageHero 
+        category="Project Submission Terminal"
+        title="Launch Your <br /><span class='text-transparent' style='-webkit-text-stroke: 1px rgba(255,255,255,0.3)'>Vision</span>"
+        subtitle="Provide the technical specifications for your next digital masterpiece. Our team will analyze your requirements and architect a bespoke solution."
+      />
+
+      <div className="max-w-7xl mx-auto relative z-10 py-6 sm:py-20 px-4 sm:px-6 lg:px-8">
+        {/* Step Indicator */}
+        <div className="flex justify-between items-center mb-12 sm:mb-20 max-w-3xl mx-auto relative">
+          <div className={`absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 z-0 transition-colors duration-500 ${theme === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
+          {[
+            { step: 1, label: "Core Specs", active: !showReview },
+            { step: 2, label: "Review & Launch", active: showReview }
+          ].map((s, i) => (
+            <div key={i} className="relative z-10 flex flex-col items-center gap-4">
+              <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-500 ${
+                s.active 
+                  ? "bg-indigo-500 border-indigo-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.5)]" 
+                  : theme === 'light' ? "bg-white border-slate-200 text-slate-400" : "bg-[#050505] border-white/10 text-white/20"
+              }`}>
+                {s.step}
+              </div>
+              <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] transition-colors duration-500 ${s.active ? 'text-indigo-500' : theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {!showReview ? (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12"
+            >
+              {/* Left Column: Core Specs */}
+              <div className="lg:col-span-7 space-y-6 sm:space-y-10">
+                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+                  <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-10 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                    <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
+                    Core Specifications
+                  </h2>
+                  
+                  <div className="space-y-5 sm:space-y-8">
+                    {/* Title */}
+                    <div className="space-y-2 sm:space-y-3">
+                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Project Title</label>
+                      <input
+                        type="text"
+                        required
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="e.g., Quantum Commerce Platform"
+                        className={`w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-300' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
+                      />
+                    </div>
+
+                    {/* Category Selection */}
+                    <div className="space-y-2 sm:space-y-3 relative">
+                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Category</label>
+                      <button
+                        type="button"
+                        onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                        className={`w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium flex items-center justify-between transition-all duration-300 ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-white/5 border-white/10 text-white'}`}
+                      >
+                        <span className={category ? "" : theme === 'light' ? "text-slate-300" : "text-white/10"}>
+                          {category || "Select Project Category"}
+                        </span>
+                        <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-500 ${isCategoryOpen ? "rotate-180" : ""} ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`} />
+                      </button>
+
+                      <AnimatePresence>
+                        {isCategoryOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className={`absolute z-50 left-0 right-0 mt-2 sm:mt-3 border rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl transition-colors duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-slate-200' : 'bg-[#0a0a0a] border-white/10 shadow-black'}`}
+                          >
+                            <div className="max-h-48 sm:max-h-64 overflow-y-auto p-1.5 sm:p-2">
+                              {CATEGORIES.map((cat) => (
+                                <button
+                                  key={cat.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setCategory(cat.id as Category);
+                                    setIsCategoryOpen(false);
+                                  }}
+                                  className={`w-full text-left px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                    category === cat.id 
+                                      ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
+                                      : theme === 'light' ? "text-slate-600 hover:bg-slate-50" : "text-white/60 hover:bg-white/5"
+                                  }`}
+                                >
+                                  {cat.id}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex justify-between items-center ml-3 sm:ml-4">
+                        <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Detailed Brief</label>
+                        <button
+                          type="button"
+                          onClick={() => setShowDescriptionPreview(!showDescriptionPreview)}
+                          className={`text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-colors ${theme === 'light' ? 'text-indigo-600 hover:text-indigo-800' : 'text-indigo-400 hover:text-indigo-300'}`}
+                        >
+                          {showDescriptionPreview ? "Edit Mode" : "Preview Markdown"}
+                        </button>
+                      </div>
+                      
+                      <div className="relative">
+                        {!showDescriptionPreview ? (
+                          <textarea
+                            required
+                            rows={8}
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Describe your vision, technical requirements, and goals..."
+                            className={`w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 resize-none ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
+                          />
+                        ) : (
+                          <div className={`w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border min-h-[200px] sm:min-h-[260px] prose prose-sm max-w-none transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200 prose-slate' : 'bg-white/2 border-white/10 prose-invert'}`}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {description || "*No description provided yet.*"}
+                            </ReactMarkdown>
+                          </div>
+                        )}
+                      </div>
+                      <p className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/10'}`}>Supports GitHub Flavored Markdown</p>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="space-y-2 sm:space-y-3">
+                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Technology Tags</label>
+                      <div className={`flex flex-wrap gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                        {tags.map((tag) => (
+                          <motion.span
+                            layout
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            key={tag}
+                            className={`inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all ${theme === 'light' ? 'bg-white text-slate-900 border border-slate-200 shadow-sm' : 'bg-white/10 text-white border border-white/10'}`}
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => removeTag(tag)}
+                              className="ml-1.5 sm:ml-2 hover:text-red-500 transition-colors"
+                            >
+                              <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                            </button>
+                          </motion.span>
+                        ))}
+                        <input
+                          type="text"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyDown={handleAddTag}
+                          placeholder={tags.length === 0 ? "Add tags" : "Add more..."}
+                          className={`flex-1 min-w-[100px] sm:min-w-[150px] bg-transparent border-none focus:ring-0 text-xs sm:text-sm font-medium transition-colors duration-500 ${theme === 'light' ? 'text-slate-900 placeholder:text-slate-400' : 'text-white placeholder:text-white/10'}`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Repo URL */}
+                    <div className="space-y-2 sm:space-y-3">
+                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Repository URL (Optional)</label>
+                      <div className="relative">
+                        <LinkIcon className={`absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/10'}`} />
+                        <input
+                          type="url"
+                          value={repoUrl}
+                          onChange={(e) => setRepoUrl(e.target.value)}
+                          placeholder="https://github.com/your-username/project"
+                          className={`w-full pl-11 sm:pl-16 pr-5 sm:pr-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Logistics & Assets */}
+              <div className="lg:col-span-5 space-y-6 lg:space-y-12">
+                {/* Live Preview Card */}
+                <div className={`backdrop-blur-3xl border p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 overflow-hidden group ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl' : 'bg-white/5 border-white/10'}`}>
+                  <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-8 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                    <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
+                    Live Preview
+                  </h2>
+                  
+                  <div className={`aspect-[16/10] relative overflow-hidden rounded-2xl sm:rounded-[2rem] border transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-100' : 'bg-black/40 border-white/5'}`}>
+                    {files.length > 0 && files[0].type.startsWith("image/") ? (
+                      <img 
+                        src={URL.createObjectURL(files[0])} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover opacity-60"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Rocket className={`h-12 w-12 transition-colors duration-500 ${theme === 'light' ? 'text-slate-200' : 'text-white/5'}`} />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <div className="absolute bottom-6 left-6 right-6">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-3 py-1 bg-indigo-500 text-white rounded-full text-[8px] font-bold uppercase tracking-widest">
+                          {category}
+                        </span>
+                      </div>
+                      <h3 className="text-white font-display text-2xl uppercase tracking-tight truncate">
+                        {title || "Project Title"}
+                      </h3>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {tags.length > 0 ? tags.map(tag => (
+                        <span key={tag} className="text-[8px] font-bold uppercase tracking-widest text-indigo-400">#{tag}</span>
+                      )) : (
+                        <span className={`text-[8px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-300' : 'text-white/10'}`}>No tags added</span>
+                      )}
+                    </div>
+                    <p className={`text-[10px] font-medium leading-relaxed line-clamp-2 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                      {description || "Your project description will appear here..."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+                  <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-10 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                    <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
+                    Logistics & Assets
+                  </h2>
+
+                  <div className="space-y-8 sm:space-y-10">
+                    {/* Budget & Currency */}
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 ml-3 sm:ml-4">
+                        <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Estimated Budget</label>
+                        <div className={`flex p-1 rounded-full border transition-colors duration-500 w-fit ${theme === 'light' ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                          {["USD", "GHS"].map((curr) => (
+                            <button
+                              key={curr}
+                              type="button"
+                              onClick={() => {
+                                setCurrency(curr as "USD" | "GHS");
+                                setBudget(BUDGET_RANGES[curr as "USD" | "GHS"][0] as BudgetRange);
+                              }}
+                              className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all ${
+                                currency === curr 
+                                  ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
+                                  : theme === 'light' ? "text-slate-400 hover:text-slate-900" : "text-white/20 hover:text-white"
+                              }`}
+                            >
+                              {curr}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        {BUDGET_RANGES[currency].map((range) => (
+                          <button
+                            key={range}
+                            type="button"
+                            onClick={() => setBudget(range as BudgetRange)}
+                            className={`px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                              budget === range 
+                                ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
+                                : theme === 'light' ? "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300" : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                            }`}
+                          >
+                            {range}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Timeline */}
+                    <div className="space-y-4 sm:space-y-6">
+                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Target Timeline</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        {TIMELINES.map((time) => (
+                          <button
+                            key={time}
+                            type="button"
+                            onClick={() => setTimeline(time as Timeline)}
+                            className={`px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                              timeline === time 
+                                ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
+                                : theme === 'light' ? "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300" : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                            }`}
+                          >
+                            {time}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* File Upload */}
+                    <div className="space-y-4 sm:space-y-6">
+                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Supporting Assets</label>
+                      <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`relative group cursor-pointer border-2 border-dashed rounded-2xl sm:rounded-[2.5rem] p-8 sm:p-12 text-center transition-all duration-500 ${
+                          isDragging 
+                            ? "border-indigo-500 bg-indigo-500/5 scale-[0.98]" 
+                            : theme === 'light' ? "border-slate-200 bg-slate-50 hover:border-slate-300" : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                        }`}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <input
+                          type="file"
+                          multiple
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                        <div className="space-y-4 sm:space-y-6">
+                          <div className={`w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto border transition-all duration-500 ${isDragging ? "bg-indigo-500 border-indigo-500" : theme === 'light' ? "bg-white border-slate-200" : "bg-white/5 border-white/10"}`}>
+                            <Upload className={`h-6 w-6 sm:h-8 sm:w-8 transition-colors duration-500 ${isDragging ? "text-white" : theme === 'light' ? "text-slate-300" : "text-white/20"}`} />
+                          </div>
+                          <div className="space-y-1.5 sm:space-y-2">
+                            <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? "text-slate-900" : "text-white"}`}>Drop Assets Here</p>
+                            <p className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? "text-slate-400" : "text-white/20"}`}>PDF, Images, or ZIP (Max 50MB)</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* File List */}
+                      <AnimatePresence>
+                        {files.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="space-y-4"
+                          >
+                            <div className="flex justify-between items-center px-4">
+                              <div className="flex items-center gap-3">
+                                <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                                  {files.length} {files.length === 1 ? 'Asset' : 'Assets'} Attached
+                                </p>
+                                <div className={`w-1 h-1 rounded-full ${theme === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
+                                <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                                  {(files.reduce((acc, f) => acc + f.size, 0) / 1024 / 1024).toFixed(2)} MB Total
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setFiles([])}
+                                className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${theme === 'light' ? 'text-red-500 hover:text-red-700' : 'text-red-400 hover:text-red-300'}`}
+                              >
+                                Clear All
+                              </button>
+                            </div>
+                            <div className="space-y-2">
+                              {files.map((file, idx) => (
+                                <motion.div
+                                  key={`${file.name}-${idx}`}
+                                  initial={{ x: -20, opacity: 0 }}
+                                  animate={{ x: 0, opacity: 1 }}
+                                  exit={{ x: 20, opacity: 0 }}
+                                  className={`flex items-center justify-between p-4 border rounded-2xl transition-all duration-300 group ${theme === 'light' ? 'bg-white border-slate-100 hover:border-slate-200 shadow-sm' : 'bg-white/[0.03] border-white/5 hover:border-white/10'}`}
+                                >
+                                  <div className="flex items-center space-x-4 overflow-hidden">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${theme === 'light' ? 'bg-slate-50 text-indigo-500' : 'bg-white/5 text-indigo-400'}`}>
+                                      <FileText className="h-5 w-5" />
+                                    </div>
+                                    <div className="overflow-hidden">
+                                      <p className={`text-[10px] font-bold uppercase tracking-widest truncate transition-colors ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                                        {file.name}
+                                      </p>
+                                      <p className={`text-[9px] font-bold uppercase tracking-widest transition-colors ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${theme === 'light' ? 'bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500' : 'bg-white/5 text-white/20 hover:bg-red-500/10 hover:text-red-400'}`}
+                                  >
+                                    <span>Remove</span>
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Section */}
+                <div className="space-y-4 sm:space-y-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowReview(true)}
+                    disabled={loading || !title || !category || !description}
+                    className={`w-full py-6 sm:py-8 rounded-2xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] transition-all duration-500 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed ${
+                      theme === 'light' 
+                        ? "bg-slate-900 text-white hover:bg-indigo-600 shadow-2xl shadow-slate-200" 
+                        : "bg-white text-black hover:bg-indigo-500 hover:text-white shadow-[0_0_50px_rgba(255,255,255,0.1)]"
+                    }`}
+                  >
+                    <span className="relative z-10 flex items-center justify-center">
+                      Review Proposal
+                      <ChevronDown className="ml-3 sm:ml-4 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-y-1 transition-transform" />
+                    </span>
+                  </button>
+                  <p className={`text-center text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                    By submitting, you agree to our creative partnership terms.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="review"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="max-w-4xl mx-auto"
+            >
+              <div className={`backdrop-blur-3xl border p-6 sm:p-12 rounded-2xl sm:rounded-[3rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-2xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-6 mb-8 sm:mb-12">
+                  <div>
+                    <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-3 sm:mb-4 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                      <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
+                      Review Transmission
+                    </h2>
+                    <h3 className={`text-xl sm:text-4xl font-display uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{title}</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowReview(false)}
+                    className={`p-2 sm:p-4 rounded-full border transition-all ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-900' : 'bg-white/5 border-white/10 text-white/20 hover:text-white'}`}
+                  >
+                    <X className="h-4 w-4 sm:h-6 sm:w-6" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-12 mb-8 sm:mb-12">
+                  <div className="space-y-6 sm:space-y-8">
+                    <div>
+                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Category</p>
+                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{category}</p>
+                    </div>
+                    <div>
+                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Budget Allocation</p>
+                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{budget} {currency}</p>
+                    </div>
+                    <div>
+                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Target Timeline</p>
+                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{timeline}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-6 sm:space-y-8">
+                    <div>
+                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Technology Stack</p>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                        {tags.map(tag => (
+                          <span key={tag} className={`px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest ${theme === 'light' ? 'bg-slate-100 text-slate-900' : 'bg-white/10 text-white'}`}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Attached Assets</p>
+                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{files.length} Files Ready</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 sm:space-y-8">
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className={`w-full py-6 sm:py-8 rounded-2xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] transition-all duration-500 relative overflow-hidden group ${
+                      theme === 'light' 
+                        ? "bg-slate-900 text-white hover:bg-indigo-600 shadow-2xl shadow-slate-200" 
+                        : "bg-white text-black hover:bg-indigo-500 hover:text-white shadow-[0_0_50px_rgba(255,255,255,0.1)]"
+                    }`}
+                  >
+                    <span className="relative z-10 flex items-center justify-center">
+                      {loading ? (
+                        <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                      ) : (
+                        <>
+                          Confirm & Transmit
+                          <Rocket className="ml-3 sm:ml-4 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" />
+                        </>
+                      )}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setShowReview(false)}
+                    className={`w-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors ${theme === 'light' ? 'text-slate-400 hover:text-slate-900' : 'text-white/20 hover:text-white'}`}
+                  >
+                    Back to Edit Mode
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};

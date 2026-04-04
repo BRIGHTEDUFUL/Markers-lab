@@ -1,0 +1,19 @@
+{
+  "name": "Maker's Lab",
+  "short_name": "Maker's Lab",
+  "description": "A collaborative platform for makers and creators to showcase their projects.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "education"]
+}
