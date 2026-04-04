@@ -51,7 +51,7 @@ export const About: React.FC = () => {
                 className="space-y-6"
               >
                 <span className="text-indigo-500 text-[11px] font-bold uppercase tracking-[0.5em]">Our Mission</span>
-                <h2 className={`text-5xl md:text-7xl font-display uppercase leading-[0.9] tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                <h2 className={`text-4xl sm:text-5xl md:text-7xl font-display uppercase leading-[0.9] tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                   Redefining the <br /> <span className="italic">Standard</span> of Digital Craft
                 </h2>
               </motion.div>
@@ -104,7 +104,7 @@ export const About: React.FC = () => {
               transition={{ duration: 0.8 }}
               className="space-y-10"
             >
-              <h2 className={`text-5xl md:text-7xl font-display uppercase leading-[0.9] tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+              <h2 className={`text-4xl sm:text-5xl md:text-7xl font-display uppercase leading-[0.9] tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                 Uncompromising <br /> Precision
               </h2>
               <p className={`font-sans leading-relaxed text-xl font-light transition-colors duration-500 ${theme === 'light' ? 'text-slate-600' : 'text-white/40'}`}>
@@ -183,7 +183,7 @@ export const About: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className={`text-6xl md:text-8xl font-display uppercase leading-[0.85] tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}
+                  className={`text-5xl sm:text-6xl md:text-8xl font-display uppercase leading-[0.85] tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}
                 >
                   Visionaries behind <br /> the <span className={`italic text-transparent transition-all duration-500`} style={{ WebkitTextStroke: theme === 'light' ? "1px #0f172a" : "1px white" }}>Execution</span>
                 </motion.h2>
@@ -256,15 +256,15 @@ export const About: React.FC = () => {
         </section>
 
         {/* CTA Section */}
-        <section className={`py-48 border-t transition-colors duration-700 text-center space-y-16 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
-          <h2 className={`text-6xl md:text-9xl font-display uppercase leading-none tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+        <section className={`py-32 sm:py-48 border-t transition-colors duration-700 text-center space-y-12 sm:space-y-16 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
+          <h2 className={`text-5xl sm:text-6xl md:text-9xl font-display uppercase leading-none tracking-tighter transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
             Ready to <br />
             <span className={`italic text-transparent transition-all duration-700`} style={{ WebkitTextStroke: theme === 'light' ? "1px #0f172a" : "1px white" }}>Collaborate?</span>
           </h2>
           <motion.button
             whileHover={{ scale: 1.05, y: -5 }}
             whileTap={{ scale: 0.95 }}
-            className={`px-20 py-10 font-bold uppercase tracking-[0.4em] text-[11px] transition-all duration-700 shadow-2xl ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600' : 'bg-white text-black hover:bg-indigo-500 hover:text-white'}`}
+            className={`px-12 sm:px-20 py-6 sm:py-10 font-bold uppercase tracking-[0.4em] text-[10px] sm:text-[11px] transition-all duration-700 shadow-2xl ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600' : 'bg-white text-black hover:bg-indigo-500 hover:text-white'}`}
           >
             Initiate Project
           </motion.button>

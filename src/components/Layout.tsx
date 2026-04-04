@@ -137,7 +137,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-12 sm:h-14 lg:h-16">
-            <div className="flex items-center">
+            <div className="flex-1 flex items-center">
               <Link to="/" className="flex items-center space-x-2 sm:space-x-3 group">
                 <motion.div 
                   whileHover={{ rotate: 15, scale: 1.1 }}
@@ -152,15 +152,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     theme === 'light' ? 'text-white' : 'text-black'
                   } group-hover:text-white`} />
                 </motion.div>
-                <span className="text-lg sm:text-xl font-display font-bold text-foreground tracking-tighter uppercase hidden xs:block bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 group-hover:from-indigo-500 group-hover:to-purple-500 transition-all duration-500">Maker’s Lab</span>
+                <span className="text-base sm:text-xl font-display font-bold text-foreground tracking-tighter uppercase xs:block bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 group-hover:from-indigo-500 group-hover:to-purple-500 transition-all duration-500">Maker’s Lab</span>
               </Link>
-              
-              <div className="hidden lg:ml-8 xl:ml-12 lg:flex lg:space-x-1">
+            </div>
+
+            <div className="hidden lg:flex flex-1 justify-center items-center">
+              <div className="flex space-x-1">
                 {filteredNavItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className="relative px-5 py-2 group"
+                    className="relative px-4 xl:px-5 py-2 group"
                   >
                     <span className={`relative z-10 text-[10px] font-bold uppercase tracking-[0.25em] transition-all duration-300 ${
                       location.pathname === item.path 
@@ -187,7 +189,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </div>
             </div>
 
-            <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
+            <div className="hidden lg:flex flex-1 items-center justify-end space-x-4 lg:space-x-6">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -330,7 +332,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsMenuOpen(false)}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[-1]"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[105]"
               />
               <motion.div
                 initial={{ x: "100%" }}
@@ -353,7 +355,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   </button>
                 </div>
 
-                <div className="flex-grow space-y-2">
+                <div className="flex-grow space-y-3 overflow-y-auto pr-2 custom-scrollbar">
                   {filteredNavItems.map((item, i) => (
                     <motion.div
                       initial={{ opacity: 0, x: 20 }}
@@ -364,15 +366,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       <Link
                         to={item.path}
                         onClick={() => setIsMenuOpen(false)}
-                        className={`group flex items-center justify-between p-4 rounded-2xl transition-all ${
+                        className={`group flex items-center justify-between p-5 rounded-2xl transition-all ${
                           location.pathname === item.path
                             ? theme === 'light' ? "bg-indigo-50 border border-indigo-100 text-indigo-600" : "bg-indigo-500/10 border border-indigo-500/20 text-foreground"
                             : theme === 'light' ? "text-slate-600 hover:bg-slate-50 hover:text-slate-900" : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
                         }`}
                       >
-                        <div className="flex items-center space-x-4">
-                          <item.icon className={`h-5 w-5 ${location.pathname === item.path ? "text-indigo-500" : "text-muted-foreground group-hover:text-indigo-500"}`} />
-                          <span className="text-xs font-bold uppercase tracking-[0.2em]">{item.name}</span>
+                        <div className="flex items-center space-x-5">
+                          <item.icon className={`h-6 w-6 ${location.pathname === item.path ? "text-indigo-500" : "text-muted-foreground group-hover:text-indigo-500"}`} />
+                          <span className="text-xs font-bold uppercase tracking-[0.25em]">{item.name}</span>
                         </div>
                         <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </Link>
