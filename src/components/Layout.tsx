@@ -464,7 +464,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <span className="text-xl sm:text-2xl font-display font-bold text-foreground tracking-tighter uppercase">Maker’s Lab</span>
               </div>
               <p className="text-muted-foreground text-sm font-light leading-relaxed max-w-sm">
-                A high-end creative platform where ideas merge with execution. We blend technical excellence with avant-garde design.
+                A high-end creative platform where ideas merge with execution. We blend technical excellence with avant-garde design. Based in Tesano, Accra, Ghana.
               </p>
             </div>
             <div className="sm:col-span-1">
@@ -487,7 +487,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </div>
           </div>
           <div className={`pt-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4 ${theme === 'light' ? 'border-slate-200' : 'border-border'}`}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-center sm:text-left">© 2026 Maker’s Lab. Platform Edition.</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-center sm:text-left">© 2026 Maker’s Lab. Tesano, Accra, Ghana.</p>
             <div className="flex space-x-4 sm:space-x-8">
               <a href="#" className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a>
               <a href="#" className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors">Terms of Service</a>

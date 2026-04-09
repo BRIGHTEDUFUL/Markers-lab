@@ -68,8 +68,8 @@ export const Contact: React.FC = () => {
             <div className="space-y-8">
               {[
                 { icon: Mail, label: "Inquiries", value: CONTACT_EMAIL },
-                { icon: MapPin, label: "Location", value: "Silicon Valley, CA" },
-                { icon: Phone, label: "Direct Line", value: "+1 (555) 000-MAKER" }
+                { icon: MapPin, label: "Location", value: "Tesano, Accra, Ghana" },
+                { icon: Phone, label: "Direct Line", value: "+233 (0) 55 000 0000" }
               ].map((item, i) => (
                 <div key={i} className="flex items-center space-x-6 group">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all duration-500 group-hover:border-indigo-500/50 ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`}>

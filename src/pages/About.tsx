@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Globe, Users, Rocket, ArrowRight, Sparkles, Code2, Megaphone } from "lucide-react";
+import { Globe, Users, Rocket, ArrowRight, Sparkles, Code2, Megaphone, MapPin } from "lucide-react";
 import PageHero from "../components/PageHero";
 import { useTheme } from "../contexts/ThemeContext";
 import InteractiveImage from "../components/InteractiveImage";
@@ -14,6 +14,7 @@ const team = [
     tag: "Product · Architecture · Delivery",
     bio: "Bright founded Maker's Lab with a singular conviction: that software should be as refined as it is functional. He leads product strategy and end-to-end engineering — from system architecture to final deployment — ensuring every deliverable meets an uncompromising standard of quality.",
     icon: Rocket,
+    location: "Accra, Ghana",
   },
   {
     name: "Abena Antwiwaa Quarshie",
@@ -22,6 +23,7 @@ const team = [
     tag: "Brand · Campaigns · Growth",
     bio: "Abena translates Maker's Lab's technical excellence into compelling narratives that reach the right audiences. She leads brand strategy, campaign execution, and growth initiatives — ensuring the studio's work is seen by the clients who deserve it most.",
     icon: Megaphone,
+    location: "Accra, Ghana",
   },
   {
     name: "Ralph Andy Menz",
@@ -30,6 +32,7 @@ const team = [
     tag: "Engineering · Integrations · Performance",
     bio: "Ralph brings rigorous engineering discipline to every feature he ships. Specialising in scalable integrations and clean system design, he ensures that what gets built today remains maintainable, performant, and extensible for years to come.",
     icon: Code2,
+    location: "Accra, Ghana",
   },
 ];
 
@@ -113,6 +116,10 @@ export const About: React.FC = () => {
                 <div className={`relative z-[2] -mt-6 mx-3 rounded-2xl border p-6 shadow-2xl backdrop-blur-2xl sm:mx-4 sm:p-7 transition-all duration-500 group-hover:shadow-indigo-500/10 ${isDark ? "border-white/[0.1] bg-[#0a0a0f]/80 shadow-black/60" : "border-slate-200/90 bg-white/90 shadow-slate-900/10"}`}>
                   <h3 className={`font-display text-xl uppercase tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>{member.name}</h3>
                   <p className={`mt-1 font-mono text-[9px] font-bold uppercase tracking-[0.25em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>{member.tag}</p>
+                  <div className={`mt-1 flex items-center gap-1.5 ${isDark ? "text-white/30" : "text-slate-400"}`}>
+                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <span className="font-mono text-[9px] uppercase tracking-[0.2em]">{member.location}</span>
+                  </div>
                   <div className={`mt-4 border-t pt-4 ${isDark ? "border-white/[0.08]" : "border-slate-200/80"}`}>
                     <p className={`text-sm font-light leading-relaxed ${isDark ? "text-white/55" : "text-slate-600"}`}>{member.bio}</p>
                   </div>
