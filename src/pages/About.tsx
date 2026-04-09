@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { Globe, Users, Rocket, ArrowRight, Sparkles, Code2, Megaphone } from "lucide-react";
 import PageHero from "../components/PageHero";
 import { useTheme } from "../contexts/ThemeContext";
+import InteractiveImage from "../components/InteractiveImage";
 
 const team = [
   {
@@ -35,6 +36,8 @@ const team = [
 export const About: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  // Track which team member's image is "active" (colored) on mobile
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
     <div className="page-shell">
@@ -79,25 +82,25 @@ export const About: React.FC = () => {
                 transition={{ delay: i * 0.12, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                 className="group relative flex flex-col"
               >
-                {/* Photo */}
                 <div className="relative overflow-hidden rounded-3xl">
                   {/* Glow border */}
                   <div className={`absolute -inset-px rounded-3xl bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm ${isDark ? "from-indigo-500/40 via-violet-500/20 to-transparent" : "from-indigo-400/50 via-violet-400/25 to-transparent"}`} aria-hidden />
                   <div className={`relative aspect-[3/4] w-full overflow-hidden rounded-3xl ${isDark ? "bg-white/[0.04] ring-1 ring-white/[0.08]" : "bg-white ring-1 ring-slate-200/90 shadow-[0_24px_80px_-24px_rgba(15,23,42,0.18)]"}`}>
                     {/* Overlay */}
                     <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    <img
+                    <InteractiveImage
                       src={member.image}
                       alt={member.name}
-                      className="h-full w-full object-cover object-top transition-transform duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      active={activeIndex === i}
+                      onActivate={() => setActiveIndex(prev => prev === i ? null : i)}
+                      className="absolute inset-0 rounded-3xl"
                     />
                     {/* Index badge */}
-                    <div className={`absolute left-4 top-4 z-[2] flex h-8 w-8 items-center justify-center rounded-full font-mono text-[10px] font-bold backdrop-blur-md ${isDark ? "border border-white/15 bg-black/40 text-white/80" : "border border-white/60 bg-white/75 text-slate-800 shadow-sm"}`}>
+                    <div className={`absolute left-4 top-4 z-[2] flex h-8 w-8 items-center justify-center rounded-full font-mono text-[10px] font-bold backdrop-blur-md pointer-events-none ${isDark ? "border border-white/15 bg-black/40 text-white/80" : "border border-white/60 bg-white/75 text-slate-800 shadow-sm"}`}>
                       {String(i + 1).padStart(2, "0")}
                     </div>
                     {/* Role badge on photo */}
-                    <div className="absolute bottom-4 left-4 right-4 z-[2]">
+                    <div className="absolute bottom-4 left-4 right-4 z-[2] pointer-events-none">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] backdrop-blur-md ${isDark ? "bg-black/50 border border-white/10 text-indigo-300" : "bg-white/80 border border-white/60 text-indigo-600"}`}>
                         <member.icon className="h-3 w-3" />
                         {member.role}
