@@ -5,7 +5,7 @@ import PageHero from "../components/PageHero";
 import { useTheme } from "../contexts/ThemeContext";
 import { toast } from "sonner";
 
-const CONTACT_EMAIL = "hello@makerslab.com";
+const CONTACT_EMAIL = "creators.makerslab@gmail.com";
 
 export const Contact: React.FC = () => {
   const { theme } = useTheme();

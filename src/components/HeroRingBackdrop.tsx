@@ -44,10 +44,10 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
   const imgClass = `h-full w-full ${objectFit} object-center select-none transition-opacity duration-700 ${
     isLight
       ? isGlobal
-        ? "opacity-[0.5] mix-blend-screen sm:opacity-[0.58] md:opacity-[0.52]"
-        : "opacity-[0.42] mix-blend-screen sm:opacity-50 md:opacity-[0.48]"
-      : `${isAmbient ? "opacity-40 sm:opacity-50" : isPanel ? "opacity-75 sm:opacity-88" : isGlobal ? "opacity-[0.95] sm:opacity-100" : "opacity-80 sm:opacity-90"}`
-  } ${!isLight && (isPage || isGlobal) && !isPanel && !isAmbient ? "md:opacity-[0.99]" : isLight && isPage ? "md:opacity-95" : ""}`;
+        ? "opacity-[0.65] mix-blend-multiply sm:opacity-[0.72]"
+        : "opacity-[0.55] mix-blend-screen sm:opacity-[0.62] md:opacity-[0.58]"
+      : `${isAmbient ? "opacity-40 sm:opacity-50" : isPanel ? "opacity-80 sm:opacity-90" : isGlobal ? "opacity-100" : "opacity-85 sm:opacity-95"}`
+  } ${!isLight && (isPage || isGlobal) && !isPanel && !isAmbient ? "md:opacity-100" : isLight && isPage ? "md:opacity-95" : ""}`;
 
   const imgStyle = isLight
     ? { filter: "saturate(1.05) contrast(1.02)" as const }
@@ -103,34 +103,34 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
       <div
         className={`absolute inset-0 transition-opacity duration-700 ${
           isLight
-            ? "bg-[radial-gradient(ellipse_75%_60%_at_50%_42%,rgba(99,102,241,0.07),transparent_58%)]"
-            : "bg-[radial-gradient(ellipse_75%_58%_at_50%_44%,rgba(251,191,36,0.11),transparent_55%)]"
+            ? "bg-[radial-gradient(ellipse_80%_65%_at_50%_42%,rgba(99,102,241,0.10),transparent_60%)]"
+            : "bg-[radial-gradient(ellipse_80%_62%_at_50%_44%,rgba(251,191,36,0.14),transparent_58%)]"
         }`}
       />
 
-      {/* Premium vignette + readability (global = lighter so the ring reads through page shells) */}
+      {/* Premium vignette + readability */}
       <div
         className={`absolute inset-0 transition-all duration-700 ${
           isLight
             ? isGlobal
-              ? "bg-gradient-to-b from-white/50 via-slate-50/18 to-slate-100/60"
-              : "bg-gradient-to-b from-white/95 via-slate-50/50 to-slate-100/[0.97]"
+              ? "bg-gradient-to-b from-white/30 via-transparent to-slate-100/50"
+              : "bg-gradient-to-b from-white/90 via-slate-50/40 to-slate-100/[0.95]"
             : isAmbient
               ? "bg-gradient-to-b from-black/70 via-black/25 to-black/80"
               : isGlobal
-                ? "bg-gradient-to-b from-black/28 via-transparent to-black/72"
-                : "bg-gradient-to-b from-black/55 via-black/15 to-black/[0.92]"
+                ? "bg-gradient-to-b from-black/20 via-transparent to-black/65"
+                : "bg-gradient-to-b from-black/50 via-black/10 to-black/[0.88]"
         }`}
       />
       <div
         className={`absolute inset-0 transition-opacity duration-700 ${
           isLight
             ? isGlobal
-              ? "opacity-90 bg-[radial-gradient(ellipse_92%_72%_at_50%_48%,transparent_0%,transparent_50%,rgba(248,250,252,0.28)_82%,rgba(248,250,252,0.5)_100%)]"
-              : "opacity-100 bg-[radial-gradient(ellipse_90%_70%_at_50%_50%,transparent_0%,transparent_42%,rgba(248,250,252,0.65)_78%,rgb(248,250,252)_100%)]"
+              ? "opacity-85 bg-[radial-gradient(ellipse_95%_75%_at_50%_48%,transparent_0%,transparent_45%,rgba(248,250,252,0.22)_78%,rgba(248,250,252,0.42)_100%)]"
+              : "opacity-100 bg-[radial-gradient(ellipse_90%_70%_at_50%_50%,transparent_0%,transparent_42%,rgba(248,250,252,0.60)_78%,rgb(248,250,252)_100%)]"
             : isGlobal
-              ? "opacity-75 bg-[radial-gradient(ellipse_96%_78%_at_50%_50%,transparent_22%,rgba(0,0,0,0.35)_100%)]"
-              : "opacity-90 bg-[radial-gradient(ellipse_95%_75%_at_50%_50%,transparent_30%,rgba(0,0,0,0.5)_100%)]"
+              ? "opacity-70 bg-[radial-gradient(ellipse_96%_78%_at_50%_50%,transparent_22%,rgba(0,0,0,0.30)_100%)]"
+              : "opacity-88 bg-[radial-gradient(ellipse_95%_75%_at_50%_50%,transparent_30%,rgba(0,0,0,0.48)_100%)]"
         }`}
       />
 

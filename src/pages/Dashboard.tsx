@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchMyProjects, deleteMyProject } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
@@ -16,9 +16,9 @@ import PageHero from "../components/PageHero";
 import { toast } from "sonner";
 import { 
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, 
-  BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid 
 } from "recharts";
 import { Project } from "../types";
+import SkeletonCard from "../components/SkeletonCard";
 
 const stripMarkdown = (text: string) => {
   return text
@@ -28,40 +28,30 @@ const stripMarkdown = (text: string) => {
     .trim();
 };
 
-const TiltCard: React.FC<{ children: React.ReactNode; className: string; onClick: () => void }> = ({ children, className, onClick }) => {
+const TiltCard: React.FC<{ children: React.ReactNode; className: string; onClick: () => void }> = memo(({ children, className, onClick }) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
   const rotateX = useTransform(y, [-100, 100], [15, -15]);
   const rotateY = useTransform(x, [-100, 100], [-15, 15]);
 
-  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+  const handleMouseMove = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    x.set(event.clientX - centerX);
-    y.set(event.clientY - centerY);
-  }
+    x.set(event.clientX - (rect.left + rect.width / 2));
+    y.set(event.clientY - (rect.top + rect.height / 2));
+  }, [x, y]);
 
-  function handleMouseLeave() {
+  const handleMouseLeave = useCallback(() => {
     x.set(0);
     y.set(0);
-  }
+  }, [x, y]);
 
   return (
     <motion.div
-      style={{
-        rotateX,
-        rotateY,
-        transformStyle: "preserve-3d",
-      }}
+      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      whileHover={{ 
-        scale: 1.02, 
-        y: -12,
-        boxShadow: "0 40px 80px -15px rgba(0, 0, 0, 0.3)"
-      }}
+      whileHover={{ scale: 1.02, y: -12, boxShadow: "0 40px 80px -15px rgba(0, 0, 0, 0.3)" }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       className={className}
       onClick={onClick}
@@ -71,7 +61,7 @@ const TiltCard: React.FC<{ children: React.ReactNode; className: string; onClick
       </div>
     </motion.div>
   );
-};
+});
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
@@ -136,13 +126,21 @@ export const Dashboard: React.FC = () => {
     onConfirm: () => {},
   });
 
-  const filteredProjects = projects.filter(p => {
+  const filteredProjects = useMemo(() => projects.filter(p => {
     const statusMatch = statusFilter === "ALL" || p.status === statusFilter;
     const categoryMatch = categoryFilter === "ALL" || p.category === categoryFilter;
     return statusMatch && categoryMatch;
-  });
+  }), [projects, statusFilter, categoryFilter]);
 
-  const fetchProjects = async () => {
+  const chartData = useMemo(() =>
+    Object.keys(STATUS_COLORS).map(status => ({
+      name: status.replace("_", " "),
+      value: projects.filter(p => p.status === status).length,
+      status,
+    })).filter(d => d.value > 0),
+  [projects]);
+
+  const fetchProjects = useCallback(async () => {
     try {
       if (!user?.id) {
         setProjects([]);
@@ -155,7 +153,7 @@ export const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     fetchProjects();
@@ -182,8 +180,12 @@ export const Dashboard: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="page-shell-flex h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+    <div className="page-shell">
+      <div className="max-w-7xl mx-auto px-4 pt-32 pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <SkeletonCard variant="project" count={6} />
+        </div>
+      </div>
     </div>
   );
 
@@ -241,24 +243,20 @@ export const Dashboard: React.FC = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={Object.keys(STATUS_COLORS).map(status => ({
-                        name: status.replace("_", " "),
-                        value: projects.filter(p => p.status === status).length,
-                        status
-                      })).filter(d => d.value > 0)}
+                      data={chartData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={window.innerWidth < 640 ? 60 : 80}
-                      outerRadius={window.innerWidth < 640 ? 90 : 120}
-                      paddingAngle={window.innerWidth < 640 ? 5 : 10}
+                      innerRadius={80}
+                      outerRadius={120}
+                      paddingAngle={10}
                       dataKey="value"
                     >
-                      {Object.keys(STATUS_COLORS).map((status, index) => (
+                      {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={
-                          status === "COMPLETED" ? "#22c55e" :
-                          status === "PENDING" ? "#eab308" :
-                          status === "IN_PROGRESS" ? "#6366f1" :
-                          status === "IN_REVIEW" ? "#3b82f6" :
+                          entry.status === "COMPLETED" ? "#22c55e" :
+                          entry.status === "PENDING" ? "#eab308" :
+                          entry.status === "IN_PROGRESS" ? "#6366f1" :
+                          entry.status === "IN_REVIEW" ? "#3b82f6" :
                           "#ef4444"
                         } stroke={theme === 'light' ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)"} strokeWidth={4} />
                       ))}

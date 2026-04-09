@@ -1,4 +1,5 @@
 import { insforge } from "./insforge-client";
+import { queryCache } from "./query-cache";
 import type {
   User,
   Project,
@@ -300,36 +301,40 @@ export async function deleteMyProject(id: string, userId: string) {
 }
 
 export async function fetchFeaturedGallery(): Promise<Project[]> {
-  const { data, error } = await insforge.database
-    .from("projects")
-    .select("*")
-    .eq("featured", true)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return attachProjectRelations((data || []) as ProjectRow[]);
+  return queryCache.fetch("featured-gallery", async () => {
+    const { data, error } = await insforge.database
+      .from("projects")
+      .select("*")
+      .eq("featured", true)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return attachProjectRelations((data || []) as ProjectRow[]);
+  }, 2 * 60_000); // 2-minute TTL
 }
 
 export async function fetchApprovedTestimonials(): Promise<Testimonial[]> {
-  const { data, error } = await insforge.database
-    .from("testimonials")
-    .select("*")
-    .eq("is_approved", true)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  const rows = (data || []) as TestimonialRow[];
-  if (!rows.length) return [];
-  const uids = [...new Set(rows.map((t) => t.user_id))];
-  const pids = [...new Set(rows.map((t) => t.project_id))];
-  const [uMap, { data: prows }] = await Promise.all([
-    profilesByIds(uids),
-    insforge.database.from("projects").select("*").in("id", pids),
-  ]);
-  const projects = await attachProjectRelations((prows || []) as ProjectRow[]);
-  const pmap = new Map(projects.map((p) => [p.id, p]));
-  return rows.map((r) => {
-    const u = uMap.get(r.user_id);
-    return mapTestimonialRow(r, u ? profileToUser(u) : undefined, pmap.get(r.project_id));
-  });
+  return queryCache.fetch("approved-testimonials", async () => {
+    const { data, error } = await insforge.database
+      .from("testimonials")
+      .select("*")
+      .eq("is_approved", true)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    const rows = (data || []) as TestimonialRow[];
+    if (!rows.length) return [];
+    const uids = [...new Set(rows.map((t) => t.user_id))];
+    const pids = [...new Set(rows.map((t) => t.project_id))];
+    const [uMap, { data: prows }] = await Promise.all([
+      profilesByIds(uids),
+      insforge.database.from("projects").select("*").in("id", pids),
+    ]);
+    const projects = await attachProjectRelations((prows || []) as ProjectRow[]);
+    const pmap = new Map(projects.map((p) => [p.id, p]));
+    return rows.map((r) => {
+      const u = uMap.get(r.user_id);
+      return mapTestimonialRow(r, u ? profileToUser(u) : undefined, pmap.get(r.project_id));
+    });
+  }, 2 * 60_000); // 2-minute TTL
 }
 
 export async function createProjectWithFiles(

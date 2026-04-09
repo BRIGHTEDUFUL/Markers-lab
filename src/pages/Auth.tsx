@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { insforge, insforgeConfigured } from "../lib/insforge-client";
 import { fetchSessionUser, userFromAuthUser } from "../lib/makers-data";
@@ -6,7 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, Globe, Zap, Cpu, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
-import { starSpec } from "../lib/star-field";
+import StarField from "../components/StarField";
 
 export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ initialMode = "login" }) => {
   const { theme } = useTheme();
@@ -23,10 +23,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const authStars = useMemo(
-    () => Array.from({ length: 50 }, (_, i) => starSpec(i, theme, 2000)),
-    [theme]
-  );
+
   useEffect(() => {
     if (location.pathname === "/register") setMode("register");
     else setMode("login");
@@ -116,51 +113,26 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   };
 
   return (
-    <div className="page-shell flex">
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 pointer-events-none z-[1] overflow-hidden opacity-50 sm:opacity-70">
-          {authStars.map((s, i) => (
-            <motion.div
-              key={i}
-              initial={{
-                opacity: s.initialOpacity,
-                scale: s.initialScale,
-              }}
-              animate={{
-                opacity: theme === "light" ? [0.06, 0.28, 0.06] : [0.06, 0.45, 0.06],
-                scale: s.isLarge ? [1, 1.2, 1] : [1, 1.5, 1],
-              }}
-              transition={{
-                duration: s.duration,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: s.delay,
-              }}
-              className="absolute rounded-full"
-              style={{
-                width: `${s.size}px`,
-                height: `${s.size}px`,
-                backgroundColor: s.starColor,
-                left: s.leftPct,
-                top: s.topPct,
-                boxShadow: s.isLarge ? `0 0 ${s.size * 4}px ${s.starColor}` : `0 0 ${s.size * 2}px ${s.starColor}`,
-                filter: `blur(${s.size * 0.2}px)`,
-              }}
-            />
-          ))}
-        </div>
+    <div className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden">
+      {/* Background stars — behind everything */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <StarField count={50} theme={theme} salt={2000} />
       </div>
 
-      {/* Back to Home */}
-      <Link 
-        to="/" 
-        className={`fixed top-20 left-4 sm:left-8 z-50 flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest transition-colors group ${theme === 'light' ? 'text-slate-400 hover:text-slate-900' : 'text-white/40 hover:text-white'}`}
+      {/* Back to Home — only visible on mobile (desktop has the left panel) */}
+      <Link
+        to="/"
+        className={`lg:hidden fixed top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 rounded-full border backdrop-blur-md text-[10px] font-bold uppercase tracking-widest transition-colors ${
+          theme === "light"
+            ? "bg-white/80 border-slate-200 text-slate-600 hover:text-slate-900"
+            : "bg-black/40 border-white/10 text-white/50 hover:text-white"
+        }`}
       >
-        <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-        <span>Return Home</span>
+        <ArrowLeft className="h-3.5 w-3.5" />
+        <span>Home</span>
       </Link>
 
-      {/* Left Side: Branding & Hero */}
+      {/* Left Side: Branding & Hero — desktop only */}
       <div className={`hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center p-12 overflow-hidden border-r transition-colors duration-700 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
         <div className="absolute inset-0 z-0 overflow-hidden">
           <div className={`absolute inset-0 bg-gradient-to-r transition-colors duration-700 ${theme === "light" ? "from-white/90 via-white/40 to-transparent" : "from-black/70 via-black/35 to-transparent"}`} />
@@ -225,15 +197,21 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         </div>
       </div>
 
-      {/* Right Side: Forms */}
-      <div className={`w-full lg:w-1/2 relative flex items-center justify-center p-8 lg:p-24 transition-colors duration-700 ${theme === 'light' ? 'bg-white' : 'bg-[#080808]'}`}>
-        {/* Subtle background effect for the right side */}
-        <div className="absolute inset-0 z-0 opacity-30">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2" />
+      {/* Right Side: Forms — full width on mobile, half on desktop */}
+      <div
+        className={`w-full lg:w-1/2 relative flex items-start lg:items-center justify-center transition-colors duration-700 ${
+          theme === "light" ? "bg-white" : "bg-[#080808]"
+        }`}
+      >
+        {/* Ambient blobs */}
+        <div className="absolute inset-0 z-0 opacity-30 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
         </div>
 
-        <div className="w-full max-w-sm relative z-10">
+        {/* Scrollable form area — critical for small phones */}
+        <div className="relative z-10 w-full min-h-screen lg:min-h-0 flex items-center justify-center px-4 py-20 sm:px-6 lg:px-12">
+          <div className="w-full max-w-sm">{/* inner */}
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
@@ -241,17 +219,25 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, x: -20, filter: "blur(10px)" }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className={`backdrop-blur-3xl p-10 border rounded-none space-y-10 shadow-2xl transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-100 shadow-slate-200/50' : 'bg-white/[0.02] border-white/5 shadow-black/20'}`}
+              className={`backdrop-blur-3xl p-6 sm:p-10 border rounded-2xl space-y-8 shadow-2xl transition-all duration-500 ${
+                theme === "light"
+                  ? "bg-white border-slate-100 shadow-slate-200/50"
+                  : "bg-white/[0.03] border-white/8 shadow-black/30"
+              }`}
             >
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
                   <span className={`text-[9px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
                     {mode === "login" ? "Authentication Required" : "New Partnership"}
                   </span>
                 </div>
-                <h2 className={`font-display text-5xl uppercase tracking-tighter leading-none transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                  {mode === "login" ? "Access<br/>Terminal" : "Join<br/>Lab"}
+                <h2 className={`font-display text-4xl sm:text-5xl uppercase tracking-tighter leading-none transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                  {mode === "login" ? (
+                    <>Access<br />Terminal</>
+                  ) : (
+                    <>Join<br />Lab</>
+                  )}
                 </h2>
               </div>
 
@@ -327,6 +313,9 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
+                          autoComplete="name"
+                          autoCapitalize="words"
+                          enterKeyHint="next"
                           className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-none ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
                           placeholder="CREATIVE NAME"
                         />
@@ -342,6 +331,9 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        autoComplete="email"
+                        inputMode="email"
+                        enterKeyHint="next"
                         className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-none ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
                         placeholder="USER@MAKERSLAB.COM"
                       />
@@ -356,6 +348,8 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        autoComplete={mode === "login" ? "current-password" : "new-password"}
+                        enterKeyHint="done"
                         className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-none ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
                         placeholder="••••••••"
                       />
@@ -383,7 +377,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               </form>
               )}
 
-              <div className={`text-center pt-6 border-t transition-colors duration-500 ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
+              <div className={`text-center pt-4 border-t transition-colors duration-500 ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
                 <p className={`text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>
                   {mode === "login" ? "No Credentials?" : "Already Registered?"}{" "}
                   <button 
@@ -399,8 +393,9 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               </div>
             </motion.div>
           </AnimatePresence>
-        </div>
-      </div>
+          </div>{/* max-w-sm */}
+        </div>{/* scrollable area */}
+      </div>{/* right panel */}
     </div>
   );
 };

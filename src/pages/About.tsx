@@ -1,416 +1,216 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Globe, Users, Rocket, ArrowRight, Sparkles } from "lucide-react";
+import { Globe, Users, Rocket, ArrowRight, Sparkles, Code2, Megaphone } from "lucide-react";
 import PageHero from "../components/PageHero";
 import { useTheme } from "../contexts/ThemeContext";
 
 const team = [
   {
     name: "Bright Eduful",
-    role: "Founder & Developer",
+    role: "Founder & Lead Engineer",
     image: "/team/bright-eduful.png",
-    bio: "Founder of Maker’s Lab. Owns product direction and end-to-end engineering—shipping polished, production-ready experiences from architecture to deployment.",
+    tag: "Product · Architecture · Delivery",
+    bio: "Bright founded Maker's Lab with a singular conviction: that software should be as refined as it is functional. He leads product strategy and end-to-end engineering — from system architecture to final deployment — ensuring every deliverable meets an uncompromising standard of quality.",
+    icon: Rocket,
+  },
+  {
+    name: "Abena Antwiwaa Quarshie",
+    role: "Head of Marketing & Growth",
+    image: "/team/abene.png",
+    tag: "Brand · Campaigns · Growth",
+    bio: "Abena translates Maker's Lab's technical excellence into compelling narratives that reach the right audiences. She leads brand strategy, campaign execution, and growth initiatives — ensuring the studio's work is seen by the clients who deserve it most.",
+    icon: Megaphone,
   },
   {
     name: "Ralph Andy Menz",
-    role: "Software Developer",
+    role: "Senior Software Developer",
     image: "/team/ralph-andy-menz.png",
-    bio: "Builds scalable features and integrations with a focus on clarity, performance, and long-term maintainability.",
-  },
-  {
-    name: "Abene",
-    role: "Marketing & Advertising",
-    image: "/team/abene.png",
-    bio: "Drives brand, campaigns, and messaging—connecting Maker’s Lab with the audiences who need elite digital execution.",
+    tag: "Engineering · Integrations · Performance",
+    bio: "Ralph brings rigorous engineering discipline to every feature he ships. Specialising in scalable integrations and clean system design, he ensures that what gets built today remains maintainable, performant, and extensible for years to come.",
+    icon: Code2,
   },
 ];
 
 export const About: React.FC = () => {
   const { theme } = useTheme();
-  const isLight = theme === "light";
+  const isDark = theme === "dark";
 
   return (
     <div className="page-shell">
-      {/* Ambient mesh — sits above global hero, below content */}
-      <div
-        className="pointer-events-none absolute inset-0 z-[1] opacity-90"
-        aria-hidden
-      >
-        <div
-          className={`absolute -left-1/4 top-0 h-[min(80vh,900px)] w-[min(80vw,900px)] rounded-full blur-[120px] ${
-            isLight ? "bg-indigo-400/25" : "bg-violet-600/20"
-          }`}
-        />
-        <div
-          className={`absolute -right-1/4 bottom-[10%] h-[min(70vh,700px)] w-[min(70vw,700px)] rounded-full blur-[100px] ${
-            isLight ? "bg-cyan-400/20" : "bg-indigo-500/15"
-          }`}
-        />
-        <div
-          className={`absolute left-1/2 top-1/3 h-px w-[min(100%,72rem)] -translate-x-1/2 bg-gradient-to-r from-transparent via-current to-transparent opacity-[0.07] ${
-            isLight ? "text-slate-900" : "text-white"
-          }`}
-        />
-      </div>
+      <PageHero
+        title={`The People Behind <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${isDark ? "white" : "#0f172a"}'>Maker's Lab</span>`}
+        subtitle="A focused, senior team that blends engineering rigour with brand craft. We don't outsource. We don't over-hire. We deliver."
+        category="The Studio"
+      />
 
-      <div className="relative z-[2]">
-        <PageHero
-          title={`People behind <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${isLight ? "#0f172a" : "white"}'>Maker’s Lab</span>`}
-          subtitle="A lean, senior team blending engineering discipline with brand craft—built around Bright’s vision and backed by Ralph and Abene."
-          category="The Studio"
-        />
+      {/* ── TEAM ─────────────────────────────────────────────────── */}
+      <section className={`relative z-10 border-b px-4 py-20 sm:py-28 transition-colors duration-700 ${isDark ? "border-white/[0.06]" : "border-slate-200/80"}`}>
+        <div className="max-w-7xl mx-auto">
 
-        <div className="relative z-10">
-          {/* Team */}
-          <section
-            className={`relative border-b px-4 py-20 sm:py-28 md:py-32 transition-colors duration-700 ${
-              isLight ? "border-slate-200/80" : "border-white/[0.06]"
-            }`}
-          >
-            <div
-              className={`pointer-events-none absolute inset-0 opacity-[0.35] mask-radial ${isLight ? "bg-grid-slate-900" : "bg-grid-white"}`}
-              aria-hidden
-            />
-
-            <div className="relative mx-auto max-w-7xl">
-              <div className="mb-14 flex flex-col justify-between gap-8 md:mb-20 md:flex-row md:items-end md:gap-12">
-                <div className="max-w-2xl space-y-5">
-                  <div className="inline-flex items-center gap-2">
-                    <span
-                      className={`font-mono text-[10px] font-medium uppercase tracking-[0.35em] ${
-                        isLight ? "text-indigo-600" : "text-indigo-400"
-                      }`}
-                    >
-                      Core team
-                    </span>
-                    <span className={`h-px w-8 ${isLight ? "bg-indigo-300/80" : "bg-indigo-500/40"}`} />
-                    <Sparkles className={`h-3.5 w-3.5 ${isLight ? "text-indigo-500" : "text-indigo-400"}`} />
-                  </div>
-                  <h2
-                    className={`font-display text-[clamp(2.25rem,5vw,4.5rem)] uppercase leading-[0.92] tracking-tighter ${
-                      isLight ? "text-slate-900" : "text-white"
-                    }`}
-                  >
-                    Execution,{" "}
-                    <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600 bg-clip-text font-serif text-4xl italic normal-case tracking-normal text-transparent sm:text-5xl md:text-6xl dark:from-indigo-400 dark:via-violet-400 dark:to-cyan-400">
-                      by design
-                    </span>
-                  </h2>
-                </div>
-                <p
-                  className={`max-w-md font-heading text-base font-light leading-relaxed md:text-lg ${
-                    isLight ? "text-slate-600" : "text-white/50"
-                  }`}
-                >
-                  Real faces, real roles. A tight crew so every engagement gets direct attention from people who ship.
-                </p>
+          {/* Section header */}
+          <div className="mb-16 sm:mb-20 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2">
+                <span className={`font-mono text-[10px] font-bold uppercase tracking-[0.35em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>Core Team</span>
+                <span className={`h-px w-8 ${isDark ? "bg-indigo-500/40" : "bg-indigo-300"}`} />
+                <Sparkles className={`h-3.5 w-3.5 ${isDark ? "text-indigo-400" : "text-indigo-500"}`} />
               </div>
-
-              <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-3 lg:gap-8 xl:gap-10">
-                {team.map((member, i) => (
-                  <motion.article
-                    key={member.name}
-                    initial={{ opacity: 0, y: 32 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-40px" }}
-                    transition={{ delay: i * 0.1, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="group relative flex flex-col"
-                  >
-                    <div className="relative">
-                      <div
-                        className={`absolute -inset-px rounded-[1.75rem] bg-gradient-to-br opacity-60 blur-sm transition-opacity duration-500 group-hover:opacity-100 sm:rounded-[2rem] ${
-                          isLight
-                            ? "from-indigo-400/40 via-violet-400/20 to-transparent"
-                            : "from-indigo-500/30 via-violet-500/20 to-transparent"
-                        }`}
-                        aria-hidden
-                      />
-                      <div
-                        className={`relative aspect-[3/4] w-full overflow-hidden rounded-[1.75rem] sm:rounded-[2rem] ${
-                          isLight
-                            ? "bg-white shadow-[0_24px_80px_-24px_rgba(15,23,42,0.2)] ring-1 ring-slate-200/90"
-                            : "bg-white/[0.04] shadow-[0_32px_100px_-32px_rgba(0,0,0,0.85)] ring-1 ring-white/[0.08]"
-                        }`}
-                      >
-                        <div
-                          className={`pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/50 via-transparent to-white/5 opacity-80 mix-blend-overlay dark:from-black/70 dark:to-transparent dark:mix-blend-normal`}
-                        />
-                        <img
-                          src={member.image}
-                          alt={member.name}
-                          className="h-full w-full object-cover object-top transition-transform duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                        <div
-                          className={`absolute left-4 top-4 z-[2] flex h-9 w-9 items-center justify-center rounded-full font-mono text-[11px] font-semibold backdrop-blur-md ${
-                            isLight
-                              ? "border border-white/60 bg-white/75 text-slate-800 shadow-sm"
-                              : "border border-white/15 bg-black/40 text-white/90"
-                          }`}
-                        >
-                          {String(i + 1).padStart(2, "0")}
-                        </div>
-                      </div>
-
-                      <div
-                        className={`relative z-[2] -mt-14 mx-3 rounded-2xl border p-6 shadow-2xl backdrop-blur-2xl sm:-mt-16 sm:mx-4 sm:rounded-[1.35rem] sm:p-7 ${
-                          isLight
-                            ? "border-slate-200/90 bg-white/85 shadow-slate-900/10"
-                            : "border-white/[0.1] bg-[#0a0a0f]/75 shadow-black/60"
-                        }`}
-                      >
-                        <h3
-                          className={`font-display text-lg uppercase tracking-tight sm:text-xl ${isLight ? "text-slate-900" : "text-white"}`}
-                        >
-                          {member.name}
-                        </h3>
-                        <p
-                          className={`mt-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.2em] ${
-                            isLight ? "text-indigo-600" : "text-indigo-400"
-                          }`}
-                        >
-                          {member.role}
-                        </p>
-                        <p
-                          className={`mt-4 border-t pt-4 text-sm font-light leading-relaxed ${
-                            isLight ? "border-slate-200/80 text-slate-600" : "border-white/[0.08] text-white/45"
-                          }`}
-                        >
-                          {member.bio}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.article>
-                ))}
-              </div>
+              <h2 className={`font-display text-[clamp(2.25rem,5vw,4.5rem)] uppercase leading-[0.92] tracking-tighter ${isDark ? "text-white" : "text-slate-900"}`}>
+                Execution,{" "}
+                <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-500 bg-clip-text text-transparent italic font-serif normal-case tracking-normal text-[clamp(2rem,4.5vw,4rem)]">
+                  by design
+                </span>
+              </h2>
             </div>
-          </section>
+            <p className={`max-w-sm font-heading text-base font-light leading-relaxed ${isDark ? "text-white/50" : "text-slate-500"}`}>
+              Every engagement receives direct attention from the people who actually design, build, and ship your product.
+            </p>
+          </div>
 
-          {/* Mission */}
-          <section className="relative mx-auto max-w-7xl px-4 py-20 sm:py-28 md:py-32">
-            <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-12 lg:gap-16">
-              <div className="space-y-8 lg:col-span-7">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="space-y-4"
-                >
-                  <span
-                    className={`font-mono text-[10px] font-medium uppercase tracking-[0.35em] ${
-                      isLight ? "text-indigo-600" : "text-indigo-400"
-                    }`}
-                  >
-                    Mission
-                  </span>
-                  <h2
-                    className={`font-display text-[clamp(2rem,4.5vw,3.75rem)] uppercase leading-[0.95] tracking-tighter ${
-                      isLight ? "text-slate-900" : "text-white"
-                    }`}
-                  >
-                    Software as{" "}
-                    <span className="font-serif text-3xl italic normal-case text-indigo-600 sm:text-4xl md:text-5xl dark:text-indigo-400">
-                      experience
-                    </span>
-                  </h2>
-                </motion.div>
-                <motion.p
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.08 }}
-                  className={`max-w-xl font-heading text-base font-light leading-relaxed md:text-lg ${
-                    isLight ? "text-slate-600" : "text-white/55"
-                  }`}
-                >
-                  Maker’s Lab merges serious engineering with refined design. Led by Bright Eduful, every engagement is a partnership—not a ticket queue.
-                </motion.p>
-
-                <div className="flex flex-wrap gap-3 pt-2">
-                  {[
-                    { k: "Stack", v: "Modern · typed · observable" },
-                    { k: "Delivery", v: "Design systems → prod" },
-                  ].map((chip) => (
-                    <div
-                      key={chip.k}
-                      className={`rounded-full border px-4 py-2.5 backdrop-blur-md ${
-                        isLight
-                          ? "border-slate-200/90 bg-white/60 text-slate-800"
-                          : "border-white/[0.1] bg-white/[0.04] text-white/80"
-                      }`}
-                    >
-                      <p className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400">
-                        {chip.k}
-                      </p>
-                      <p className="mt-0.5 text-xs font-light">{chip.v}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-4 sm:max-w-lg">
-                  {[
-                    { t: "Build", s: "Products & platforms" },
-                    { t: "Grow", s: "Brand & reach" },
-                  ].map((item) => (
-                    <div
-                      key={item.t}
-                      className={`rounded-2xl border p-5 transition-colors duration-300 ${
-                        isLight
-                          ? "border-slate-200/90 bg-gradient-to-br from-white to-slate-50/80 hover:border-indigo-200/80"
-                          : "border-white/[0.08] bg-gradient-to-br from-white/[0.06] to-transparent hover:border-indigo-500/25"
-                      }`}
-                    >
-                      <h4 className={`font-display text-2xl uppercase ${isLight ? "text-slate-900" : "text-white"}`}>
-                        {item.t}
-                      </h4>
-                      <p className="mt-2 font-mono text-[9px] font-bold uppercase tracking-[0.25em] text-indigo-500 dark:text-indigo-400">
-                        {item.s}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-                className="relative lg:col-span-5"
+          {/* Team cards */}
+          <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-3">
+            {team.map((member, i) => (
+              <motion.article
+                key={member.name}
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ delay: i * 0.12, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="group relative flex flex-col"
               >
-                <div
-                  className={`relative aspect-[4/5] overflow-hidden rounded-[1.75rem] sm:aspect-square sm:rounded-[2rem] ${
-                    isLight
-                      ? "shadow-[0_40px_100px_-40px_rgba(79,70,229,0.35)] ring-1 ring-slate-200/90"
-                      : "shadow-[0_40px_120px_-40px_rgba(99,102,241,0.25)] ring-1 ring-white/[0.1]"
-                  }`}
-                >
-                  <div
-                    className={`absolute inset-0 z-[1] bg-gradient-to-tr opacity-90 mix-blend-soft-light ${
-                      isLight ? "from-indigo-500/20 via-transparent to-cyan-500/15" : "from-violet-600/25 via-transparent to-indigo-600/20"
-                    }`}
-                  />
-                  <img
-                    src="/team/bright-eduful.png"
-                    alt="Bright Eduful, Founder & Developer"
-                    className="h-full w-full object-cover object-top"
-                    sizes="(max-width: 1024px) 100vw, 40vw"
-                  />
-                </div>
-                <div
-                  className={`absolute -bottom-4 -right-4 hidden rounded-2xl border px-4 py-3 backdrop-blur-xl sm:flex sm:items-center sm:gap-3 ${
-                    isLight ? "border-slate-200/90 bg-white/90" : "border-white/10 bg-black/50"
-                  }`}
-                >
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
-                  <span className={`font-mono text-[10px] uppercase tracking-widest ${isLight ? "text-slate-600" : "text-white/60"}`}>
-                    Accepting partners
-                  </span>
-                </div>
-              </motion.div>
-            </div>
-          </section>
-
-          {/* Values */}
-          <section
-            className={`relative border-y px-4 py-20 sm:py-28 ${
-              isLight ? "border-slate-200/80 bg-white/35" : "border-white/[0.06] bg-white/[0.02]"
-            }`}
-          >
-            <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-5">
-              {[
-                {
-                  title: "Innovation first",
-                  desc: "Right tools, clear patterns, measurable outcomes—not hype for its own sake.",
-                  icon: Rocket,
-                },
-                {
-                  title: "Global mindset",
-                  desc: "Remote-first collaboration with the discipline of a product studio.",
-                  icon: Globe,
-                },
-                {
-                  title: "Small team, high bar",
-                  desc: "Direct access to the people who design, build, and ship your work.",
-                  icon: Users,
-                },
-              ].map((value, i) => (
-                <motion.div
-                  key={value.title}
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-                  className={`group relative overflow-hidden rounded-2xl border p-8 transition-all duration-500 md:p-9 ${
-                    isLight
-                      ? "border-slate-200/90 bg-gradient-to-b from-white/90 to-slate-50/50 hover:border-indigo-300/60 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.2)]"
-                      : "border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-transparent hover:border-indigo-500/30 hover:shadow-[0_24px_80px_-30px_rgba(99,102,241,0.15)]"
-                  }`}
-                >
-                  <div
-                    className={`mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-transform duration-500 group-hover:scale-105 ${
-                      isLight
-                        ? "from-indigo-500/15 to-violet-500/10 text-indigo-600 shadow-indigo-500/10"
-                        : "from-indigo-500/25 to-violet-600/10 text-indigo-300 shadow-indigo-900/40"
-                    }`}
-                  >
-                    <value.icon className="h-7 w-7" />
+                {/* Photo */}
+                <div className="relative overflow-hidden rounded-3xl">
+                  {/* Glow border */}
+                  <div className={`absolute -inset-px rounded-3xl bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm ${isDark ? "from-indigo-500/40 via-violet-500/20 to-transparent" : "from-indigo-400/50 via-violet-400/25 to-transparent"}`} aria-hidden />
+                  <div className={`relative aspect-[3/4] w-full overflow-hidden rounded-3xl ${isDark ? "bg-white/[0.04] ring-1 ring-white/[0.08]" : "bg-white ring-1 ring-slate-200/90 shadow-[0_24px_80px_-24px_rgba(15,23,42,0.18)]"}`}>
+                    {/* Overlay */}
+                    <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className="h-full w-full object-cover object-top transition-transform duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                    {/* Index badge */}
+                    <div className={`absolute left-4 top-4 z-[2] flex h-8 w-8 items-center justify-center rounded-full font-mono text-[10px] font-bold backdrop-blur-md ${isDark ? "border border-white/15 bg-black/40 text-white/80" : "border border-white/60 bg-white/75 text-slate-800 shadow-sm"}`}>
+                      {String(i + 1).padStart(2, "0")}
+                    </div>
+                    {/* Role badge on photo */}
+                    <div className="absolute bottom-4 left-4 right-4 z-[2]">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] backdrop-blur-md ${isDark ? "bg-black/50 border border-white/10 text-indigo-300" : "bg-white/80 border border-white/60 text-indigo-600"}`}>
+                        <member.icon className="h-3 w-3" />
+                        {member.role}
+                      </span>
+                    </div>
                   </div>
-                  <h3 className={`font-display text-lg uppercase tracking-tight md:text-xl ${isLight ? "text-slate-900" : "text-white"}`}>
-                    {value.title}
-                  </h3>
-                  <p className={`mt-4 font-heading text-sm font-light leading-relaxed md:text-base ${isLight ? "text-slate-600" : "text-white/45"}`}>
-                    {value.desc}
-                  </p>
-                </motion.div>
+                </div>
+
+                {/* Info card — overlaps photo */}
+                <div className={`relative z-[2] -mt-6 mx-3 rounded-2xl border p-6 shadow-2xl backdrop-blur-2xl sm:mx-4 sm:p-7 transition-all duration-500 group-hover:shadow-indigo-500/10 ${isDark ? "border-white/[0.1] bg-[#0a0a0f]/80 shadow-black/60" : "border-slate-200/90 bg-white/90 shadow-slate-900/10"}`}>
+                  <h3 className={`font-display text-xl uppercase tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>{member.name}</h3>
+                  <p className={`mt-1 font-mono text-[9px] font-bold uppercase tracking-[0.25em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>{member.tag}</p>
+                  <div className={`mt-4 border-t pt-4 ${isDark ? "border-white/[0.08]" : "border-slate-200/80"}`}>
+                    <p className={`text-sm font-light leading-relaxed ${isDark ? "text-white/55" : "text-slate-600"}`}>{member.bio}</p>
+                  </div>
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── MISSION ──────────────────────────────────────────────── */}
+      <section className="relative z-10 max-w-7xl mx-auto px-4 py-20 sm:py-28">
+        <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-12 lg:gap-16">
+          <div className="space-y-8 lg:col-span-7">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-4">
+              <span className={`font-mono text-[10px] font-bold uppercase tracking-[0.35em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>Our Mission</span>
+              <h2 className={`font-display text-[clamp(2rem,4.5vw,3.75rem)] uppercase leading-[0.95] tracking-tighter ${isDark ? "text-white" : "text-slate-900"}`}>
+                Software as{" "}
+                <span className="font-serif italic normal-case text-indigo-500 text-[clamp(1.75rem,4vw,3.5rem)]">experience</span>
+              </h2>
+            </motion.div>
+            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.08 }} className={`max-w-xl font-heading text-base font-light leading-relaxed md:text-lg ${isDark ? "text-white/55" : "text-slate-600"}`}>
+              Maker's Lab was built on the belief that great software is never accidental. Led by Bright Eduful, every engagement is a genuine partnership — one where strategy, design, and engineering move in lockstep from the first conversation to the final deployment.
+            </motion.p>
+            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.14 }} className={`max-w-xl font-heading text-base font-light leading-relaxed md:text-lg ${isDark ? "text-white/55" : "text-slate-600"}`}>
+              We don't operate a ticket queue. We don't hand work off to junior contractors. When you engage Maker's Lab, you work directly with the people who will architect, build, and ship your product.
+            </motion.p>
+            <div className="flex flex-wrap gap-3 pt-2">
+              {[
+                { k: "Stack", v: "Modern · Typed · Observable" },
+                { k: "Delivery", v: "Design Systems → Production" },
+                { k: "Approach", v: "Partnership, not outsourcing" },
+              ].map((chip) => (
+                <div key={chip.k} className={`rounded-full border px-4 py-2.5 backdrop-blur-md ${isDark ? "border-white/[0.1] bg-white/[0.04] text-white/80" : "border-slate-200/90 bg-white/60 text-slate-800"}`}>
+                  <p className={`font-mono text-[9px] font-bold uppercase tracking-[0.2em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>{chip.k}</p>
+                  <p className="mt-0.5 text-xs font-light">{chip.v}</p>
+                </div>
               ))}
             </div>
-          </section>
+          </div>
 
-          {/* CTA */}
-          <section className="relative px-4 py-20 text-center sm:space-y-12 sm:py-28 md:py-32">
-            <div
-              className={`pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-indigo-500/25 to-transparent dark:via-indigo-400/20`}
-              aria-hidden
-            />
-            <h2
-              className={`relative font-display text-[clamp(2.5rem,8vw,6.5rem)] uppercase leading-[0.9] tracking-tighter ${
-                isLight ? "text-slate-900" : "text-white"
-              }`}
-            >
-              Ready to{" "}
-              <br className="sm:hidden" />
-              <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500 bg-clip-text text-transparent dark:from-indigo-400 dark:via-fuchsia-400 dark:to-cyan-400">
-                collaborate?
-              </span>
-            </h2>
-            <div className="relative mt-10 flex flex-col items-center justify-center gap-4 sm:mt-12 sm:flex-row sm:gap-5">
-              <Link
-                to="/contact"
-                className={`inline-flex items-center gap-3 rounded-full px-10 py-4 text-[10px] font-bold uppercase tracking-[0.32em] shadow-lg transition-all duration-300 sm:px-12 sm:py-5 sm:text-[11px] ${
-                  isLight
-                    ? "bg-slate-900 text-white shadow-slate-900/25 hover:bg-gradient-to-r hover:from-indigo-600 hover:to-violet-600 hover:shadow-indigo-500/30"
-                    : "bg-white text-slate-950 shadow-white/10 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-violet-600 hover:text-white hover:shadow-indigo-500/25"
-                }`}
-              >
-                Initiate contact
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                to="/register"
-                className={`rounded-full border px-9 py-4 text-[10px] font-bold uppercase tracking-[0.28em] backdrop-blur-md transition-all duration-300 sm:px-11 sm:py-5 sm:text-[11px] ${
-                  isLight
-                    ? "border-slate-300/90 bg-white/50 text-slate-900 hover:border-indigo-400/60 hover:bg-white/80"
-                    : "border-white/20 bg-white/[0.04] text-white hover:border-white/40 hover:bg-white/[0.08]"
-                }`}
-              >
-                Join Maker’s Lab
-              </Link>
+          <motion.div initial={{ opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }} className="relative lg:col-span-5">
+            <div className={`relative aspect-[4/5] overflow-hidden rounded-3xl sm:aspect-square ${isDark ? "ring-1 ring-white/[0.1] shadow-[0_40px_120px_-40px_rgba(99,102,241,0.25)]" : "ring-1 ring-slate-200/90 shadow-[0_40px_100px_-40px_rgba(79,70,229,0.3)]"}`}>
+              <div className={`absolute inset-0 z-[1] bg-gradient-to-tr opacity-80 mix-blend-soft-light ${isDark ? "from-violet-600/25 via-transparent to-indigo-600/20" : "from-indigo-500/20 via-transparent to-cyan-500/15"}`} />
+              <img src="/team/bright-eduful.png" alt="Bright Eduful — Founder & Lead Engineer" className="h-full w-full object-cover object-top" sizes="(max-width: 1024px) 100vw, 40vw" />
             </div>
-          </section>
+            <div className={`absolute -bottom-4 -right-4 hidden rounded-2xl border px-4 py-3 backdrop-blur-xl sm:flex sm:items-center sm:gap-3 ${isDark ? "border-white/10 bg-black/50" : "border-slate-200/90 bg-white/90"}`}>
+              <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
+              <span className={`font-mono text-[10px] uppercase tracking-widest ${isDark ? "text-white/60" : "text-slate-600"}`}>Accepting partners</span>
+            </div>
+          </motion.div>
         </div>
-      </div>
+      </section>
+
+      {/* ── VALUES ───────────────────────────────────────────────── */}
+      <section className={`relative z-10 border-y px-4 py-20 sm:py-28 transition-colors duration-700 ${isDark ? "border-white/[0.06] bg-white/[0.02]" : "border-slate-200/80 bg-white/40"}`}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-14 sm:mb-16">
+            <span className={`font-mono text-[10px] font-bold uppercase tracking-[0.35em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>How We Work</span>
+            <h2 className={`mt-3 font-display text-[clamp(2rem,4vw,3.5rem)] uppercase leading-[0.92] tracking-tighter ${isDark ? "text-white" : "text-slate-900"}`}>Our Principles</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {[
+              { title: "Precision Over Speed", desc: "We take the time to understand the problem before writing a single line of code. Rushed work creates technical debt. Deliberate work creates lasting value.", icon: Rocket },
+              { title: "Global Perspective", desc: "Remote-first by design, we bring the discipline of a product studio to every engagement — regardless of timezone, industry, or scale.", icon: Globe },
+              { title: "Senior Accountability", desc: "There are no hand-offs to junior teams here. The people you meet are the people who build. That accountability is non-negotiable.", icon: Users },
+            ].map((v, i) => (
+              <motion.div key={v.title} initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                className={`group relative overflow-hidden rounded-2xl border p-8 transition-all duration-500 md:p-9 ${isDark ? "border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-transparent hover:border-indigo-500/30 hover:shadow-[0_24px_80px_-30px_rgba(99,102,241,0.15)]" : "border-slate-200/90 bg-gradient-to-b from-white/90 to-slate-50/50 hover:border-indigo-300/60 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.18)]"}`}>
+                <div className={`mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-transform duration-500 group-hover:scale-105 ${isDark ? "from-indigo-500/25 to-violet-600/10 text-indigo-300 shadow-indigo-900/40" : "from-indigo-500/15 to-violet-500/10 text-indigo-600 shadow-indigo-500/10"}`}>
+                  <v.icon className="h-7 w-7" />
+                </div>
+                <h3 className={`font-display text-lg uppercase tracking-tight md:text-xl ${isDark ? "text-white" : "text-slate-900"}`}>{v.title}</h3>
+                <p className={`mt-4 font-heading text-sm font-light leading-relaxed md:text-base ${isDark ? "text-white/45" : "text-slate-600"}`}>{v.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────────────── */}
+      <section className="relative z-10 px-4 py-24 text-center sm:py-32">
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" aria-hidden />
+        <div className="max-w-3xl mx-auto space-y-8">
+          <h2 className={`font-display text-[clamp(2.5rem,8vw,6rem)] uppercase leading-[0.9] tracking-tighter ${isDark ? "text-white" : "text-slate-900"}`}>
+            Ready to{" "}
+            <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-500 bg-clip-text text-transparent">collaborate?</span>
+          </h2>
+          <p className={`font-heading text-base font-light leading-relaxed max-w-xl mx-auto ${isDark ? "text-white/50" : "text-slate-500"}`}>
+            Whether you have a fully-formed brief or just an idea worth exploring, we'd like to hear from you. Every great product starts with a conversation.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <Link to="/contact" className={`inline-flex items-center gap-3 rounded-full px-10 py-4 text-[11px] font-bold uppercase tracking-[0.3em] shadow-lg transition-all duration-300 active:scale-95 ${isDark ? "bg-white text-slate-950 shadow-white/10 hover:bg-indigo-500 hover:text-white hover:shadow-indigo-500/25" : "bg-slate-900 text-white shadow-slate-900/25 hover:bg-indigo-600 hover:shadow-indigo-500/30"}`}>
+              Start a Conversation <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link to="/register" className={`rounded-full border px-10 py-4 text-[11px] font-bold uppercase tracking-[0.28em] backdrop-blur-md transition-all duration-300 active:scale-95 ${isDark ? "border-white/20 bg-white/[0.04] text-white hover:border-white/40 hover:bg-white/[0.08]" : "border-slate-300/90 bg-white/50 text-slate-900 hover:border-indigo-400/60 hover:bg-white/80"}`}>
+              Join Maker's Lab
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

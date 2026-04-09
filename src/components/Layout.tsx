@@ -10,6 +10,7 @@ import { Toaster } from "sonner";
 
 import PWAInstallPrompt from "./PWAInstallPrompt";
 import HeroRingBackdrop from "./HeroRingBackdrop";
+import BottomNav from "./BottomNav";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
@@ -127,7 +128,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.8 }}
             onClick={scrollToTop}
-            className={`fixed bottom-8 right-8 z-[100] p-4 rounded-2xl shadow-2xl backdrop-blur-xl border transition-all duration-300 group ${theme === 'light' ? 'bg-white/80 border-slate-200 text-slate-900 hover:bg-slate-900 hover:text-white' : 'bg-white/5 border-white/10 text-white hover:bg-white hover:text-black'}`}
+            aria-label="Back to top"
+            className={`fixed bottom-24 lg:bottom-8 right-4 lg:right-8 z-[100] p-4 rounded-2xl shadow-2xl backdrop-blur-xl border transition-all duration-300 group ${theme === 'light' ? 'bg-white/80 border-slate-200 text-slate-900 hover:bg-slate-900 hover:text-white' : 'bg-white/5 border-white/10 text-white hover:bg-white hover:text-black'}`}
           >
             <ChevronRight className="h-6 w-6 -rotate-90 group-hover:-translate-y-1 transition-transform" />
           </motion.button>
@@ -443,12 +445,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </AnimatePresence>
       </motion.nav>
 
-      <main className="relative z-[1] flex flex-grow flex-col">
+      <main className="relative z-[1] flex flex-grow flex-col pb-16 lg:pb-0">
         {children}
       </main>
 
       <Toaster position="top-right" theme={theme as 'light' | 'dark'} richColors />
       <PWAInstallPrompt />
+      <BottomNav />
 
       <footer className={`relative z-[1] border-t py-12 sm:py-24 backdrop-blur-md ${theme === 'light' ? 'border-slate-200/80 bg-slate-50/40' : 'border-border/80 bg-card/45'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

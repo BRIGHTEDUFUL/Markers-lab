@@ -2,19 +2,55 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#050505" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#050505" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="description" content="A collaborative platform for makers and creators to showcase their projects." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Maker's Lab" />
+
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Maker's Lab" />
+    <meta property="og:description" content="Where ideas merge with execution." />
+    <meta property="og:image" content="/hero-ring.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Preconnect to external origins to reduce DNS + TLS latency -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://picsum.photos" />
+
+    <!-- Preload critical hero asset (LCP) -->
+    <link rel="preload" href="/hero-ring.png" as="image" fetchpriority="high" />
+
+    <!-- Google Fonts: non-render-blocking via media trick -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" />
+    </noscript>
+
     <link rel="apple-touch-icon" href="/icon-192x192.png" />
     <link rel="manifest" href="/manifest.json" />
-    <title>Maker’s Lab</title>
+    <title>Maker's Lab</title>
+
+    <!-- Inline critical CSS: prevents FOUC for above-the-fold shell -->
+    <style>
+      *,::before,::after{box-sizing:border-box}
+      html{-webkit-text-size-adjust:100%}
+      body{margin:0;background:#050505;color:#fff;font-family:Inter,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+      #root{min-height:100dvh}
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

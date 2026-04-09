@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+/* Google Fonts are loaded non-blocking via <link> in index.html */
 @import "tailwindcss";
 
 @theme {
@@ -40,11 +40,47 @@
   }
 
   * {
-    transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease, fill 0.5s ease, stroke 0.5s ease;
+    /* Scope transitions to specific properties — avoids layout/paint thrashing on every element */
+    transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease;
+    /* Remove tap highlight on mobile */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    /* Momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent font size inflation on orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Smooth scroll for anchor links */
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground antialiased selection:bg-indigo-500 selection:text-white;
+    /* Prevent overscroll bounce on iOS for the body */
+    overscroll-behavior-y: none;
+  }
+
+  /* Scrollable containers should have momentum scrolling */
+  .overflow-y-auto,
+  .overflow-y-scroll,
+  .overflow-x-auto,
+  .overflow-x-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent text selection on interactive elements */
+  button, a, [role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+    /* Prevent callout on long-press (iOS) */
+    -webkit-touch-callout: none;
+  }
+
+  /* Ensure inputs don't zoom on focus on iOS (font-size >= 16px) */
+  input, textarea, select {
+    font-size: max(16px, 1em);
   }
 }
 
@@ -98,6 +134,55 @@
   @keyframes marquee {
     0% { transform: translateX(0); }
     100% { transform: translateX(-50%); }
+  }
+
+  /* GPU-accelerated layers for heavy animated elements */
+  .gpu-layer {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Defer off-screen content rendering (improves INP / CLS) */
+  .content-deferred {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
+
+  /* Safe area padding helpers for notched devices */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Minimum 44×44px touch target (Apple HIG / WCAG 2.5.5) */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Active press state — native-like scale feedback */
+  .press-feedback {
+    transition: transform 0.1s ease, opacity 0.1s ease;
+  }
+  .press-feedback:active {
+    transform: scale(0.96);
+    opacity: 0.85;
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-marquee {
+      animation: none;
+    }
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
