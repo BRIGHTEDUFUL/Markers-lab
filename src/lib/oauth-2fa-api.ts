@@ -7,7 +7,7 @@
 import {
   generateOTPCode,
   hashOTPCode,
-  verifyOTPCode as verifyOTPCodeHash,
+  verifyOTPCode,
   isOTPExpired,
   getOTPExpirationTime,
   getLockoutExpirationTime,
@@ -83,7 +83,7 @@ export async function generateAndSendOTP(userId: string, email: string) {
   try {
     // Generate 6-digit code
     const otpCode = generateOTPCode();
-    const otpHash = await hashOTPCode(otpCode);
+    const otpHash = hashOTPCode(otpCode);
     const expiresAt = getOTPExpirationTime();
 
     // Store OTP in database
@@ -182,7 +182,7 @@ export async function verifyOTPCode(userId: string, code: string) {
     }
 
     // Verify code
-    const codeValid = await verifyOTPCodeHash(code, otpRecord.otp_code_hash);
+    const codeValid = verifyOTPCode(code, otpRecord.otp_code_hash);
 
     if (!codeValid) {
       // Increment attempts

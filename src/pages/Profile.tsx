@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
 
 import PageHero from "../components/PageHero";
+import TwoFactorSettings from "../components/TwoFactorSettings";
 
 export const Profile: React.FC = () => {
   const { theme } = useTheme();
@@ -215,7 +216,20 @@ export const Profile: React.FC = () => {
             </div>
           </form>
         </motion.div>
+
+        {/* Two-Factor Authentication Settings */}
+        {user?.id && user?.email && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-12 sm:mt-16"
+          >
+            <TwoFactorSettings userId={user.id} email={user.email} />
+          </motion.div>
+        )}
       </div>
     </div>
   );
 };
+

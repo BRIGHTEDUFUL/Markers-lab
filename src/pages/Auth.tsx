@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { insforge, insforgeConfigured } from "../lib/insforge-client";
 import { fetchSessionUser, userFromAuthUser, trackPasswordResetRequest, completePasswordReset, trackLoginAttempt, logAuditEvent, markEmailAsVerified } from "../lib/makers-data";
-import { generateAndSendOTP, verifyOTPCode, getOrCreateGoogleUser } from "../lib/oauth-2fa-api";
+import { validateEmailPasswordLogin, generateAndSendOTP, verifyOTPCode, getOrCreateGoogleUser, getUserSettings } from "../lib/oauth-2fa-api";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, Globe, Zap, Cpu, ArrowLeft, Eye, EyeOff, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -10,7 +10,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import StarField from "../components/StarField";
 import { useTouchFeedback } from "../hooks/useTouchFeedback";
 import GoogleSignInButton from "../components/GoogleSignInButton";
-import { TwoFactorModal } from "../components/TwoFactorModal";
+import TwoFactorModal from "../components/TwoFactorModal";
 
 /**
  * Enhanced Auth Page with:
@@ -43,9 +43,10 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   const [passwordStrength, setPasswordStrength] = useState<"weak" | "fair" | "good" | "strong" | null>(null);
   const [newPasswordStrength, setNewPasswordStrength] = useState<"weak" | "fair" | "good" | "strong" | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
-  const [twoFactorUserId, setTwoFactorUserId] = useState("");
-  const [twoFactorEmail, setTwoFactorEmail] = useState("");
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState("");
+  const [pendingUserEmail, setPendingUserEmail] = useState("");
+  const [has2FAEnabled, setHas2FAEnabled] = useState(false);
   const { login } = useAuth();
   const { handlers: submitHandlers, isPressed: isSubmitPressed } = useTouchFeedback(80);
   const navigate = useNavigate();
@@ -283,55 +284,58 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
       if (mode === "login") {
-        const { data, error: signErr } = await insforge.auth.signInWithPassword({ email, password });
-        if (signErr) {
-          // Track failed login attempt (for brute force detection)
+        // Use new 2FA-aware email login
+        const result = await validateEmailPasswordLogin(email, password);
+        if (!result.success) {
+          // Track failed login attempt
           await trackLoginAttempt(email, false, {
-            ipAddress: "browser", // In production, get real IP from backend
+            ipAddress: "browser",
             userAgent: navigator.userAgent,
-            failedReason: signErr.message,
+            failedReason: result.error,
           });
-          setError(signErr.message || "Login failed");
+          setError(result.error || "Login failed");
           return;
         }
-        if (data?.user) {
-          // Track successful login
-          await trackLoginAttempt(email, true, {
-            userId: data.user.id,
-            userAgent: navigator.userAgent,
-          });
 
-          // Check if user has 2FA enabled
-          const settings = await insforge.from("user_settings")
-            .select("two_factor_enabled, two_factor_method")
-            .eq("user_id", data.user.id)
-            .single();
-
-          if (settings.data?.two_factor_enabled) {
-            // Send OTP and show modal
-            const otpResult = await generateAndSendOTP(data.user.id, email);
-            if (otpResult.success) {
-              setTwoFactorUserId(data.user.id);
-              setTwoFactorEmail(email);
-              setShowTwoFactorModal(true);
-              return;
-            } else {
-              setError(otpResult.error || "Failed to send OTP");
-              return;
-            }
-          }
-
-          // No 2FA, proceed with normal login
-          let u = await fetchSessionUser();
-          if (!u) u = userFromAuthUser(data.user);
-          if (u) login(u);
-          else {
-            setError("Signed in but profile could not be loaded. Check VITE_INSFORGE_* env and database policies.");
+        // Login successful, check if 2FA is enabled
+        if (result.data?.has2FA) {
+          // Store user info and show 2FA modal
+          setPendingUserId(result.data.userId);
+          setPendingUserEmail(email);
+          setHas2FAEnabled(true);
+          setShow2FAModal(true);
+          
+          // Generate and send OTP
+          const otpResult = await generateAndSendOTP(result.data.userId, email);
+          if (!otpResult.success) {
+            setError(otpResult.error || "Failed to generate OTP");
+            setShow2FAModal(false);
             return;
           }
-          navigate("/dashboard");
+          
+          // Track successful password validation (before 2FA)
+          await trackLoginAttempt(email, true, {
+            userId: result.data.userId,
+            userAgent: navigator.userAgent,
+            stage: "2fa_pending",
+          });
         } else {
-          setError("No user returned from server. Check InsForge configuration.");
+          // No 2FA, proceed with normal login
+          // Get session user
+          let u = await fetchSessionUser();
+          if (!u) u = userFromAuthUser({ id: result.data?.userId, email } as any);
+          if (u) {
+            login(u);
+            // Track successful login
+            await trackLoginAttempt(email, true, {
+              userId: result.data?.userId,
+              userAgent: navigator.userAgent,
+            });
+            navigate("/dashboard");
+          } else {
+            setError("Profile could not be loaded. Check database policies.");
+            return;
+          }
         }
         return;
       }
@@ -373,6 +377,68 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
     }
   };
 
+  // Handle 2FA OTP verification
+  const handle2FAVerify = async (otpCode: string) => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await verifyOTPCode(pendingUserId, otpCode);
+      if (!result.success) {
+        setError(result.error || "Invalid or expired OTP");
+        return;
+      }
+
+      // OTP verified successfully, log user in
+      let u = await fetchSessionUser();
+      if (!u) u = userFromAuthUser({ id: pendingUserId, email: pendingUserEmail } as any);
+      if (u) {
+        login(u);
+        // Track successful 2FA login
+        await logAuditEvent("login_success_2fa", "auth", pendingUserId, {
+          userId: pendingUserId,
+          email: pendingUserEmail,
+        });
+        // Close modal and navigate
+        setShow2FAModal(false);
+        navigate("/dashboard");
+      } else {
+        setError("Profile could not be loaded after 2FA verification");
+      }
+    } catch (err: any) {
+      setError(err?.message || "OTP verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle 2FA modal close
+  const handle2FACancel = () => {
+    setShow2FAModal(false);
+    setError("");
+    setPendingUserId("");
+    setPendingUserEmail("");
+    setHas2FAEnabled(false);
+  };
+
+  // Handle 2FA OTP resend
+  const handle2FAResend = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await generateAndSendOTP(pendingUserId, pendingUserEmail);
+      if (!result.success) {
+        setError(result.error || "Failed to resend OTP");
+        return;
+      }
+      // Show success message in modal
+      setError(""); // Clear any previous errors
+    } catch (err: any) {
+      setError(err?.message || "Failed to resend OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -403,107 +469,24 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
     }
   };
 
-  // Handle 2FA OTP verification
-  const handleTwoFactorVerify = async (code: string) => {
-    try {
-      const result = await verifyOTPCode(twoFactorUserId, code);
-      if (result.success) {
-        // OTP verified, now complete the login
-        const { data } = await insforge.auth.getCurrentUser();
-        if (data?.user) {
-          let u = await fetchSessionUser();
-          if (!u) u = userFromAuthUser(data.user);
-          if (u) login(u);
-        }
-        return { success: true };
-      } else {
-        return { success: false, error: result.error, remainingAttempts: result.remainingAttempts };
-      }
-    } catch (err: any) {
-      return { success: false, error: err.message || "Verification failed" };
-    }
-  };
-
-  // Handle 2FA resend OTP
-  const handleTwoFactorResend = async () => {
-    try {
-      const result = await generateAndSendOTP(twoFactorUserId, twoFactorEmail);
-      return { success: result.success, error: result.error };
-    } catch (err: any) {
-      return { success: false, error: err.message || "Resend failed" };
-    }
-  };
-
-  // Handle Google Sign-In
-  const handleGoogleSignIn = async (googleData: any) => {
-    setLoading(true);
-    setError("");
-    try {
-      // Use our new Google OAuth function
-      const result = await getOrCreateGoogleUser({
-        id: googleData.id,
-        email: googleData.email,
-        name: googleData.name,
-        picture: googleData.picture,
-      });
-
-      if (!result.success) {
-        setError(result.error || "Google sign-in failed");
-        return;
-      }
-
-      // Check if user has 2FA enabled
-      if (result.hasTwoFA) {
-        // Show 2FA modal
-        const otpResult = await generateAndSendOTP(result.userId, result.email);
-        if (otpResult.success) {
-          setTwoFactorUserId(result.userId);
-          setTwoFactorEmail(result.email);
-          setShowTwoFactorModal(true);
-          return;
-        } else {
-          setError(otpResult.error || "Failed to send OTP");
-          return;
-        }
-      }
-
-      // No 2FA, complete login directly
-      const sessionUser = await fetchSessionUser();
-      if (sessionUser) {
-        login(sessionUser);
-        navigate("/dashboard");
-      } else {
-        setError("Could not load user profile");
-      }
-    } catch (err: any) {
-      setError(err.message || "Google sign-in error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden">
-      {/* 2FA Modal - appears when 2FA is required */}
-      <AnimatePresence>
-        {showTwoFactorModal && (
-          <TwoFactorModal
-            email={twoFactorEmail}
-            onVerify={handleTwoFactorVerify}
-            onCancel={() => {
-              setShowTwoFactorModal(false);
-              setTwoFactorUserId("");
-              setTwoFactorEmail("");
-            }}
-            onResend={handleTwoFactorResend}
-          />
-        )}
-      </AnimatePresence>
-
       {/* Background stars — behind everything */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <StarField count={50} theme={theme} salt={2000} />
       </div>
+
+      {/* 2FA Modal */}
+      <AnimatePresence>
+        {show2FAModal && (
+          <TwoFactorModal
+            email={pendingUserEmail}
+            onVerify={handle2FAVerify}
+            onCancel={handle2FACancel}
+            onResend={handle2FAResend}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Back to Home — only visible on mobile (desktop has the left panel) */}
       <Link
@@ -1126,11 +1109,16 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     <div className="flex-1 h-px bg-current" />
                   </div>
 
-                  {/* Google Sign-In Button - New Component */}
+                  {/* Google OAuth Button */}
                   <GoogleSignInButton
-                    onSuccess={handleGoogleSignIn}
-                    onError={(error) => setError(error)}
-                    isLoading={loading}
+                    onSuccess={(googleData) => {
+                      // Google OAuth successful, handle user creation/linking
+                      handleGoogleAuth();
+                    }}
+                    onError={(error) => {
+                      setError(error || "Google sign-in failed");
+                    }}
+                    isLoading={googleLoading}
                   />
                 </div>
               </form>

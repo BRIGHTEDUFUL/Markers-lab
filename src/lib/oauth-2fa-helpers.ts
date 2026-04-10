@@ -4,6 +4,8 @@
 // File: src/lib/oauth-2fa-helpers.ts
 // These functions handle OTP generation, verification, and Google OAuth
 
+import crypto from 'crypto';
+
 // ============================================================
 // EMAIL 2FA FUNCTIONS
 // ============================================================
@@ -17,33 +19,27 @@ export function generateOTPCode(): string {
 }
 
 /**
- * Hash an OTP code for secure storage (uses browser's SubtleCrypto)
+ * Hash an OTP code for secure storage
+ * In production, use bcrypt or argon2 for better security
  * @param code The 6-digit code
- * @returns Hashed code in hex format
+ * @returns Hashed code
  */
-export async function hashOTPCode(code: string): Promise<string> {
-  const salt = import.meta.env.VITE_OTP_SALT || 'default-salt';
-  const data = new TextEncoder().encode(code + salt);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+export function hashOTPCode(code: string): string {
+  return crypto
+    .createHash('sha256')
+    .update(code + process.env.OTP_SALT || 'default-salt')
+    .digest('hex');
 }
 
 /**
- * Verify an OTP code against its hash (constant-time comparison)
+ * Verify an OTP code against its hash
  * @param code The user-entered code
  * @param hash The stored hash
  * @returns true if code matches
  */
-export async function verifyOTPCode(code: string, hash: string): Promise<boolean> {
-  const codeHash = await hashOTPCode(code);
-  // Constant-time comparison using built-in timing-safe comparison
-  if (codeHash.length !== hash.length) return false;
-  let result = 0;
-  for (let i = 0; i < hash.length; i++) {
-    result |= codeHash.charCodeAt(i) ^ hash.charCodeAt(i);
-  }
-  return result === 0;
+export function verifyOTPCode(code: string, hash: string): boolean {
+  const codeHash = hashOTPCode(code);
+  return crypto.timingSafeEqual(Buffer.from(codeHash), Buffer.from(hash));
 }
 
 /**
