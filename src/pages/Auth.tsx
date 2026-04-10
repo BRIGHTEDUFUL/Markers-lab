@@ -2,12 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { insforge, insforgeConfigured } from "../lib/insforge-client";
 import { fetchSessionUser, userFromAuthUser, trackPasswordResetRequest, completePasswordReset, trackLoginAttempt, logAuditEvent, markEmailAsVerified } from "../lib/makers-data";
+import { generateAndSendOTP, verifyOTPCode, getOrCreateGoogleUser } from "../lib/oauth-2fa-api";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, Globe, Zap, Cpu, ArrowLeft, Eye, EyeOff, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
 import StarField from "../components/StarField";
 import { useTouchFeedback } from "../hooks/useTouchFeedback";
+import GoogleSignInButton from "../components/GoogleSignInButton";
+import { TwoFactorModal } from "../components/TwoFactorModal";
 
 /**
  * Enhanced Auth Page with:
@@ -40,6 +43,9 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   const [passwordStrength, setPasswordStrength] = useState<"weak" | "fair" | "good" | "strong" | null>(null);
   const [newPasswordStrength, setNewPasswordStrength] = useState<"weak" | "fair" | "good" | "strong" | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
+  const [twoFactorUserId, setTwoFactorUserId] = useState("");
+  const [twoFactorEmail, setTwoFactorEmail] = useState("");
   const { login } = useAuth();
   const { handlers: submitHandlers, isPressed: isSubmitPressed } = useTouchFeedback(80);
   const navigate = useNavigate();
@@ -294,7 +300,28 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
             userId: data.user.id,
             userAgent: navigator.userAgent,
           });
-          
+
+          // Check if user has 2FA enabled
+          const settings = await insforge.from("user_settings")
+            .select("two_factor_enabled, two_factor_method")
+            .eq("user_id", data.user.id)
+            .single();
+
+          if (settings.data?.two_factor_enabled) {
+            // Send OTP and show modal
+            const otpResult = await generateAndSendOTP(data.user.id, email);
+            if (otpResult.success) {
+              setTwoFactorUserId(data.user.id);
+              setTwoFactorEmail(email);
+              setShowTwoFactorModal(true);
+              return;
+            } else {
+              setError(otpResult.error || "Failed to send OTP");
+              return;
+            }
+          }
+
+          // No 2FA, proceed with normal login
           let u = await fetchSessionUser();
           if (!u) u = userFromAuthUser(data.user);
           if (u) login(u);
@@ -376,8 +403,103 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
     }
   };
 
+  // Handle 2FA OTP verification
+  const handleTwoFactorVerify = async (code: string) => {
+    try {
+      const result = await verifyOTPCode(twoFactorUserId, code);
+      if (result.success) {
+        // OTP verified, now complete the login
+        const { data } = await insforge.auth.getCurrentUser();
+        if (data?.user) {
+          let u = await fetchSessionUser();
+          if (!u) u = userFromAuthUser(data.user);
+          if (u) login(u);
+        }
+        return { success: true };
+      } else {
+        return { success: false, error: result.error, remainingAttempts: result.remainingAttempts };
+      }
+    } catch (err: any) {
+      return { success: false, error: err.message || "Verification failed" };
+    }
+  };
+
+  // Handle 2FA resend OTP
+  const handleTwoFactorResend = async () => {
+    try {
+      const result = await generateAndSendOTP(twoFactorUserId, twoFactorEmail);
+      return { success: result.success, error: result.error };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Resend failed" };
+    }
+  };
+
+  // Handle Google Sign-In
+  const handleGoogleSignIn = async (googleData: any) => {
+    setLoading(true);
+    setError("");
+    try {
+      // Use our new Google OAuth function
+      const result = await getOrCreateGoogleUser({
+        id: googleData.id,
+        email: googleData.email,
+        name: googleData.name,
+        picture: googleData.picture,
+      });
+
+      if (!result.success) {
+        setError(result.error || "Google sign-in failed");
+        return;
+      }
+
+      // Check if user has 2FA enabled
+      if (result.hasTwoFA) {
+        // Show 2FA modal
+        const otpResult = await generateAndSendOTP(result.userId, result.email);
+        if (otpResult.success) {
+          setTwoFactorUserId(result.userId);
+          setTwoFactorEmail(result.email);
+          setShowTwoFactorModal(true);
+          return;
+        } else {
+          setError(otpResult.error || "Failed to send OTP");
+          return;
+        }
+      }
+
+      // No 2FA, complete login directly
+      const sessionUser = await fetchSessionUser();
+      if (sessionUser) {
+        login(sessionUser);
+        navigate("/dashboard");
+      } else {
+        setError("Could not load user profile");
+      }
+    } catch (err: any) {
+      setError(err.message || "Google sign-in error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden">
+      {/* 2FA Modal - appears when 2FA is required */}
+      <AnimatePresence>
+        {showTwoFactorModal && (
+          <TwoFactorModal
+            email={twoFactorEmail}
+            onVerify={handleTwoFactorVerify}
+            onCancel={() => {
+              setShowTwoFactorModal(false);
+              setTwoFactorUserId("");
+              setTwoFactorEmail("");
+            }}
+            onResend={handleTwoFactorResend}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Background stars — behind everything */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <StarField count={50} theme={theme} salt={2000} />
@@ -1004,49 +1126,12 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     <div className="flex-1 h-px bg-current" />
                   </div>
 
-                  {/* Google OAuth Button */}
-                  <motion.button
-                    type="button"
-                    onClick={handleGoogleAuth}
-                    disabled={googleLoading}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`w-full flex items-center justify-center gap-3 py-4 px-4 text-[10px] font-bold uppercase tracking-widest rounded-lg sm:rounded-none border transition-all duration-300 disabled:opacity-50 ${
-                      theme === 'light'
-                        ? 'bg-white border-slate-200 text-slate-900 hover:bg-slate-50 hover:border-slate-300'
-                        : 'bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20'
-                    }`}
-                    aria-label="Sign in with Google"
-                  >
-                    {googleLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        {/* Google Icon */}
-                        <svg className="h-4 w-4" viewBox="0 0 24 24">
-                          <path
-                            fill="currentColor"
-                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                          />
-                          <path
-                            fill="currentColor"
-                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                          />
-                          <path
-                            fill="currentColor"
-                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                          />
-                          <path
-                            fill="currentColor"
-                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                          />
-                        </svg>
-                        <span>Google</span>
-                      </>
-                    )}
-                  </motion.button>
+                  {/* Google Sign-In Button - New Component */}
+                  <GoogleSignInButton
+                    onSuccess={handleGoogleSignIn}
+                    onError={(error) => setError(error)}
+                    isLoading={loading}
+                  />
                 </div>
               </form>
               )}
