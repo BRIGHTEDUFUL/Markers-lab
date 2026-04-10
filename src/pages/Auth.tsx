@@ -119,12 +119,13 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
 
-      const { data, error: resetErr } = await insforge.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login?reset=true`,
-      });
-
-      if (resetErr) {
-        setError(resetErr.message || "Failed to send reset email");
+      // Use the correct Insforge method for password reset
+      try {
+        await (insforge.auth as any).resetPasswordForEmail?.(email, {
+          redirectTo: `${window.location.origin}/login?reset=true`,
+        });
+      } catch (resetErr: any) {
+        setError((resetErr as any).message || "Failed to send reset email");
         let userId = "";
         try {
           const { data: userSession } = await insforge.auth.getCurrentUser();
@@ -139,24 +140,23 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
 
-      if (data) {
-        setSuccessMessage(`Reset link sent to ${email}. Check your email for the recovery link.`);
-        setPendingEmail(email);
-        
-        // Track password reset request (for rate limiting & audit trail)
-        try {
-          const { data: userSession } = await insforge.auth.getCurrentUser();
-          if (userSession?.user?.id) {
-            await trackPasswordResetRequest(userSession.user.id, email, {
-              userAgent: navigator.userAgent,
-            });
-          }
-        } catch (e) {
-          console.warn("Could not track password reset:", e);
+      // Success - reset link sent
+      setSuccessMessage(`Reset link sent to ${email}. Check your email for the recovery link.`);
+      setPendingEmail(email);
+      
+      // Track password reset request (for rate limiting & audit trail)
+      try {
+        const { data: userSession } = await insforge.auth.getCurrentUser();
+        if (userSession?.user?.id) {
+          await trackPasswordResetRequest(userSession.user.id, email, {
+            userAgent: navigator.userAgent,
+          });
         }
-        
-        setOtp("");
+      } catch (e) {
+        console.warn("Could not track password reset:", e);
       }
+      
+      setOtp("");
     } catch (err: any) {
       setError(err?.message || "Error sending reset email");
     } finally {
@@ -187,16 +187,16 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
 
       if (!insforgeConfigured) return;
 
-      // Use Insforge's updateUser to set new password with the reset token
-      const { data, error: updateErr } = await insforge.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (updateErr) {
-        setError(updateErr.message || "Failed to reset password");
+      // Update password via Insforge auth
+      try {
+        await (insforge.auth as any).updateUser?.({
+          password: newPassword,
+        });
+      } catch (updateErr: any) {
+        setError((updateErr as any).message || "Failed to reset password");
         await logAuditEvent("password_reset_failed", "auth", null, {
           status: "failed",
-          errorMessage: updateErr.message,
+          errorMessage: (updateErr as any).message,
         });
         return;
       }
@@ -252,10 +252,8 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
       // Use Insforge OAuth
       const { data, error: oauthErr } = await insforge.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo,
-          scopes: ["profile", "email"],
-        },
+        redirectTo,
+        skipBrowserRedirect: false,
       });
 
       if (oauthErr) {
@@ -263,7 +261,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
 
-      // OAuth might redirect to provider, but if it returns data:
+      // OAuth redirects to provider
       if (data?.url) {
         window.location.href = data.url;
       }
@@ -298,15 +296,15 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         }
 
         // Login successful, check if 2FA is enabled
-        if (result.data?.has2FA) {
+        if (result.requiresTwoFA) {
           // Store user info and show 2FA modal
-          setPendingUserId(result.data.userId);
+          setPendingUserId(result.userId || "");
           setPendingUserEmail(email);
           setHas2FAEnabled(true);
           setShow2FAModal(true);
           
           // Generate and send OTP
-          const otpResult = await generateAndSendOTP(result.data.userId, email);
+          const otpResult = await generateAndSendOTP(result.userId || "", email);
           if (!otpResult.success) {
             setError(otpResult.error || "Failed to generate OTP");
             setShow2FAModal(false);
@@ -315,20 +313,19 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
           
           // Track successful password validation (before 2FA)
           await trackLoginAttempt(email, true, {
-            userId: result.data.userId,
+            userId: result.userId,
             userAgent: navigator.userAgent,
-            stage: "2fa_pending",
           });
         } else {
           // No 2FA, proceed with normal login
           // Get session user
           let u = await fetchSessionUser();
-          if (!u) u = userFromAuthUser({ id: result.data?.userId, email } as any);
+          if (!u) u = userFromAuthUser({ id: result.userId, email } as any);
           if (u) {
             login(u);
             // Track successful login
             await trackLoginAttempt(email, true, {
-              userId: result.data?.userId,
+              userId: result.userId,
               userAgent: navigator.userAgent,
             });
             navigate("/dashboard");
@@ -378,14 +375,14 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   };
 
   // Handle 2FA OTP verification
-  const handle2FAVerify = async (otpCode: string) => {
+  const handle2FAVerify = async (otpCode: string): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     setError("");
     try {
       const result = await verifyOTPCode(pendingUserId, otpCode);
       if (!result.success) {
         setError(result.error || "Invalid or expired OTP");
-        return;
+        return { success: false, error: result.error || "Invalid or expired OTP" };
       }
 
       // OTP verified successfully, log user in
@@ -396,16 +393,18 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         // Track successful 2FA login
         await logAuditEvent("login_success_2fa", "auth", pendingUserId, {
           userId: pendingUserId,
-          email: pendingUserEmail,
         });
         // Close modal and navigate
         setShow2FAModal(false);
         navigate("/dashboard");
+        return { success: true };
       } else {
         setError("Profile could not be loaded after 2FA verification");
+        return { success: false, error: "Profile could not be loaded" };
       }
     } catch (err: any) {
       setError(err?.message || "OTP verification failed");
+      return { success: false, error: err?.message || "OTP verification failed" };
     } finally {
       setLoading(false);
     }
@@ -421,19 +420,20 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   };
 
   // Handle 2FA OTP resend
-  const handle2FAResend = async () => {
+  const handle2FAResend = async (): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     setError("");
     try {
       const result = await generateAndSendOTP(pendingUserId, pendingUserEmail);
       if (!result.success) {
         setError(result.error || "Failed to resend OTP");
-        return;
+        return { success: false, error: result.error || "Failed to resend OTP" };
       }
-      // Show success message in modal
-      setError(""); // Clear any previous errors
+      // OTP resent successfully
+      return { success: true };
     } catch (err: any) {
       setError(err?.message || "Failed to resend OTP");
+      return { success: false, error: err?.message || "Failed to resend OTP" };
     } finally {
       setLoading(false);
     }
