@@ -19,16 +19,31 @@
 }
 
 @layer base {
+  /*
+   * ═══════════════════════════════════════════════════
+   *  LIGHT MODE — Premium layered surfaces
+   * ═══════════════════════════════════════════════════
+   */
   :root {
-    --background: #ffffff;
-    --foreground: #050505;
-    --card: #f9f9f9;
-    --card-foreground: #050505;
-    --border: #e4e4e7;
-    --muted: #f4f4f5;
-    --muted-foreground: #71717a;
+    /* Surfaces — layered, NOT pure-white everywhere */
+    --background: #f8fafc;        /* app-level background */
+    --card: #ffffff;              /* elevated surfaces */
+    --card-foreground: #0f172a;
+
+    /* Typography — strong contrast, readable */
+    --foreground: #0f172a;        /* primary text */
+    --muted: #f1f5f9;             /* section / subtle bg */
+    --muted-foreground: #475569;  /* secondary text */
+
+    /* Borders & accents */
+    --border: #e2e8f0;
   }
 
+  /*
+   * ═══════════════════════════════════════════════════
+   *  DARK MODE — unchanged
+   * ═══════════════════════════════════════════════════
+   */
   .dark {
     --background: #050505;
     --foreground: #ffffff;
@@ -86,19 +101,31 @@
 
 @layer utilities {
   /**
-   * Translucent page shells so Layout’s fixed HeroRingBackdrop (z-0) stays visible.
+   * Translucent page shells so Layout's fixed HeroRingBackdrop (z-0) stays visible.
    * Cards and panels keep their own opaque / frosted surfaces for readability.
    */
   .page-shell {
-    @apply relative min-h-screen min-h-[100dvh] overflow-hidden bg-slate-50/30 backdrop-blur-md transition-colors duration-700 dark:bg-[#030303]/38;
+    @apply relative min-h-screen min-h-[100dvh] overflow-hidden transition-colors duration-700;
+    background: linear-gradient(to bottom, #ffffff, #f1f5f9);
+  }
+  .dark .page-shell {
+    @apply bg-[#030303]/38;
   }
 
   .page-shell-flex {
-    @apply flex min-h-screen min-h-[100dvh] items-center justify-center bg-slate-50/30 backdrop-blur-md transition-colors duration-500 dark:bg-[#030303]/38;
+    @apply flex min-h-screen min-h-[100dvh] items-center justify-center transition-colors duration-500;
+    background: linear-gradient(to bottom, #ffffff, #f1f5f9);
+  }
+  .dark .page-shell-flex {
+    @apply bg-[#030303]/38;
   }
 
   .page-shell-short {
-    @apply flex min-h-[70vh] items-center justify-center bg-slate-50/30 backdrop-blur-md transition-colors duration-500 dark:bg-[#030303]/38;
+    @apply flex min-h-[70vh] items-center justify-center transition-colors duration-500;
+    background: linear-gradient(to bottom, #ffffff, #f1f5f9);
+  }
+  .dark .page-shell-short {
+    @apply bg-[#030303]/38;
   }
 
   .text-glow {

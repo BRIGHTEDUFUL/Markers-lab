@@ -1,11 +1,25 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import { Download, X, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useTouchFeedback } from "../hooks/useTouchFeedback";
 
+/**
+ * PWAInstallPrompt — Native-style bottom sheet & desktop toast for PWA installation
+ * 
+ * Features:
+ * - Mobile: Full-screen bottom sheet (visible <lg)
+ * - Desktop: Toast in top-right (visible ≥lg)
+ * - 3s delay before showing (non-intrusive)
+ * - Session-based dismissal (won't show again this session)
+ * - Touch-friendly tap targets (44px+)
+ * - Spring animations with haptic-like feedback
+ * - Safe-area inset aware
+ * - Accessibility: ARIA labels, proper keyboard support
+ */
 const DISMISSED_KEY = "pwa-prompt-dismissed";
 
-const PWAInstallPrompt: React.FC = () => {
+const PWAInstallPrompt: React.FC = memo(() => {
   const { theme } = useTheme();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -17,7 +31,7 @@ const PWAInstallPrompt: React.FC = () => {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Small delay so it doesn't pop up immediately on load
+      // 3s delay for non-intrusive UX
       setTimeout(() => setIsVisible(true), 3000);
     };
 
@@ -27,10 +41,16 @@ const PWAInstallPrompt: React.FC = () => {
 
   const handleInstall = useCallback(async () => {
     if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
-    setIsVisible(false);
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA installation outcome: ${outcome}`);
+      setDeferredPrompt(null);
+      setIsVisible(false);
+      sessionStorage.setItem(DISMISSED_KEY, "1");
+    } catch (error) {
+      console.error("PWA install error:", error);
+    }
   }, [deferredPrompt]);
 
   const handleDismiss = useCallback(() => {
@@ -42,118 +62,277 @@ const PWAInstallPrompt: React.FC = () => {
     <AnimatePresence>
       {isVisible && (
         <>
-          {/* Backdrop — tap outside to dismiss */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[190] lg:hidden"
-            onClick={handleDismiss}
+          {/* Mobile bottom sheet */}
+          <MobileBottomSheet
+            theme={theme}
+            onInstall={handleInstall}
+            onDismiss={handleDismiss}
           />
 
-          {/* Bottom sheet — mobile */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className={`fixed bottom-0 left-0 right-0 z-[195] lg:hidden rounded-t-3xl border-t shadow-2xl ${
-              theme === "light"
-                ? "bg-white border-slate-200"
-                : "bg-[#0a0a0a] border-white/10"
-            }`}
-            style={{ paddingBottom: "env(safe-area-inset-bottom, 16px)" }}
-          >
-            {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className={`h-1 w-10 rounded-full ${theme === "light" ? "bg-slate-200" : "bg-white/20"}`} />
-            </div>
-
-            <div className="px-6 pt-4 pb-6 space-y-5">
-              <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-2xl flex-shrink-0 ${theme === "light" ? "bg-indigo-50" : "bg-indigo-500/10"}`}>
-                  <Smartphone className="h-6 w-6 text-indigo-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-bold uppercase tracking-widest ${theme === "light" ? "text-slate-900" : "text-white"}`}>
-                    Add to Home Screen
-                  </h3>
-                  <p className={`text-xs mt-1 leading-relaxed ${theme === "light" ? "text-slate-500" : "text-white/50"}`}>
-                    Install Maker's Lab for a faster, native-like experience — works offline too.
-                  </p>
-                </div>
-                <button
-                  onClick={handleDismiss}
-                  aria-label="Dismiss install prompt"
-                  className={`p-2 rounded-full flex-shrink-0 ${theme === "light" ? "text-slate-400 hover:bg-slate-100" : "text-white/40 hover:bg-white/10"}`}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleInstall}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all active:scale-95 ${
-                    theme === "light"
-                      ? "bg-slate-900 text-white"
-                      : "bg-white text-black"
-                  }`}
-                >
-                  <Download className="h-4 w-4" />
-                  Install App
-                </button>
-                <button
-                  onClick={handleDismiss}
-                  className={`px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all active:scale-95 ${
-                    theme === "light"
-                      ? "bg-slate-100 text-slate-600"
-                      : "bg-white/10 text-white/60"
-                  }`}
-                >
-                  Not Now
-                </button>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Desktop toast — top-right */}
-          <motion.div
-            initial={{ opacity: 0, y: -16, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.95 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className={`hidden lg:flex fixed top-20 right-6 z-[195] w-80 items-center gap-3 p-4 rounded-2xl shadow-2xl border backdrop-blur-xl ${
-              theme === "light"
-                ? "bg-white/95 border-slate-200"
-                : "bg-[#0a0a0a]/95 border-white/10"
-            }`}
-          >
-            <div className={`p-2.5 rounded-xl flex-shrink-0 ${theme === "light" ? "bg-indigo-50" : "bg-indigo-500/10"}`}>
-              <Download className="h-5 w-5 text-indigo-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className={`text-xs font-bold uppercase tracking-widest ${theme === "light" ? "text-slate-900" : "text-white"}`}>Install App</p>
-              <p className={`text-[10px] mt-0.5 ${theme === "light" ? "text-slate-500" : "text-white/40"}`}>Add to home screen</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleInstall}
-                className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 ${
-                  theme === "light" ? "bg-slate-900 text-white" : "bg-white text-black"
-                }`}
-              >
-                Install
-              </button>
-              <button onClick={handleDismiss} className={`p-1.5 rounded-full ${theme === "light" ? "text-slate-400 hover:bg-slate-100" : "text-white/40 hover:bg-white/10"}`}>
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </motion.div>
+          {/* Desktop toast */}
+          <DesktopToast
+            theme={theme}
+            onInstall={handleInstall}
+            onDismiss={handleDismiss}
+          />
         </>
       )}
     </AnimatePresence>
   );
+});
+
+/**
+ * MobileBottomSheet — Full-screen bottom sheet for mobile
+ */
+const MobileBottomSheet: React.FC<{
+  theme: "light" | "dark";
+  onInstall: () => void;
+  onDismiss: () => void;
+}> = ({ theme, onInstall, onDismiss }) => {
+  const { handlers: installHandlers, isPressed: isInstallPressed } = useTouchFeedback(60);
+  const { handlers: dismissHandlers, isPressed: isDismissPressed } = useTouchFeedback(60);
+
+  return (
+    <>
+      {/* Backdrop — tap to dismiss */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[190] lg:hidden bg-black/20 backdrop-blur-sm"
+        onClick={onDismiss}
+        aria-hidden="true"
+      />
+
+      {/* Bottom sheet — mobile */}
+      <motion.div
+        initial={{ y: "100%", opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100%", opacity: 0 }}
+        transition={{ type: "spring", damping: 28, stiffness: 340 }}
+        className={`fixed bottom-0 left-0 right-0 z-[195] lg:hidden rounded-t-3xl border-t shadow-2xl ${
+          theme === "light"
+            ? "bg-white border-slate-200/50"
+            : "bg-[#0a0a0a] border-white/5"
+        }`}
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        role="dialog"
+        aria-label="Install application"
+      >
+        {/* Drag handle */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing"
+        >
+          <div
+            className={`h-1.5 w-12 rounded-full transition-colors ${
+              theme === "light" ? "bg-slate-300" : "bg-white/20"
+            }`}
+            aria-hidden="true"
+          />
+        </motion.div>
+
+        <div className="px-6 pt-4 pb-6 space-y-5">
+          {/* Header with icon */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="flex items-start gap-4"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25, delay: 0.1 }}
+              className={`p-3 rounded-2xl flex-shrink-0 ${
+                theme === "light" ? "bg-indigo-50" : "bg-indigo-500/10"
+              }`}
+            >
+              <Smartphone
+                className="h-6 w-6 text-indigo-500"
+                aria-hidden="true"
+              />
+            </motion.div>
+
+            <div className="flex-1 min-w-0">
+              <h3
+                className={`text-sm font-black uppercase tracking-widest ${
+                  theme === "light" ? "text-slate-900" : "text-white"
+                }`}
+              >
+                Add to Home Screen
+              </h3>
+              <p
+                className={`text-xs mt-1.5 leading-relaxed ${
+                  theme === "light" ? "text-slate-600" : "text-white/60"
+                }`}
+              >
+                Get instant access to Maker's Lab. Works offline and installs on your home screen.
+              </p>
+            </div>
+
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={onDismiss}
+              aria-label="Dismiss install prompt"
+              className={`p-2 rounded-full flex-shrink-0 transition-colors duration-200 ${
+                theme === "light"
+                  ? "text-slate-400 hover:bg-slate-100"
+                  : "text-white/40 hover:bg-white/10"
+              }`}
+            >
+              <X className="h-4 w-4" />
+            </motion.button>
+          </motion.div>
+
+          {/* Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex gap-3"
+          >
+            {/* Install button */}
+            <motion.button
+              {...installHandlers}
+              onClick={onInstall}
+              whileTap={isInstallPressed ? { scale: 0.95 } : { scale: 1 }}
+              className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all shadow-lg ${
+                theme === "light"
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-600/40"
+                  : "bg-indigo-500 text-black hover:bg-indigo-400 shadow-indigo-500/40"
+              } ${isInstallPressed ? "shadow-md" : ""}`}
+              aria-label="Install the application"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Install App
+            </motion.button>
+
+            {/* Dismiss button */}
+            <motion.button
+              {...dismissHandlers}
+              onClick={onDismiss}
+              whileTap={isDismissPressed ? { scale: 0.95 } : { scale: 1 }}
+              className={`px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${
+                theme === "light"
+                  ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  : "bg-white/10 text-white/70 hover:bg-white/15"
+              }`}
+              aria-label="Dismiss, ask later"
+            >
+              Not Now
+            </motion.button>
+          </motion.div>
+
+          {/* Footer hint */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.25 }}
+            className={`text-[10px] text-center leading-relaxed ${
+              theme === "light" ? "text-slate-500" : "text-white/40"
+            }`}
+          >
+            You can install this app anytime from the share menu
+          </motion.p>
+        </div>
+      </motion.div>
+    </>
+  );
 };
 
+/**
+ * DesktopToast — Toast notification for desktop (≥lg)
+ */
+const DesktopToast: React.FC<{
+  theme: "light" | "dark";
+  onInstall: () => void;
+  onDismiss: () => void;
+}> = ({ theme, onInstall, onDismiss }) => {
+  const { handlers: installHandlers, isPressed: isInstallPressed } = useTouchFeedback(50);
+  const { handlers: dismissHandlers, isPressed: isDismissPressed } = useTouchFeedback(50);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -16, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -16, scale: 0.95 }}
+      transition={{ type: "spring", damping: 25, stiffness: 340 }}
+      className={`hidden lg:flex fixed top-20 right-6 z-[195] w-80 items-center gap-3 p-4 rounded-2xl shadow-2xl border backdrop-blur-xl ${
+        theme === "light"
+          ? "bg-white/95 border-slate-200"
+          : "bg-[#0a0a0a]/95 border-white/10"
+      }`}
+      role="status"
+      aria-label="Install app notification"
+    >
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.1 }}
+        className={`p-2.5 rounded-xl flex-shrink-0 ${
+          theme === "light" ? "bg-indigo-50" : "bg-indigo-500/10"
+        }`}
+      >
+        <Download
+          className="h-5 w-5 text-indigo-500"
+          aria-hidden="true"
+        />
+      </motion.div>
+
+      <div className="flex-1 min-w-0">
+        <p
+          className={`text-xs font-bold uppercase tracking-widest ${
+            theme === "light" ? "text-slate-900" : "text-white"
+          }`}
+        >
+          Install App
+        </p>
+        <p
+          className={`text-[10px] mt-0.5 leading-tight ${
+            theme === "light" ? "text-slate-600" : "text-white/60"
+          }`}
+        >
+          Add to home screen for instant access
+        </p>
+      </div>
+
+      <motion.div className="flex items-center gap-1.5">
+        {/* Install button */}
+        <motion.button
+          {...installHandlers}
+          onClick={onInstall}
+          whileTap={isInstallPressed ? { scale: 0.92 } : { scale: 1 }}
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+            theme === "light"
+              ? "bg-indigo-600 text-white hover:bg-indigo-700"
+              : "bg-indigo-500 text-black hover:bg-indigo-400"
+          }`}
+          aria-label="Install"
+        >
+          Install
+        </motion.button>
+
+        {/* Dismiss button */}
+        <motion.button
+          {...dismissHandlers}
+          onClick={onDismiss}
+          whileTap={isDismissPressed ? { scale: 0.92 } : { scale: 1 }}
+          className={`p-1.5 rounded-lg transition-colors duration-200 ${
+            theme === "light"
+              ? "text-slate-400 hover:bg-slate-100"
+              : "text-white/40 hover:bg-white/10"
+          }`}
+          aria-label="Dismiss"
+        >
+          <X className="h-3.5 w-3.5" />
+        </motion.button>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+PWAInstallPrompt.displayName = "PWAInstallPrompt";
 export default PWAInstallPrompt;

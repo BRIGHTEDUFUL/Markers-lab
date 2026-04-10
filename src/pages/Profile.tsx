@@ -76,6 +76,7 @@ export const Profile: React.FC = () => {
       <PageHero 
         title={`Profile <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${theme === 'light' ? '#0f172a' : 'white'}'>Settings</span>`}
         subtitle="Manage your account information and security protocols."
+        details="Update your profile details, change your password, manage notification preferences, and view your account activity history from your secure dashboard."
         category="User Terminal"
       />
 
@@ -92,7 +93,7 @@ export const Profile: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className={`p-6 rounded-3xl border text-center space-y-3 transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl' : 'bg-white/5 border-white/10'}`}
+              className={`p-6 rounded-3xl border text-center space-y-3 transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 border-white/10'}`}
             >
               <div className={`h-10 w-10 rounded-2xl mx-auto flex items-center justify-center ${theme === "light" ? stat.boxLight : stat.boxDark}`}>
                 <stat.icon className="h-5 w-5" />
@@ -110,7 +111,7 @@ export const Profile: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`backdrop-blur-3xl rounded-2xl sm:rounded-[2.5rem] border overflow-hidden transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-2xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}
+          className={`backdrop-blur-3xl rounded-2xl sm:rounded-[2.5rem] border overflow-hidden transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}
         >
           <form onSubmit={handleSubmit} className="p-5 sm:p-12 space-y-8 sm:space-y-12">
             {/* Avatar Section */}

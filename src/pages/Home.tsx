@@ -60,7 +60,7 @@ export const Home = () => {
             transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
             className={`font-display text-[17vw] sm:text-[14vw] md:text-[12vw] lg:text-[10vw] leading-[0.84] uppercase tracking-tighter ${isDark ? "text-white" : "text-slate-900"}`}
           >
-            <motion.span animate={{ rotate: [-1.5, 1.5] }} transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} style={{ originX: 0.5, originY: 0, display: "inline-block" }} className={`bg-clip-text text-transparent ${isDark ? "bg-gradient-to-b from-white via-white to-white/40" : "bg-gradient-to-b from-slate-900 via-slate-900 to-slate-900/40"}`}>
+            <motion.span animate={{ rotate: [-1.5, 1.5] }} transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} style={{ originX: 0.5, originY: 0, display: "inline-block" }} className={`bg-clip-text text-transparent ${isDark ? "bg-gradient-to-b from-white via-white to-white/40" : "text-slate-900"}`}>
               Websites
             </motion.span>
             <br />
@@ -166,7 +166,7 @@ export const Home = () => {
                 const imageUrl = mediaSrc(coverImage?.path, `https://picsum.photos/seed/${project.id}/800/600`);
                 return (
                   <FadeUp key={project.id} delay={i * 0.1}>
-                    <div className={`group relative overflow-hidden rounded-3xl border transition-all duration-500 hover:-translate-y-1 ${isDark ? "border-white/[0.08] hover:border-white/20" : "border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-xl hover:shadow-slate-200/50"}`}>
+                    <div className={`group relative overflow-hidden rounded-3xl border transition-all duration-500 hover:-translate-y-1 ${isDark ? "border-white/[0.08] hover:border-white/20" : "border-slate-200 hover:border-indigo-200/60 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60"}`}>
                       <div className="aspect-[4/3] overflow-hidden">
                         <img src={imageUrl} alt={project.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                       </div>
@@ -221,12 +221,12 @@ export const Home = () => {
           </FadeUp>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
             {([
-              { quote: "Maker's Lab transformed our vision into a digital masterpiece. Their attention to detail and elite motion design is unparalleled.", author: "Julian Sterling", role: "CEO, Nexus AI", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200" },
-              { quote: "The most professional and creative team we've ever worked with. They don't just build apps; they build experiences.", author: "Aria Chen", role: "Founder, Quantum Labs", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200" },
-              { quote: "Uncompromising precision and elite execution. Maker's Lab is the gold standard for high-end web development.", author: "Dorian Thorne", role: "Design Director, Stellar", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200" },
+              { quote: "Bright's architectural vision transformed a complex project into an elegant, scalable system. His attention to detail and commitment to execution excellence is what sets Maker's Lab apart.", author: "Bright Eduful", role: "Founder & Lead Engineer", img: "/team/bright-eduful.png" },
+              { quote: "Abena's strategic approach to growth marketing helped us reach the right audience at the right time. Her campaigns are data-driven yet creative — exactly what we needed.", author: "Abena Antwiwaa Quarshie", role: "Head of Marketing & Growth", img: "/team/abene.png" },
+              { quote: "Ralph's engineering discipline ensured our systems remained performant and maintainable through every iteration. His integrations were flawless and his code was pristine.", author: "Ralph Andy Menz", role: "Senior Software Developer", img: "/team/ralph-andy-menz.png" },
             ] as const).map((t, i) => (
               <FadeUp key={i} delay={i * 0.1}>
-                <div className={`group relative h-full p-7 sm:p-9 rounded-3xl border transition-all duration-500 hover:-translate-y-1 ${isDark ? "bg-white/[0.03] border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.06]" : "bg-white border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-xl hover:shadow-slate-200/50"}`}>
+                <div className={`group relative h-full p-7 sm:p-9 rounded-3xl border transition-all duration-500 hover:-translate-y-1 ${isDark ? "bg-white/[0.03] border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.06]" : "bg-white border-slate-200 hover:border-indigo-200/60 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60"}`}>
                   <div className="flex gap-1 mb-4">
                     {[...Array(5)].map((_, s) => (
                       <Star key={s} className="h-3.5 w-3.5 fill-indigo-500 text-indigo-500" />
@@ -279,3 +279,4 @@ export const Home = () => {
     </div>
   );
 };
+

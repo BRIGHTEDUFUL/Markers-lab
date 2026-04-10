@@ -100,3 +100,45 @@ export interface Analytics {
   statusCounts: { status: string; _count: number }[];
   categoryCounts: { category: string; _count: number }[];
 }
+
+export interface LoginAttempt {
+  id: string;
+  email: string;
+  user_id?: string;
+  success: boolean;
+  failed_reason?: string;
+  ip_address: string;
+  user_agent: string;
+  device_fingerprint?: string;
+  created_at: string;
+}
+
+export interface AuditLog {
+  id: string;
+  user_id?: string;
+  action: string;
+  table_name: string;
+  record_id?: string;
+  old_values?: Record<string, any>;
+  new_values?: Record<string, any>;
+  ip_address?: string;
+  user_agent?: string;
+  status: string;
+  error_message?: string;
+  created_at: string;
+}
+
+export interface SecurityStats {
+  loginAttempts: LoginAttempt[];
+  auditLogs: AuditLog[];
+  bruteForceAttempts: Array<{
+    ip: string;
+    count: number;
+    lastAttempt: string;
+  }>;
+  failedLoginsByEmail: Array<{
+    email: string;
+    count: number;
+    lastAttempt: string;
+  }>;
+}

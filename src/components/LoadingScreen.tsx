@@ -13,7 +13,7 @@ const LoadingScreen: React.FC = memo(() => {
   return (
     <div
       className={`fixed inset-0 z-[90] flex flex-col backdrop-blur-md transition-colors duration-700 ${
-        isDark ? "bg-[#030303]/80" : "bg-slate-50/80"
+        isDark ? "bg-[#030303]/80" : "bg-white/90"
       }`}
       role="status"
       aria-label="Loading"

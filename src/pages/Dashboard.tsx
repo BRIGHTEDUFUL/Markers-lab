@@ -195,6 +195,7 @@ export const Dashboard: React.FC = () => {
         category="Terminal / Project Management"
         title={`My <br /><span class='text-transparent' style='-webkit-text-stroke: 1px ${theme === 'light' ? '#0f172a' : 'rgba(255,255,255,0.3)'}'>Projects</span>`}
         subtitle="Track your creative requests, monitor development progress, and manage your digital assets in real-time."
+        details="View all active projects, track submission status, review approved assets, and communicate directly with the Maker's Lab team on your engagements."
       />
 
       <div className="max-w-7xl mx-auto relative z-10 py-10 sm:py-20 px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-20">
@@ -217,7 +218,7 @@ export const Dashboard: React.FC = () => {
         {/* Overview Stats & Chart */}
         {projects.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-            <div className={`lg:col-span-1 backdrop-blur-3xl border p-6 sm:p-10 rounded-2xl sm:rounded-[2.5rem] flex flex-col justify-center transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+            <div className={`lg:col-span-1 backdrop-blur-3xl border p-6 sm:p-10 rounded-2xl sm:rounded-[2.5rem] flex flex-col justify-center transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-indigo-100/40' : 'bg-white/5 border-white/10'}`}>
               <h3 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-6 sm:mb-10 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
                 <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-3 text-indigo-400" />
                 Status Overview
@@ -238,7 +239,7 @@ export const Dashboard: React.FC = () => {
                 })}
               </div>
             </div>
-            <div className={`lg:col-span-2 backdrop-blur-3xl border p-6 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+            <div className={`lg:col-span-2 backdrop-blur-3xl border p-6 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-indigo-100/40' : 'bg-white/5 border-white/10'}`}>
               <div className="h-[250px] sm:h-[350px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -284,9 +285,9 @@ export const Dashboard: React.FC = () => {
                 <button
                   onClick={() => setStatusFilter("ALL")}
                   className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all border ${
-                    statusFilter === "ALL" 
-                      ? theme === 'light' ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200" : "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]" 
-                      : theme === 'light' ? "bg-slate-100 text-slate-400 border-slate-200 hover:border-slate-300" : "bg-white/5 text-white/40 border-white/10 hover:border-white/20"
+                    statusFilter === "ALL"
+                      ? theme === 'light' ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200" : "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                      : theme === 'light' ? "bg-white text-slate-500 border-slate-300 hover:border-slate-400 hover:text-slate-700" : "bg-white/5 text-white/40 border-white/10 hover:border-white/20"
                   }`}
                 >
                   All
@@ -296,9 +297,9 @@ export const Dashboard: React.FC = () => {
                     key={status}
                     onClick={() => setStatusFilter(status)}
                     className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all border ${
-                      statusFilter === status 
+                      statusFilter === status
                         ? "bg-indigo-500 text-white border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.3)]"
-                        : theme === 'light' ? "bg-slate-100 text-slate-400 border-slate-200 hover:border-slate-300" : "bg-white/5 text-white/40 border-white/10 hover:border-white/20"
+                        : theme === 'light' ? "bg-white text-slate-500 border-slate-300 hover:border-slate-400 hover:text-slate-700" : "bg-white/5 text-white/40 border-white/10 hover:border-white/20"
                     }`}
                   >
                     {status.replace("_", " ")}
@@ -347,7 +348,7 @@ export const Dashboard: React.FC = () => {
 
         <div className="space-y-8">
           {projects.length === 0 ? (
-            <div className={`backdrop-blur-3xl border rounded-[3rem] p-24 text-center space-y-8 transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+            <div className={`backdrop-blur-3xl border rounded-[3rem] p-24 text-center space-y-8 transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-indigo-100/40' : 'bg-white/5 border-white/10'}`}>
               <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto border transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
                 <FileText className={`h-8 w-8 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/20'}`} />
               </div>
@@ -359,7 +360,7 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
           ) : filteredProjects.length === 0 ? (
-            <div className={`backdrop-blur-3xl border rounded-[3rem] p-24 text-center space-y-8 transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+            <div className={`backdrop-blur-3xl border rounded-[3rem] p-24 text-center space-y-8 transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-indigo-100/40' : 'bg-white/5 border-white/10'}`}>
               <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto border transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
                 <Search className={`h-8 w-8 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/20'}`} />
               </div>
@@ -381,7 +382,7 @@ export const Dashboard: React.FC = () => {
               {filteredProjects.map((project) => (
                 <TiltCard
                   key={project.id}
-                  className={`relative rounded-2xl sm:rounded-[2.5rem] border overflow-hidden transition-all duration-500 cursor-pointer group backdrop-blur-3xl ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50 hover:border-indigo-500/50' : CARD_STATUS_COLORS[project.status] || "bg-white/5 border-white/10"}`}
+                  className={`relative rounded-2xl sm:rounded-[2.5rem] border overflow-hidden transition-all duration-500 cursor-pointer group backdrop-blur-3xl ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-indigo-100/40 hover:border-indigo-500/50' : CARD_STATUS_COLORS[project.status] || "bg-white/5 border-white/10"}`}
                   onClick={() => setSelectedProject(project)}
                 >
                   {/* Status Accent Bar */}
@@ -442,7 +443,7 @@ export const Dashboard: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className={`backdrop-blur-3xl border rounded-[2.5rem] overflow-hidden transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+            <div className={`backdrop-blur-3xl border rounded-[2.5rem] overflow-hidden transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-indigo-100/40' : 'bg-white/5 border-white/10'}`}>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -693,3 +694,4 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
+

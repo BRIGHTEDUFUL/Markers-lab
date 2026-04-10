@@ -1,26 +1,47 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { insforge, insforgeConfigured } from "../lib/insforge-client";
-import { fetchSessionUser, userFromAuthUser } from "../lib/makers-data";
+import { fetchSessionUser, userFromAuthUser, trackPasswordResetRequest, completePasswordReset, trackLoginAttempt, logAuditEvent, markEmailAsVerified } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
-import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, Globe, Zap, Cpu, ArrowLeft } from "lucide-react";
+import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, Globe, Zap, Cpu, ArrowLeft, Eye, EyeOff, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
 import StarField from "../components/StarField";
+import { useTouchFeedback } from "../hooks/useTouchFeedback";
 
+/**
+ * Enhanced Auth Page with:
+ * - Google OAuth integration via Insforge
+ * - Advanced styling with animations
+ * - Password strength indicator
+ * - Real-time form validation
+ * - Enhanced accessibility
+ * - Mobile-optimized UX
+ */
 export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ initialMode = "login" }) => {
   const { theme } = useTheme();
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<"auth" | "verify">("auth");
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [step, setStep] = useState<"auth" | "verify" | "forgot" | "reset">("auth");
   const [otp, setOtp] = useState("");
+  const [resetToken, setResetToken] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
   const [pendingName, setPendingName] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState<"weak" | "fair" | "good" | "strong" | null>(null);
+  const [newPasswordStrength, setNewPasswordStrength] = useState<"weak" | "fair" | "good" | "strong" | null>(null);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const { login } = useAuth();
+  const { handlers: submitHandlers, isPressed: isSubmitPressed } = useTouchFeedback(80);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,7 +50,222 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
     else setMode("login");
   }, [location.pathname]);
 
+  // Detect if user is returning from password reset email link
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get("reset") === "true") {
+      setStep("reset");
+    }
+  }, [location.search]);
+
+  // Calculate password strength
+  useEffect(() => {
+    if (!password) {
+      setPasswordStrength(null);
+      return;
+    }
+    
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+    
+    if (strength <= 1) setPasswordStrength("weak");
+    else if (strength <= 2) setPasswordStrength("fair");
+    else if (strength <= 3) setPasswordStrength("good");
+    else setPasswordStrength("strong");
+  }, [password]);
+
+  // Calculate new password strength
+  useEffect(() => {
+    if (!newPassword) {
+      setNewPasswordStrength(null);
+      return;
+    }
+    
+    let strength = 0;
+    if (newPassword.length >= 8) strength++;
+    if (newPassword.length >= 12) strength++;
+    if (/[A-Z]/.test(newPassword)) strength++;
+    if (/[0-9]/.test(newPassword)) strength++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) strength++;
+    
+    if (strength <= 1) setNewPasswordStrength("weak");
+    else if (strength <= 2) setNewPasswordStrength("fair");
+    else if (strength <= 3) setNewPasswordStrength("good");
+    else setNewPasswordStrength("strong");
+  }, [newPassword]);
+
   const redirectTo = `${window.location.origin}/login`;
+
+  // Forgot Password Handler
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
+    try {
+      if (!insforgeConfigured) {
+        setError("Password reset not configured. Check environment variables.");
+        return;
+      }
+
+      const { data, error: resetErr } = await insforge.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login?reset=true`,
+      });
+
+      if (resetErr) {
+        setError(resetErr.message || "Failed to send reset email");
+        let userId = "";
+        try {
+          const { data: userSession } = await insforge.auth.getCurrentUser();
+          userId = userSession?.user?.id || "";
+        } catch {}
+        // Log failed reset attempt (for security audit)
+        await logAuditEvent("forgot_password_failed", "auth", null, {
+          userId,
+          status: "failed",
+          errorMessage: resetErr.message,
+        });
+        return;
+      }
+
+      if (data) {
+        setSuccessMessage(`Reset link sent to ${email}. Check your email for the recovery link.`);
+        setPendingEmail(email);
+        
+        // Track password reset request (for rate limiting & audit trail)
+        try {
+          const { data: userSession } = await insforge.auth.getCurrentUser();
+          if (userSession?.user?.id) {
+            await trackPasswordResetRequest(userSession.user.id, email, {
+              userAgent: navigator.userAgent,
+            });
+          }
+        } catch (e) {
+          console.warn("Could not track password reset:", e);
+        }
+        
+        setOtp("");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Error sending reset email");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reset Password Verification Handler
+  const handleResetPasswordVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      if (!newPassword || !confirmPassword) {
+        setError("Please fill in all fields");
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+
+      if (newPasswordStrength === "weak") {
+        setError("Password is too weak. Use at least 8 characters with uppercase, numbers, and symbols");
+        return;
+      }
+
+      if (!insforgeConfigured) return;
+
+      // Use Insforge's updateUser to set new password with the reset token
+      const { data, error: updateErr } = await insforge.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateErr) {
+        setError(updateErr.message || "Failed to reset password");
+        await logAuditEvent("password_reset_failed", "auth", null, {
+          status: "failed",
+          errorMessage: updateErr.message,
+        });
+        return;
+      }
+
+      // Get current user to log the event
+      let currentUser = null;
+      try {
+        const { data: userSession } = await insforge.auth.getCurrentUser();
+        currentUser = userSession?.user;
+      } catch {}
+
+      // Mark email as verified (user proved access to email)
+      if (currentUser?.id) {
+        await markEmailAsVerified(currentUser.id);
+      }
+
+      // Complete password reset tracking
+      if (currentUser?.id) {
+        await completePasswordReset(currentUser.id);
+        // Log successful reset
+        await logAuditEvent("password_reset_success", "auth", currentUser.id, {
+          userId: currentUser.id,
+          status: "success",
+        });
+      }
+
+      setSuccessMessage("Password reset successfully! Redirecting to login...");
+      setTimeout(() => {
+        setStep("auth");
+        setEmail("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setOtp("");
+        navigate("/login");
+      }, 2000);
+    } catch (err: any) {
+      setError(err?.message || "Error resetting password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Google OAuth handler
+  const handleGoogleAuth = async () => {
+    setGoogleLoading(true);
+    setError("");
+    try {
+      if (!insforgeConfigured) {
+        setError("OAuth not configured. Check environment variables.");
+        return;
+      }
+
+      // Use Insforge OAuth
+      const { data, error: oauthErr } = await insforge.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          scopes: ["profile", "email"],
+        },
+      });
+
+      if (oauthErr) {
+        setError(oauthErr.message || "Google authentication failed");
+        return;
+      }
+
+      // OAuth might redirect to provider, but if it returns data:
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      setError(err?.message || "Google authentication error");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,10 +279,22 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
       if (mode === "login") {
         const { data, error: signErr } = await insforge.auth.signInWithPassword({ email, password });
         if (signErr) {
+          // Track failed login attempt (for brute force detection)
+          await trackLoginAttempt(email, false, {
+            ipAddress: "browser", // In production, get real IP from backend
+            userAgent: navigator.userAgent,
+            failedReason: signErr.message,
+          });
           setError(signErr.message || "Login failed");
           return;
         }
         if (data?.user) {
+          // Track successful login
+          await trackLoginAttempt(email, true, {
+            userId: data.user.id,
+            userAgent: navigator.userAgent,
+          });
+          
           let u = await fetchSessionUser();
           if (!u) u = userFromAuthUser(data.user);
           if (u) login(u);
@@ -67,6 +315,11 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         redirectTo,
       });
       if (regErr) {
+        // Track failed registration
+        await logAuditEvent("registration_failed", "auth", null, {
+          status: "failed",
+          errorMessage: regErr.message,
+        });
         setError(regErr.message || "Registration failed");
         return;
       }
@@ -77,6 +330,12 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
       if (data?.accessToken && data.user) {
+        // Track successful registration
+        await logAuditEvent("registration_success", "auth", data.user.id, {
+          userId: data.user.id,
+          status: "success",
+        });
+        
         let u = await fetchSessionUser();
         if (!u) u = userFromAuthUser(data.user);
         if (u) login(u);
@@ -102,6 +361,11 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
       if (data?.user) {
+        // Mark email as verified in profiles table
+        if (data.user.id) {
+          await markEmailAsVerified(data.user.id);
+        }
+        
         let u = await fetchSessionUser();
         if (!u) u = userFromAuthUser(data.user);
         if (u) login(u);
@@ -221,7 +485,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className={`backdrop-blur-3xl p-6 sm:p-10 border rounded-2xl space-y-8 shadow-2xl transition-all duration-500 ${
                 theme === "light"
-                  ? "bg-white border-slate-100 shadow-slate-200/50"
+                  ? "bg-white border-slate-200 shadow-xl shadow-slate-200/50"
                   : "bg-white/[0.03] border-white/8 shadow-black/30"
               }`}
             >
@@ -290,6 +554,253 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     Back
                   </button>
                 </form>
+              ) : step === "forgot" ? (
+                <form className="space-y-6" onSubmit={handleForgotPassword}>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="bg-red-500/10 text-red-500 p-4 text-[10px] font-bold uppercase tracking-widest border border-red-500/20"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                  {successMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="bg-green-500/10 text-green-500 p-4 text-[10px] font-bold uppercase tracking-widest border border-green-500/20"
+                    >
+                      {successMessage}
+                    </motion.div>
+                  )}
+                  <p className={`text-sm ${theme === "light" ? "text-slate-600" : "text-white/60"}`}>
+                    Enter your email address and we'll send you a link to reset your password.
+                  </p>
+
+                  <motion.div
+                    className="group"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <label className={`block text-[10px] font-bold mb-2 uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-gray-500'}`}>Email Address</label>
+                    <div className="relative">
+                      <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${theme === 'light' ? 'text-slate-300 group-focus-within:text-slate-900' : 'text-gray-600 group-focus-within:text-white'}`} />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => setTouched({ ...touched, forgotEmail: true })}
+                        autoComplete="email"
+                        inputMode="email"
+                        className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-lg sm:rounded-none ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
+                        placeholder="USER@MAKERSLAB.COM"
+                        aria-label="Email address for password reset"
+                      />
+                    </div>
+                  </motion.div>
+
+                  <motion.button
+                    {...submitHandlers}
+                    type="submit"
+                    disabled={loading || !email || !!successMessage}
+                    whileTap={isSubmitPressed && !successMessage ? { scale: 0.95 } : { scale: 1 }}
+                    className={`group relative w-full flex justify-center py-5 px-4 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 disabled:opacity-50 rounded-lg sm:rounded-none overflow-hidden shadow-lg ${theme === 'light' ? 'bg-slate-900 text-white hover:shadow-xl shadow-slate-900/20 hover:shadow-indigo-600/30' : 'bg-white text-black hover:shadow-xl shadow-white/10 hover:shadow-indigo-500/30'}`}
+                  >
+                    <div className="absolute inset-0 w-0 bg-indigo-600 transition-all duration-500 group-hover:w-full" />
+                    {loading ? (
+                      <Loader2 className="animate-spin h-4 w-4 relative z-10" />
+                    ) : (
+                      <span className="flex items-center relative z-10">
+                        {successMessage ? "Link Sent ✓" : "Send Reset Link"} <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    )}
+                  </motion.button>
+
+                  {successMessage && (
+                    <motion.button
+                      type="button"
+                      onClick={() => setStep("reset")}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`group relative w-full flex justify-center py-4 px-4 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 rounded-lg sm:rounded-none border ${theme === 'light' ? 'border-indigo-500 text-indigo-600 hover:bg-indigo-50' : 'border-indigo-400 text-indigo-400 hover:bg-indigo-500/10'}`}
+                    >
+                      Continue to Reset Password
+                    </motion.button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("auth");
+                      setEmail("");
+                      setError("");
+                      setSuccessMessage("");
+                    }}
+                    className={`w-full text-[10px] font-bold uppercase tracking-widest transition-colors duration-300 py-2 ${theme === 'light' ? 'text-slate-500 hover:text-slate-900' : 'text-white/40 hover:text-white'}`}
+                  >
+                    ← Back to Login
+                  </button>
+                </form>
+              ) : step === "reset" ? (
+                <form className="space-y-6" onSubmit={handleResetPasswordVerify}>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="bg-red-500/10 text-red-500 p-4 text-[10px] font-bold uppercase tracking-widest border border-red-500/20"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                  {successMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="bg-green-500/10 text-green-500 p-4 text-[10px] font-bold uppercase tracking-widest border border-green-500/20"
+                    >
+                      {successMessage}
+                    </motion.div>
+                  )}
+
+                  <div className="space-y-4">
+                    <motion.div
+                      className="group"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <label className={`block text-[10px] font-bold mb-2 uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-gray-500'}`}>New Password</label>
+                      <div className="relative">
+                        <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${theme === 'light' ? 'text-slate-300 group-focus-within:text-slate-900' : 'text-gray-600 group-focus-within:text-white'}`} />
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          required
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          onBlur={() => setTouched({ ...touched, newPassword: true })}
+                          autoComplete="new-password"
+                          className={`block w-full pl-12 pr-12 py-4 border text-sm transition-all outline-none rounded-lg sm:rounded-none ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
+                          placeholder="New Password"
+                          aria-label="New password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className={`absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${theme === 'light' ? 'text-slate-400 hover:text-slate-600' : 'text-gray-500 hover:text-white'}`}
+                          aria-label={showNewPassword ? "Hide password" : "Show password"}
+                        >
+                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+
+                      {newPassword && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-3 space-y-2"
+                        >
+                          <div className={`h-1.5 w-full rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-white/10'}`}>
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{
+                                width: newPasswordStrength === "weak" ? "25%" : newPasswordStrength === "fair" ? "50%" : newPasswordStrength === "good" ? "75%" : "100%",
+                              }}
+                              className={`h-full rounded-full transition-all ${
+                                newPasswordStrength === "weak" ? "bg-red-500" :
+                                newPasswordStrength === "fair" ? "bg-yellow-500" :
+                                newPasswordStrength === "good" ? "bg-blue-500" :
+                                "bg-green-500"
+                              }`}
+                            />
+                          </div>
+                          <span className={`text-[9px] font-bold uppercase tracking-widest ${
+                            newPasswordStrength === "weak" ? "text-red-500" :
+                            newPasswordStrength === "fair" ? "text-yellow-500" :
+                            newPasswordStrength === "good" ? "text-blue-500" :
+                            "text-green-500"
+                          }`}>
+                            {newPasswordStrength?.toUpperCase()}
+                          </span>
+                        </motion.div>
+                      )}
+                    </motion.div>
+
+                    <motion.div
+                      className="group"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                    >
+                      <label className={`block text-[10px] font-bold mb-2 uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-gray-500'}`}>Confirm Password</label>
+                      <div className="relative">
+                        <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${theme === 'light' ? 'text-slate-300 group-focus-within:text-slate-900' : 'text-gray-600 group-focus-within:text-white'}`} />
+                        <input
+                          type="password"
+                          required
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          onBlur={() => setTouched({ ...touched, confirmPassword: true })}
+                          autoComplete="new-password"
+                          className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-lg sm:rounded-none ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
+                          placeholder="Confirm Password"
+                          aria-label="Confirm password"
+                        />
+                      </div>
+                      {touched.confirmPassword && confirmPassword && newPassword && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className={`text-[10px] font-bold uppercase tracking-widest mt-2 flex items-center gap-1 ${
+                            newPassword === confirmPassword ? 'text-green-500' : 'text-red-500'
+                          }`}
+                        >
+                          {newPassword === confirmPassword ? (
+                            <>
+                              <Check className="h-3.5 w-3.5" />
+                              Passwords match
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-3.5 w-3.5" />
+                              Passwords don't match
+                            </>
+                          )}
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  </div>
+
+                  <motion.button
+                    {...submitHandlers}
+                    type="submit"
+                    disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPasswordStrength === "weak"}
+                    whileTap={isSubmitPressed ? { scale: 0.95 } : { scale: 1 }}
+                    className={`group relative w-full flex justify-center py-5 px-4 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 disabled:opacity-50 rounded-lg sm:rounded-none overflow-hidden shadow-lg ${theme === 'light' ? 'bg-slate-900 text-white hover:shadow-xl shadow-slate-900/20 hover:shadow-indigo-600/30' : 'bg-white text-black hover:shadow-xl shadow-white/10 hover:shadow-indigo-500/30'}`}
+                  >
+                    <div className="absolute inset-0 w-0 bg-indigo-600 transition-all duration-500 group-hover:w-full" />
+                    {loading ? (
+                      <Loader2 className="animate-spin h-4 w-4 relative z-10" />
+                    ) : (
+                      <span className="flex items-center relative z-10">
+                        Reset Password <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    )}
+                  </motion.button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("auth");
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    }}
+                    className={`w-full text-[10px] font-bold uppercase tracking-widest transition-colors duration-300 py-2 ${theme === 'light' ? 'text-slate-500 hover:text-slate-900' : 'text-white/40 hover:text-white'}`}
+                  >
+                    ← Back to Login
+                  </button>
+                </form>
               ) : (
               <form className="space-y-6" onSubmit={handleSubmit}>
                 {error && (
@@ -304,7 +815,12 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                 
                 <div className="space-y-5">
                   {mode === "register" && (
-                    <div className="group">
+                    <motion.div 
+                      className="group"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                    >
                       <label className={`block text-[10px] font-bold mb-2 uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-gray-500'}`}>Full Name</label>
                       <div className="relative">
                         <UserIcon className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${theme === 'light' ? 'text-slate-300 group-focus-within:text-slate-900' : 'text-gray-600 group-focus-within:text-white'}`} />
@@ -313,16 +829,24 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
+                          onBlur={() => setTouched({ ...touched, name: true })}
                           autoComplete="name"
                           autoCapitalize="words"
                           enterKeyHint="next"
-                          className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-none ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
+                          className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-lg sm:rounded-none ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
                           placeholder="CREATIVE NAME"
+                          aria-label="Full name"
                         />
                       </div>
-                    </div>
+                    </motion.div>
                   )}
-                  <div className="group">
+
+                  <motion.div 
+                    className="group"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                  >
                     <label className={`block text-[10px] font-bold mb-2 uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-gray-500'}`}>Identity (Email)</label>
                     <div className="relative">
                       <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${theme === 'light' ? 'text-slate-300 group-focus-within:text-slate-900' : 'text-gray-600 group-focus-within:text-white'}`} />
@@ -331,37 +855,137 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => setTouched({ ...touched, email: true })}
                         autoComplete="email"
                         inputMode="email"
                         enterKeyHint="next"
-                        className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-none ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
+                        className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-lg sm:rounded-none ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
                         placeholder="USER@MAKERSLAB.COM"
+                        aria-label="Email address"
                       />
                     </div>
-                  </div>
-                  <div className="group">
+                    {touched.email && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={`text-[10px] font-bold uppercase tracking-widest mt-2 flex items-center gap-1 ${theme === 'light' ? 'text-green-600' : 'text-green-400'}`}
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        Valid email
+                      </motion.div>
+                    )}
+                  </motion.div>
+
+                  <motion.div 
+                    className="group"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
                     <label className={`block text-[10px] font-bold mb-2 uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-gray-500'}`}>Access Key (Password)</label>
                     <div className="relative">
                       <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${theme === 'light' ? 'text-slate-300 group-focus-within:text-slate-900' : 'text-gray-600 group-focus-within:text-white'}`} />
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        onBlur={() => setTouched({ ...touched, password: true })}
                         autoComplete={mode === "login" ? "current-password" : "new-password"}
                         enterKeyHint="done"
-                        className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-none ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
+                        className={`block w-full pl-12 pr-12 py-4 border text-sm transition-all outline-none rounded-lg sm:rounded-none ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
                         placeholder="••••••••"
+                        aria-label="Password"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={`absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${theme === 'light' ? 'text-slate-400 hover:text-slate-600' : 'text-gray-500 hover:text-white'}`}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
-                  </div>
+
+                    {/* Password strength indicator */}
+                    {mode === "register" && password && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-3 space-y-2"
+                      >
+                        <div className={`h-1.5 w-full rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-white/10'}`}>
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{
+                              width: passwordStrength === "weak" ? "25%" : passwordStrength === "fair" ? "50%" : passwordStrength === "good" ? "75%" : "100%",
+                            }}
+                            className={`h-full rounded-full transition-all ${
+                              passwordStrength === "weak" ? "bg-red-500" :
+                              passwordStrength === "fair" ? "bg-yellow-500" :
+                              passwordStrength === "good" ? "bg-blue-500" :
+                              "bg-green-500"
+                            }`}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[9px] font-bold uppercase tracking-widest ${
+                            passwordStrength === "weak" ? "text-red-500" :
+                            passwordStrength === "fair" ? "text-yellow-500" :
+                            passwordStrength === "good" ? "text-blue-500" :
+                            "text-green-500"
+                          }`}>
+                            Strength: {passwordStrength?.toUpperCase()}
+                          </span>
+                          <div className="flex gap-1">
+                            {[0, 1, 2, 3].map((i) => (
+                              <div
+                                key={i}
+                                className={`h-1 w-1 rounded-full transition-all ${
+                                  i < (passwordStrength === "weak" ? 1 : passwordStrength === "fair" ? 2 : passwordStrength === "good" ? 3 : 4)
+                                    ? "bg-indigo-500"
+                                    : theme === "light" ? "bg-slate-200" : "bg-white/10"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Forgot Password Link — login mode only */}
+                    {mode === "login" && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                        className="mt-2"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStep("forgot");
+                            setEmail("");
+                            setError("");
+                            setSuccessMessage("");
+                          }}
+                          className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${theme === 'light' ? 'text-slate-500 hover:text-indigo-600' : 'text-white/40 hover:text-indigo-400'}`}
+                        >
+                          Forgot Password?
+                        </button>
+                      </motion.div>
+                    )}
+                  </motion.div>
                 </div>
 
+                {/* Main action buttons */}
                 <div className="space-y-4">
-                  <button
+                  <motion.button
+                    {...submitHandlers}
                     type="submit"
                     disabled={loading}
-                    className={`group relative w-full flex justify-center py-5 px-4 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 disabled:opacity-50 rounded-none overflow-hidden ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600' : 'bg-white text-black hover:bg-indigo-500 hover:text-white'}`}
+                    whileTap={isSubmitPressed ? { scale: 0.95 } : { scale: 1 }}
+                    className={`group relative w-full flex justify-center py-5 px-4 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 disabled:opacity-50 rounded-lg sm:rounded-none overflow-hidden shadow-lg ${theme === 'light' ? 'bg-slate-900 text-white hover:shadow-xl shadow-slate-900/20 hover:shadow-indigo-600/30' : 'bg-white text-black hover:shadow-xl shadow-white/10 hover:shadow-indigo-500/30'}`}
                   >
                     <div className="absolute inset-0 w-0 bg-indigo-600 transition-all duration-500 group-hover:w-full" />
                     {loading ? (
@@ -371,8 +995,58 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                         {mode === "login" ? "Initiate Session" : "Create Account"} <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                       </span>
                     )}
-                  </button>
+                  </motion.button>
 
+                  {/* Divider */}
+                  <div className={`flex items-center gap-3 ${theme === 'light' ? 'text-slate-300' : 'text-white/20'}`}>
+                    <div className="flex-1 h-px bg-current" />
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Or continue with</span>
+                    <div className="flex-1 h-px bg-current" />
+                  </div>
+
+                  {/* Google OAuth Button */}
+                  <motion.button
+                    type="button"
+                    onClick={handleGoogleAuth}
+                    disabled={googleLoading}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`w-full flex items-center justify-center gap-3 py-4 px-4 text-[10px] font-bold uppercase tracking-widest rounded-lg sm:rounded-none border transition-all duration-300 disabled:opacity-50 ${
+                      theme === 'light'
+                        ? 'bg-white border-slate-200 text-slate-900 hover:bg-slate-50 hover:border-slate-300'
+                        : 'bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20'
+                    }`}
+                    aria-label="Sign in with Google"
+                  >
+                    {googleLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        {/* Google Icon */}
+                        <svg className="h-4 w-4" viewBox="0 0 24 24">
+                          <path
+                            fill="currentColor"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                          />
+                          <path
+                            fill="currentColor"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          />
+                          <path
+                            fill="currentColor"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                          />
+                          <path
+                            fill="currentColor"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                          />
+                        </svg>
+                        <span>Google</span>
+                      </>
+                    )}
+                  </motion.button>
                 </div>
               </form>
               )}

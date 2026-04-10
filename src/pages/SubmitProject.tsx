@@ -307,6 +307,7 @@ export const SubmitProject: React.FC = () => {
         category="Project Submission Terminal"
         title={`Launch Your <br /><span class='text-transparent' style='-webkit-text-stroke: 1px ${theme === "light" ? "#0f172a" : "rgba(255,255,255,0.35)"}'>Vision</span>`}
         subtitle="Provide the technical specifications for your next digital masterpiece. Our team will analyze your requirements and architect a bespoke solution."
+        details="Share your project goals, budget, timeline, and scope. Include as much detail as possible about your vision, and we'll respond with a comprehensive technical proposal within 48 hours."
       />
 
       <div className="max-w-7xl mx-auto relative z-10 py-6 sm:py-20 px-4 sm:px-6 lg:px-8">
@@ -343,7 +344,7 @@ export const SubmitProject: React.FC = () => {
             >
               {/* Left Column: Core Specs */}
               <div className="lg:col-span-7 space-y-6 sm:space-y-10">
-                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
                   <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-10 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
                     <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
                     Core Specifications
@@ -359,7 +360,7 @@ export const SubmitProject: React.FC = () => {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="e.g., Quantum Commerce Platform"
-                        className={`w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-300' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
+                        className={`w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
                       />
                     </div>
 
@@ -369,7 +370,7 @@ export const SubmitProject: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                        className={`w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium flex items-center justify-between transition-all duration-300 ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-white/5 border-white/10 text-white'}`}
+                        className={`w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium flex items-center justify-between transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500' : 'bg-white/5 border-white/10 text-white'}`}
                       >
                         <span className={category ? "" : theme === 'light' ? "text-slate-300" : "text-white/10"}>
                           {category || "Select Project Category"}
@@ -430,7 +431,7 @@ export const SubmitProject: React.FC = () => {
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Describe your vision, technical requirements, and goals..."
-                            className={`w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 resize-none ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
+                            className={`w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 resize-none ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
                           />
                         ) : (
                           <div className={`w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border min-h-[200px] sm:min-h-[260px] prose prose-sm max-w-none transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200 prose-slate' : 'bg-white/2 border-white/10 prose-invert'}`}>
@@ -486,7 +487,7 @@ export const SubmitProject: React.FC = () => {
                           value={repoUrl}
                           onChange={(e) => setRepoUrl(e.target.value)}
                           placeholder="https://github.com/your-username/project"
-                          className={`w-full pl-11 sm:pl-16 pr-5 sm:pr-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
+                          className={`w-full pl-11 sm:pl-16 pr-5 sm:pr-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
                         />
                       </div>
                     </div>
@@ -542,7 +543,7 @@ export const SubmitProject: React.FC = () => {
                   </div>
                 </div>
 
-                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
                   <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-10 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
                     <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
                     Logistics & Assets
@@ -796,8 +797,8 @@ export const SubmitProject: React.FC = () => {
                     onClick={handleSubmit}
                     disabled={loading}
                     className={`w-full py-6 sm:py-8 rounded-2xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] transition-all duration-500 relative overflow-hidden group ${
-                      theme === 'light' 
-                        ? "bg-slate-900 text-white hover:bg-indigo-600 shadow-2xl shadow-slate-200" 
+                      theme === 'light'
+                        ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xl shadow-indigo-200"
                         : "bg-white text-black hover:bg-indigo-500 hover:text-white shadow-[0_0_50px_rgba(255,255,255,0.1)]"
                     }`}
                   >

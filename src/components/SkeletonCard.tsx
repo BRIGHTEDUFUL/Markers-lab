@@ -15,8 +15,8 @@ const shimmer = "animate-pulse";
 
 const ProjectSkeleton: React.FC<{ theme: string }> = ({ theme }) => (
   <div
-    className={`rounded-2xl border overflow-hidden ${
-      theme === "light" ? "bg-white border-slate-200" : "bg-white/5 border-white/10"
+    className={`rounded-2xl border overflow-hidden shadow-sm ${
+      theme === "light" ? "bg-white border-slate-200 shadow-slate-200/40" : "bg-white/5 border-white/10"
     }`}
   >
     {/* Status bar */}

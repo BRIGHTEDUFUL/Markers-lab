@@ -58,7 +58,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const root = window.document.documentElement;
     const isDark = theme === 'dark';
     root.style.setProperty('--nav-bg-rgb', isDark ? '5, 5, 5' : '255, 255, 255');
-    root.style.setProperty('--nav-border-rgb', isDark ? '255, 255, 255' : '0, 0, 0');
+    root.style.setProperty('--nav-border-rgb', isDark ? '255, 255, 255' : '15, 23, 42');
   }, [theme]);
   
   const navPadding = useTransform(
@@ -129,7 +129,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             exit={{ opacity: 0, y: 20, scale: 0.8 }}
             onClick={scrollToTop}
             aria-label="Back to top"
-            className={`fixed bottom-24 lg:bottom-8 right-4 lg:right-8 z-[100] p-4 rounded-2xl shadow-2xl backdrop-blur-xl border transition-all duration-300 group ${theme === 'light' ? 'bg-white/80 border-slate-200 text-slate-900 hover:bg-slate-900 hover:text-white' : 'bg-white/5 border-white/10 text-white hover:bg-white hover:text-black'}`}
+            className={`fixed bottom-24 lg:bottom-8 right-4 lg:right-8 z-[100] p-4 rounded-2xl shadow-xl backdrop-blur-xl border transition-all duration-300 group ${theme === 'light' ? 'bg-white/90 border-slate-200 shadow-slate-200/60 text-slate-900 hover:bg-slate-900 hover:text-white hover:border-slate-900' : 'bg-white/5 border-white/10 text-white hover:bg-white hover:text-black'}`}
           >
             <ChevronRight className="h-6 w-6 -rotate-90 group-hover:-translate-y-1 transition-transform" />
           </motion.button>
@@ -154,8 +154,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <motion.div 
                   whileHover={{ rotate: 15, scale: 1.1 }}
                   className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all duration-500 shadow-lg relative overflow-hidden ${
-                    theme === 'light' 
-                      ? 'bg-slate-900 shadow-slate-200' 
+                    theme === 'light'
+                      ? 'bg-slate-900 shadow-slate-300/50'
                       : 'bg-white shadow-white/5'
                   }`}
                 >
@@ -206,9 +206,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleTheme}
-                className={`relative p-2.5 rounded-xl border transition-all duration-500 group overflow-hidden ${
+                className={`relative p-2.5 rounded-xl border transition-all duration-500 group overflow-hidden shadow-sm ${
                   theme === 'light'
-                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
                     : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
                 }`}
                 title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
@@ -293,8 +293,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={toggleTheme}
-                className={`p-2.5 rounded-xl border focus:outline-none transition-all duration-500 relative overflow-hidden ${
-                  theme === 'light' ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-muted-foreground'
+                className={`p-2.5 rounded-xl border focus:outline-none transition-all duration-500 relative overflow-hidden shadow-sm ${
+                  theme === 'light' ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' : 'bg-white/5 border-white/10 text-muted-foreground'
                 }`}
               >
                 <div className="relative z-10 flex items-center justify-center w-5 h-5">
@@ -326,8 +326,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`p-2 sm:p-3 rounded-full border focus:outline-none transition-all ${
-                  theme === 'light' ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-muted-foreground'
+                className={`p-2 sm:p-3 rounded-full border focus:outline-none transition-all shadow-sm ${
+                  theme === 'light' ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' : 'bg-white/5 border-white/10 text-muted-foreground'
                 }`}
               >
                 {isMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
@@ -351,8 +351,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className={`fixed top-0 right-0 bottom-0 w-[85%] max-w-sm border-l z-[110] p-8 flex flex-col ${
-                  theme === 'light' ? 'bg-white border-slate-200' : 'bg-card border-border'
+                className={`fixed top-0 right-0 bottom-0 w-[85%] max-w-sm border-l z-[110] p-8 flex flex-col shadow-2xl ${
+                  theme === 'light' ? 'bg-white border-slate-200 shadow-slate-200/60' : 'bg-card border-border'
                 }`}
               >
                 <div className="flex justify-between items-center mb-12">
@@ -378,10 +378,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       <Link
                         to={item.path}
                         onClick={() => setIsMenuOpen(false)}
-                        className={`group flex items-center justify-between p-5 rounded-2xl transition-all ${
+                        className={`group flex items-center justify-between p-5 rounded-2xl transition-all shadow-sm ${
                           location.pathname === item.path
-                            ? theme === 'light' ? "bg-indigo-50 border border-indigo-100 text-indigo-600" : "bg-indigo-500/10 border border-indigo-500/20 text-foreground"
-                            : theme === 'light' ? "text-slate-600 hover:bg-slate-50 hover:text-slate-900" : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                            ? theme === 'light' ? "bg-indigo-50 border border-indigo-200 text-indigo-600 shadow-sm shadow-indigo-100/50" : "bg-indigo-500/10 border border-indigo-500/20 text-foreground"
+                            : theme === 'light' ? "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:shadow-sm" : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
                         }`}
                       >
                         <div className="flex items-center space-x-5">
@@ -400,8 +400,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       <Link
                         to="/profile"
                         onClick={() => setIsMenuOpen(false)}
-                        className={`flex items-center space-x-4 p-4 rounded-2xl border ${
-                          theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-900' : 'bg-foreground/5 border-border text-foreground'
+                        className={`flex items-center space-x-4 p-4 rounded-2xl border shadow-sm ${
+                          theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 shadow-slate-100/50' : 'bg-foreground/5 border-border text-foreground'
                         }`}
                       >
                         {user.avatarUrl ? (
@@ -453,7 +453,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <PWAInstallPrompt />
       <BottomNav />
 
-      <footer className={`relative z-[1] border-t py-12 sm:py-24 backdrop-blur-md ${theme === 'light' ? 'border-slate-200/80 bg-slate-50/40' : 'border-border/80 bg-card/45'}`}>
+      <footer className={`relative z-[1] border-t py-12 sm:py-24 backdrop-blur-md ${theme === 'light' ? 'border-slate-200 bg-white/80' : 'border-border/80 bg-card/45'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 mb-16">
             <div className="col-span-1 sm:col-span-2 space-y-6">

@@ -119,6 +119,7 @@ export const PublicGallery: React.FC = () => {
       <PageHero 
         title={`Digital<br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${theme === 'light' ? '#0f172a' : 'white'}'>Masterpieces</span>`}
         subtitle="A curated showcase of our most ambitious projects, technical breakthroughs, and creative experiments."
+        details="From full-stack web applications to mobile solutions, discover how we transform ideas into industry-leading digital products that drive real business impact."
         category="The Exhibition"
       />
 
@@ -211,9 +212,9 @@ export const PublicGallery: React.FC = () => {
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`px-8 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-500 border relative overflow-hidden group ${
-                  activeCategory === cat 
-                  ? theme === 'light' ? "bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-200" : "bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.2)]" 
-                  : theme === 'light' ? "bg-white text-slate-400 border-slate-200 hover:border-slate-400 hover:text-slate-900" : "bg-white/5 text-white/40 border-white/10 hover:border-white/30 hover:text-white"
+                  activeCategory === cat
+                  ? theme === 'light' ? "bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-200" : "bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                  : theme === 'light' ? "bg-white text-slate-500 border-slate-300 hover:border-slate-400 hover:text-slate-900" : "bg-white/5 text-white/40 border-white/10 hover:border-white/30 hover:text-white"
                 }`}
               >
                 <span className="relative z-10">{cat.replace("_", " ")}</span>
@@ -245,7 +246,7 @@ export const PublicGallery: React.FC = () => {
                   transition={{ delay: i * 0.1, duration: 0.8 }}
                 >
                   <TiltCard
-                    className={`group relative overflow-hidden border rounded-[3rem] p-5 cursor-pointer transition-all duration-700 ${theme === 'light' ? 'bg-white border-slate-200 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)]' : 'bg-white/2 border-white/5 hover:border-white/20'}`}
+                    className={`group relative overflow-hidden border rounded-[3rem] p-5 cursor-pointer transition-all duration-700 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60' : 'bg-white/2 border-white/5 hover:border-white/20'}`}
                     onClick={() => setSelectedProject(project)}
                   >
                     <div className={`aspect-[16/10] relative overflow-hidden rounded-[2.5rem] ${theme === 'light' ? 'bg-slate-100' : 'bg-[#0a0a0a]'}`}>
@@ -376,7 +377,7 @@ export const PublicGallery: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.15, duration: 0.8 }}
-                  className={`group backdrop-blur-3xl border p-14 rounded-[3rem] space-y-12 hover:border-indigo-500/40 transition-all duration-700 relative overflow-hidden ${theme === 'light' ? 'bg-white border-slate-200 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)]' : 'bg-white/2 border-white/5'}`}
+                  className={`group backdrop-blur-3xl border p-14 rounded-[3rem] space-y-12 hover:border-indigo-500/40 transition-all duration-700 relative overflow-hidden ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/2 border-white/5'}`}
                 >
                   <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
                     <div className="h-2 w-2 rounded-full bg-indigo-500 animate-ping" />

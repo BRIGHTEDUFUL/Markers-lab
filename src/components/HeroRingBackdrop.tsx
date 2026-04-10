@@ -4,15 +4,39 @@ import { useHeroRingSrc } from "../hooks/useHeroRingSrc";
 
 type Theme = "light" | "dark";
 
+/**
+ * HeroRingBackdrop Component Props
+ * 
+ * Variants:
+ * - "global": Fixed full-viewport backdrop (z-0), used once in Layout
+ *   Position: center (top-1/2)
+ * - "page": Positioned hero section backdrop for inner pages
+ *   Position: top quarter (top-1/4) of section
+ * - "hero": General hero variant
+ * - "authPanel": Full-cover auth panel variant
+ * - "authAmbient": Subtle auth ambient variant
+ */
 type Props = {
+  /** Light or dark theme */
   theme: Theme;
+  /** Additional CSS classes */
   className?: string;
-  /** `global` = fixed full-viewport layer (Layout). Others = in-page heroes. */
+  /** Positioning variant - affects how the ring image is positioned */
   variant?: "hero" | "page" | "authPanel" | "authAmbient" | "global";
 };
 
 /**
- * Golden ring hero art: dark mode = cinematic full-bleed; light mode = screen-blend on cool paper.
+ * HeroRingBackdrop — Cinematic golden ring backdrop
+ * 
+ * Provides:
+ * - Theme-aware rendering (dark mode = cinematic, light mode = screen-blend)
+ * - Responsive sizing and positioning
+ * - Performance-optimized animations (respects prefers-reduced-motion)
+ * - Multiple variants for different use cases
+ * 
+ * Usage:
+ * - Global: <HeroRingBackdrop theme={theme} variant="global" />
+ * - Page: <HeroRingBackdrop theme={theme} variant="page" />
  */
 const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "hero" }) => {
   const { src, onImgError } = useHeroRingSrc();
@@ -90,7 +114,7 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
           className={
             isGlobal
               ? "absolute left-1/2 top-1/2 aspect-square w-[min(81vmin,100vw,97dvh)] -translate-x-1/2 -translate-y-1/2 sm:w-[min(74vmin,100vw,94dvh)] lg:w-[min(67vmin,736px,90dvh)]"
-              : "absolute left-1/2 top-1/2 h-[min(220vw,240vh)] w-[min(220vw,240vh)] -translate-x-1/2 -translate-y-1/2 sm:h-[min(180vw,200vh)] sm:w-[min(180vw,200vh)] lg:h-[min(160vw,180vh)] lg:w-[min(160vw,180vh)]"
+              : "absolute left-1/2 top-1/4 h-[min(220vw,240vh)] w-[min(220vw,240vh)] -translate-x-1/2 -translate-y-1/2 sm:h-[min(180vw,200vh)] sm:w-[min(180vw,200vh)] lg:h-[min(160vw,180vh)] lg:w-[min(160vw,180vh)]"
           }
           animate={imgMotion || undefined}
           transition={imgMotion ? transition : undefined}

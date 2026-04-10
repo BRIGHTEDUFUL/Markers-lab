@@ -593,6 +593,280 @@ export async function adminDeleteUserProfile(userId: string) {
   if (error) throw error;
 }
 
+// ============================================================
+// CRITICAL: PASSWORD RESET & SECURITY FUNCTIONS (Phase 1)
+// ============================================================
+
+/**
+ * Track a password reset request (initiated by resetPasswordForEmail)
+ * Call this after Insforge sends the reset email
+ */
+export async function trackPasswordResetRequest(
+  userId: string,
+  email: string,
+  options?: { ipAddress?: string; userAgent?: string }
+) {
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  const { error } = await insforge.database.from("password_resets").insert([
+    {
+      user_id: userId,
+      email,
+      token_hash: `reset_${userId}_${Date.now()}`, // Placeholder - in production, use actual token from Insforge
+      used: false,
+      expires_at: expiresAt.toISOString(),
+      ip_address: options?.ipAddress,
+      user_agent: options?.userAgent,
+    },
+  ]);
+  if (error) {
+    console.warn("[makers-data] password reset tracking failed:", error.message);
+    // Don't throw - this is audit-only and shouldn't block user
+  }
+}
+
+/**
+ * Mark a password reset as completed
+ * Call this after user successfully resets their password
+ */
+export async function completePasswordReset(userId: string) {
+  const { error } = await insforge.database
+    .from("password_resets")
+    .update({ used: true, completed_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("used", false)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  
+  if (error) {
+    console.warn("[makers-data] password reset completion failed:", error.message);
+  }
+}
+
+/**
+ * Get recent password reset attempts for a user (rate limiting check)
+ */
+export async function getRecentPasswordResets(userId: string, minutes: number = 60) {
+  const cutoff = new Date(Date.now() - minutes * 60 * 1000).toISOString();
+  const { data, error } = await insforge.database
+    .from("password_resets")
+    .select("id")
+    .eq("user_id", userId)
+    .gte("created_at", cutoff)
+    .order("created_at", { ascending: false });
+  
+  if (error) {
+    console.warn("[makers-data] password reset history fetch failed:", error.message);
+    return [];
+  }
+  
+  return (data || []) as { id: string }[];
+}
+
+/**
+ * Track a login attempt (success or failure)
+ */
+export async function trackLoginAttempt(
+  email: string,
+  success: boolean,
+  options?: {
+    userId?: string;
+    ipAddress?: string;
+    userAgent?: string;
+    failedReason?: string;
+    deviceFingerprint?: string;
+  }
+) {
+  const { error } = await insforge.database.from("login_attempts").insert([
+    {
+      email,
+      user_id: options?.userId,
+      success,
+      failed_reason: options?.failedReason,
+      ip_address: options?.ipAddress || "unknown",
+      user_agent: options?.userAgent,
+      device_fingerprint: options?.deviceFingerprint,
+    },
+  ]);
+  
+  if (error) {
+    console.warn("[makers-data] login attempt tracking failed:", error.message);
+  }
+}
+
+/**
+ * Check for brute force attacks: count failed login attempts from an IP
+ */
+export async function checkBruteForceAttempts(ipAddress: string, minutes: number = 15) {
+  const cutoff = new Date(Date.now() - minutes * 60 * 1000).toISOString();
+  const { data, error } = await insforge.database
+    .from("login_attempts")
+    .select("id")
+    .eq("ip_address", ipAddress)
+    .eq("success", false)
+    .gte("created_at", cutoff);
+  
+  if (error) {
+    console.warn("[makers-data] brute force check failed:", error.message);
+    return 0;
+  }
+  
+  return (data || []).length;
+}
+
+/**
+ * Log an audit event (admin updates, critical actions)
+ */
+export async function logAuditEvent(
+  action: string,
+  tableName: string,
+  recordId: string | null = null,
+  options?: {
+    userId?: string;
+    oldValues?: Record<string, unknown>;
+    newValues?: Record<string, unknown>;
+    ipAddress?: string;
+    userAgent?: string;
+    status?: string;
+    errorMessage?: string;
+  }
+) {
+  const { error } = await insforge.database.from("audit_logs").insert([
+    {
+      user_id: options?.userId,
+      action,
+      table_name: tableName,
+      record_id: recordId,
+      old_values: options?.oldValues || null,
+      new_values: options?.newValues || null,
+      ip_address: options?.ipAddress,
+      user_agent: options?.userAgent,
+      status: options?.status || "success",
+      error_message: options?.errorMessage || null,
+    },
+  ]);
+  
+  if (error) {
+    console.warn("[makers-data] audit logging failed:", error.message);
+  }
+}
+
+/**
+ * Get user settings (theme, preferences, 2FA status)
+ */
+export async function fetchUserSettings(userId: string) {
+  const { data, error } = await insforge.database
+    .from("user_settings")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  
+  if (error) throw error;
+  
+  // Return default settings if not found
+  if (!data) {
+    return {
+      userId,
+      theme: "dark",
+      emailNotifications: true,
+      marketingEmails: true,
+      twoFactorEnabled: false,
+      twoFactorMethod: null,
+      privacyLevel: "private",
+      bio: null,
+    };
+  }
+  
+  return {
+    userId: (data as any).user_id,
+    theme: (data as any).theme || "dark",
+    emailNotifications: (data as any).email_notifications ?? true,
+    marketingEmails: (data as any).marketing_emails ?? true,
+    twoFactorEnabled: (data as any).two_factor_enabled ?? false,
+    twoFactorMethod: (data as any).two_factor_method,
+    privacyLevel: (data as any).privacy_level || "private",
+    bio: (data as any).bio,
+  };
+}
+
+/**
+ * Update user settings
+ */
+export async function updateUserSettings(userId: string, patch: Record<string, unknown>) {
+  const updates: Record<string, unknown> = {};
+  
+  if (patch.theme !== undefined) updates.theme = patch.theme;
+  if (patch.emailNotifications !== undefined) updates.email_notifications = patch.emailNotifications;
+  if (patch.marketingEmails !== undefined) updates.marketing_emails = patch.marketingEmails;
+  if (patch.twoFactorEnabled !== undefined) updates.two_factor_enabled = patch.twoFactorEnabled;
+  if (patch.twoFactorMethod !== undefined) updates.two_factor_method = patch.twoFactorMethod;
+  if (patch.privacyLevel !== undefined) updates.privacy_level = patch.privacyLevel;
+  if (patch.bio !== undefined) updates.bio = patch.bio;
+  
+  if (!Object.keys(updates).length) return; // Nothing to update
+  
+  updates.updated_at = new Date().toISOString();
+  
+  const { data, error } = await insforge.database
+    .from("user_settings")
+    .update(updates)
+    .eq("user_id", userId)
+    .select()
+    .maybeSingle();
+  
+  // If no existing settings, create them
+  if (!data && !error) {
+    const { error: insErr } = await insforge.database
+      .from("user_settings")
+      .insert([{ user_id: userId, ...updates }]);
+    if (insErr) throw insErr;
+  } else if (error) {
+    throw error;
+  }
+}
+
+/**
+ * Mark email as verified in profiles table
+ */
+export async function markEmailAsVerified(userId: string) {
+  const { error } = await insforge.database
+    .from("profiles")
+    .update({ email_verified: true })
+    .eq("id", userId);
+  
+  if (error) throw error;
+}
+
+/**
+ * Get admin: recent login attempts (security monitoring)
+ */
+export async function adminGetRecentLoginAttempts(limit: number = 100) {
+  const { data, error } = await insforge.database
+    .from("login_attempts")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  
+  if (error) throw error;
+  return (data || []) as any[];
+}
+
+/**
+ * Get admin: audit logs for review
+ */
+export async function adminGetAuditLogs(options?: { limit?: number; action?: string; userId?: string }) {
+  let q = insforge.database.from("audit_logs").select("*");
+  
+  if (options?.action) q = q.eq("action", options.action);
+  if (options?.userId) q = q.eq("user_id", options.userId);
+  
+  const { data, error } = await q
+    .order("created_at", { ascending: false })
+    .limit(options?.limit || 500);
+  
+  if (error) throw error;
+  return (data || []) as any[];
+}
+
 export async function fetchAdminAnalytics(): Promise<Analytics> {
   const { data: projects, error: e1 } = await insforge.database.from("projects").select("status,category");
   if (e1) throw e1;

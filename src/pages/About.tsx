@@ -47,6 +47,7 @@ export const About: React.FC = () => {
       <PageHero
         title={`The People Behind <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${isDark ? "white" : "#0f172a"}'>Maker's Lab</span>`}
         subtitle="A focused, senior team that blends engineering rigour with brand craft. We don't outsource. We don't over-hire. We deliver."
+        details="Meet the architects, engineers, and strategists who collaborate directly with you from initial vision through final deployment. Your success is our standard."
         category="The Studio"
       />
 
@@ -113,7 +114,7 @@ export const About: React.FC = () => {
                 </div>
 
                 {/* Info card — overlaps photo */}
-                <div className={`relative z-[2] -mt-6 mx-3 rounded-2xl border p-6 shadow-2xl backdrop-blur-2xl sm:mx-4 sm:p-7 transition-all duration-500 group-hover:shadow-indigo-500/10 ${isDark ? "border-white/[0.1] bg-[#0a0a0f]/80 shadow-black/60" : "border-slate-200/90 bg-white/90 shadow-slate-900/10"}`}>
+                <div className={`relative z-[2] -mt-6 mx-3 rounded-2xl border p-6 shadow-xl backdrop-blur-2xl sm:mx-4 sm:p-7 transition-all duration-500 group-hover:shadow-indigo-500/10 ${isDark ? "border-white/[0.1] bg-[#0a0a0f]/80 shadow-black/60" : "border-slate-200/90 bg-white/90 shadow-slate-200/50"}`}>
                   <h3 className={`font-display text-xl uppercase tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>{member.name}</h3>
                   <p className={`mt-1 font-mono text-[9px] font-bold uppercase tracking-[0.25em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>{member.tag}</p>
                   <div className={`mt-1 flex items-center gap-1.5 ${isDark ? "text-white/30" : "text-slate-400"}`}>
@@ -188,7 +189,7 @@ export const About: React.FC = () => {
               { title: "Senior Accountability", desc: "There are no hand-offs to junior teams here. The people you meet are the people who build. That accountability is non-negotiable.", icon: Users },
             ].map((v, i) => (
               <motion.div key={v.title} initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-                className={`group relative overflow-hidden rounded-2xl border p-8 transition-all duration-500 md:p-9 ${isDark ? "border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-transparent hover:border-indigo-500/30 hover:shadow-[0_24px_80px_-30px_rgba(99,102,241,0.15)]" : "border-slate-200/90 bg-gradient-to-b from-white/90 to-slate-50/50 hover:border-indigo-300/60 hover:shadow-[0_24px_60px_-24px_rgba(99,102,241,0.18)]"}`}>
+                className={`group relative overflow-hidden rounded-2xl border p-8 transition-all duration-500 md:p-9 ${isDark ? "border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-transparent hover:border-indigo-500/30 hover:shadow-[0_24px_80px_-30px_rgba(99,102,241,0.15)]" : "border-slate-200/90 bg-gradient-to-b from-white/90 to-slate-50/50 hover:border-indigo-300/60 hover:shadow-lg hover:shadow-indigo-100/50"}`}>
                 <div className={`mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-transform duration-500 group-hover:scale-105 ${isDark ? "from-indigo-500/25 to-violet-600/10 text-indigo-300 shadow-indigo-900/40" : "from-indigo-500/15 to-violet-500/10 text-indigo-600 shadow-indigo-500/10"}`}>
                   <v.icon className="h-7 w-7" />
                 </div>

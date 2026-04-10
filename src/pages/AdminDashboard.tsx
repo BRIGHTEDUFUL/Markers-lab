@@ -23,7 +23,7 @@ import {
   Search, Filter, MoreVertical, Edit2, Trash2, CheckCircle, XCircle, 
   Clock, AlertCircle, Download, ExternalLink, Star, MessageSquare, 
   Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, User as UserIcon, Calendar, Tag, 
-  DollarSign, Clock as ClockIcon, FileText, BarChart3, Users, Briefcase, Image, Rocket
+  DollarSign, Clock as ClockIcon, FileText, BarChart3, Users, Briefcase, Image, Rocket, Shield
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { format } from "date-fns";
@@ -36,6 +36,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Legend, CartesianGrid 
 } from "recharts";
 import PageHero from "../components/PageHero";
+import { SecurityMonitoring } from "../components/SecurityMonitoring";
 import { Project, User, Analytics, Testimonial } from "../types";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -71,7 +72,7 @@ export const AdminDashboard: React.FC = () => {
   const [previewProject, setPreviewProject] = useState<Project | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [adminNote, setAdminNote] = useState("");
-  const [view, setView] = useState<"OVERVIEW" | "SUBMISSIONS" | "GALLERY" | "USERS" | "TESTIMONIALS">("OVERVIEW");
+  const [view, setView] = useState<"OVERVIEW" | "SUBMISSIONS" | "GALLERY" | "USERS" | "TESTIMONIALS" | "SECURITY">("OVERVIEW");
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [bulkStatus, setBulkStatus] = useState("");
   const [confirmModal, setConfirmModal] = useState<{
@@ -463,6 +464,7 @@ export const AdminDashboard: React.FC = () => {
       <PageHero 
         title={`Admin <br /><span class='text-transparent italic' style='-webkit-text-stroke: 1px ${theme === 'light' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'}'>Console</span>`}
         subtitle="Global project oversight and management terminal."
+        details="Monitor all submissions, review project details, manage approvals, track delivery status, and oversee the complete project lifecycle from intake to completion."
         category="System Administration"
       />
 
@@ -526,6 +528,16 @@ export const AdminDashboard: React.FC = () => {
             >
               <MessageSquare className="h-4 w-4 mr-2" /> Testimonials
             </button>
+            <button 
+              onClick={() => setView("SECURITY")}
+              className={`px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center transition-all ${
+                view === "SECURITY" 
+                  ? theme === 'light' ? "bg-slate-900 text-white shadow-lg" : "bg-white text-black shadow-xl" 
+                  : theme === 'light' ? "text-slate-400 hover:text-slate-900 hover:bg-slate-900/5" : "text-white/40 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Shield className="h-4 w-4 mr-2" /> Security
+            </button>
           </div>
         </div>
 
@@ -549,7 +561,7 @@ export const AdminDashboard: React.FC = () => {
                 <div
                   key={i}
                   className={`p-8 rounded-3xl border transition-all ${
-                    theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 backdrop-blur-3xl border-white/10'
+                    theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-6">
@@ -566,7 +578,7 @@ export const AdminDashboard: React.FC = () => {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className={`p-8 rounded-3xl border transition-all ${
-                theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 backdrop-blur-3xl border-white/10'
+                theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
               }`}>
                 <h3 className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-8 flex items-center ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>
                   <BarChart3 className="h-4 w-4 mr-3 text-indigo-400" />
@@ -623,7 +635,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div className={`p-8 rounded-3xl border transition-all ${
-                theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 backdrop-blur-3xl border-white/10'
+                theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
               }`}>
                 <h3 className={`text-[10px] font-bold uppercase tracking-[0.3em] mb-8 flex items-center ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>
                   <Tag className="h-4 w-4 mr-3 text-indigo-400" />
@@ -668,7 +680,7 @@ export const AdminDashboard: React.FC = () => {
 
             {/* Projects Table */}
             <div className={`rounded-[2.5rem] border overflow-hidden transition-all ${
-              theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 backdrop-blur-3xl border-white/10'
+              theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
             }`}>
               <div className={`p-8 border-b flex flex-col lg:flex-row lg:items-center justify-between gap-6 ${
                 theme === 'light' ? 'border-slate-100' : 'border-white/5'
@@ -1030,7 +1042,7 @@ export const AdminDashboard: React.FC = () => {
             className="space-y-8"
           >
             <div className={`rounded-[2.5rem] border overflow-hidden transition-all ${
-              theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 backdrop-blur-3xl border-white/10'
+              theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
             }`}>
               <div className={`p-8 border-b flex flex-col lg:flex-row lg:items-center justify-between gap-6 ${
                 theme === 'light' ? 'border-slate-100' : 'border-white/5'
@@ -1166,7 +1178,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {projects.filter(p => p.featured).map((project) => (
                 <div key={project.id} className={`rounded-[2.5rem] border overflow-hidden group transition-all ${
-                  theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 backdrop-blur-3xl border-white/10'
+                  theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
                 }`}>
                   <div className={`aspect-video relative overflow-hidden ${theme === 'light' ? 'bg-slate-100' : 'bg-[#0a0a0a]'}`}>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
@@ -1242,7 +1254,7 @@ export const AdminDashboard: React.FC = () => {
             className="space-y-8"
           >
             <div className={`rounded-[2.5rem] border overflow-hidden transition-all ${
-              theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 backdrop-blur-3xl border-white/10'
+              theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
             }`}>
               <div className={`p-8 border-b flex flex-col lg:flex-row lg:items-center justify-between gap-6 ${
                 theme === 'light' ? 'border-slate-100' : 'border-white/5'
@@ -1363,7 +1375,7 @@ export const AdminDashboard: React.FC = () => {
             className="space-y-8"
           >
             <div className={`rounded-[2.5rem] border overflow-hidden transition-all ${
-              theme === 'light' ? 'bg-white border-slate-200 shadow-sm' : 'bg-white/5 backdrop-blur-3xl border-white/10'
+              theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
             }`}>
               <div className={`p-8 border-b flex flex-col lg:flex-row lg:items-center justify-between gap-6 ${
                 theme === 'light' ? 'border-slate-100' : 'border-white/5'
@@ -1469,6 +1481,18 @@ export const AdminDashboard: React.FC = () => {
                 </table>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {view === "SECURITY" && (
+          <motion.div
+            key="security"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-8"
+          >
+            <SecurityMonitoring />
           </motion.div>
         )}
       </AnimatePresence>
