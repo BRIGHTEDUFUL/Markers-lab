@@ -31,13 +31,24 @@ $bodyObj = @{
 }
 
 $body = $bodyObj | ConvertTo-Json -Depth 6 -Compress
-$resp = Invoke-RestMethod -Method Post -Uri 'https://5ab7xs59.functions.insforge.app/send-project-submission-email' -Headers @{
-  Authorization = "Bearer $anon"
-  apikey = $anon
-  'Content-Type' = 'application/json'
-} -Body $body
+try {
+  $resp = Invoke-RestMethod -Method Post -Uri 'https://5ab7xs59.functions.insforge.app/send-project-submission-email' -Headers @{
+    Authorization = "Bearer $anon"
+    apikey = $anon
+    'Content-Type' = 'application/json'
+  } -Body $body
 
-$resp | ConvertTo-Json -Depth 6
+  $resp | ConvertTo-Json -Depth 6
 
-npx @insforge/cli db query "UPDATE public.submission_notifications SET delivery_status='SENT', dispatched_at=NOW(), delivery_error=NULL, updated_at=NOW() WHERE id='$notificationId';"
+  if ($resp.ok -eq $true) {
+    npx @insforge/cli db query "UPDATE public.submission_notifications SET delivery_status='SENT', dispatched_at=NOW(), delivery_error=NULL, updated_at=NOW() WHERE id='$notificationId';"
+  } elseif ($resp.blocked -eq $true) {
+    $err = ($resp.error -replace "'", "''")
+    npx @insforge/cli db query "UPDATE public.submission_notifications SET delivery_status='QUEUED', delivery_error='$err', updated_at=NOW() WHERE id='$notificationId';"
+  }
+} catch {
+  $err = ($_.Exception.Message -replace "'", "''")
+  npx @insforge/cli db query "UPDATE public.submission_notifications SET delivery_status='FAILED', delivery_error='$err', updated_at=NOW() WHERE id='$notificationId';"
+}
+
 npx @insforge/cli db query "SELECT id, project_id, official_email, delivery_status, dispatched_at, delivery_error FROM public.submission_notifications WHERE id='$notificationId';"

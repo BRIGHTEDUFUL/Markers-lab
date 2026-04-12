@@ -190,6 +190,22 @@ export default async function handler(req: Request) {
 
   if (!response.ok) {
     const text = await response.text();
+    const lowered = text.toLowerCase();
+    const isRecipientRestriction =
+      response.status === 403 &&
+      lowered.includes("you can only send testing emails to your own email address");
+
+    if (isRecipientRestriction) {
+      return json(200, {
+        ok: false,
+        blocked: true,
+        code: "RESEND_RECIPIENT_RESTRICTED",
+        error:
+          "Resend account is in testing mode. Verify a domain and use a sender on that domain to deliver to official inbox.",
+        details: text.slice(0, 400),
+      });
+    }
+
     return json(502, {
       ok: false,
       error: "Email provider request failed",

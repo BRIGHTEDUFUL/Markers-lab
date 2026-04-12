@@ -179,8 +179,27 @@ async function invokeSubmissionEmailFunction(payload: Record<string, unknown>) {
 
   for (const fnName of fns) {
     try {
-      const { error } = await (insforge.functions as any).invoke(fnName, { body: payload });
-      if (!error) return { success: true as const };
+      const { data, error } = await (insforge.functions as any).invoke(fnName, { body: payload });
+      if (!error) {
+        const body = (data || {}) as {
+          ok?: boolean;
+          blocked?: boolean;
+          code?: string;
+          error?: string;
+          details?: string;
+        };
+
+        if (body.ok === false) {
+          const reason = [body.error, body.details].filter(Boolean).join(" :: ");
+          return {
+            success: false as const,
+            blocked: Boolean(body.blocked || body.code === "RESEND_RECIPIENT_RESTRICTED"),
+            error: reason || "Submission email blocked by provider policy",
+          };
+        }
+
+        return { success: true as const, blocked: false as const };
+      }
       lastError = error;
     } catch (err) {
       lastError = err;
@@ -189,6 +208,7 @@ async function invokeSubmissionEmailFunction(payload: Record<string, unknown>) {
 
   return {
     success: false as const,
+    blocked: false as const,
     error:
       lastError instanceof Error
         ? lastError.message
@@ -277,6 +297,9 @@ async function createSubmissionNotification(
     updateRow.delivery_status = "SENT";
     updateRow.dispatched_at = new Date().toISOString();
     updateRow.delivery_error = null;
+  } else if (sendResult.blocked) {
+    updateRow.delivery_status = "QUEUED";
+    updateRow.delivery_error = sendResult.error;
   } else {
     updateRow.delivery_status = "FAILED";
     updateRow.delivery_error = sendResult.error;
@@ -700,6 +723,9 @@ export async function adminRetrySubmissionNotificationEmail(notificationId: stri
     updateRow.delivery_status = "SENT";
     updateRow.dispatched_at = new Date().toISOString();
     updateRow.delivery_error = null;
+  } else if (sendResult.blocked) {
+    updateRow.delivery_status = "QUEUED";
+    updateRow.delivery_error = sendResult.error;
   } else {
     updateRow.delivery_status = "FAILED";
     updateRow.delivery_error = sendResult.error;
