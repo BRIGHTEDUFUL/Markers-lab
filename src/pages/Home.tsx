@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { ArrowRight, ArrowUpRight, Zap, Shield, Globe, Star, Quote } from "lucide-react";
 import { motion } from "motion/react";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 import { fetchFeaturedGallery } from "../lib/makers-data";
 import { useTheme } from "../contexts/ThemeContext";
+import { pickFeaturedShowcase, resolveProjectShowcaseImage } from "../lib/gallery-showcase";
+import { SHOWCASE_CARD_DURATION, SHOWCASE_CARD_STAGGER, SHOWCASE_EASE } from "../lib/showcase-motion";
 import { mediaSrc } from "../lib/media-url";
 import { Project } from "../types";
 import StarField from "../components/StarField";
@@ -17,12 +21,20 @@ const FadeUp: React.FC<{ children: React.ReactNode; delay?: number; className?: 
     initial={{ opacity: 0, y: 28 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, margin: "-60px" }}
-    transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+    transition={{ duration: SHOWCASE_CARD_DURATION, delay, ease: SHOWCASE_EASE }}
     className={className}
   >
     {children}
   </motion.div>
 );
+
+const stripMarkdown = (text: string) => {
+  return text
+    .replace(/[#*`_~]/g, "")
+    .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+    .replace(/\n/g, " ")
+    .trim();
+};
 
 export const Home = () => {
   const { user } = useAuth();
@@ -30,7 +42,18 @@ export const Home = () => {
   const { shouldReduceMotion } = useAdaptiveMotion();
   const isDark = theme === "dark";
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const portfolioProjects = pickFeaturedShowcase(featuredProjects, 3);
+  const lightboxSlides = useMemo(() => {
+    if (!selectedProject) return [] as Array<{ src: string }>;
+    const imageFiles = (selectedProject.files || []).filter((f) => f.mimeType?.startsWith("image/"));
+    if (!imageFiles.length) {
+      return [{ src: resolveProjectShowcaseImage(selectedProject) }];
+    }
+    return imageFiles.map((f) => ({ src: mediaSrc(f.path, resolveProjectShowcaseImage(selectedProject)) }));
+  }, [selectedProject]);
 
   useEffect(() => {
     fetchFeaturedGallery()
@@ -161,21 +184,39 @@ export const Home = () => {
                 <div key={i} className={`aspect-[4/3] rounded-3xl animate-pulse ${isDark ? "bg-white/5" : "bg-slate-200"}`} />
               ))}
             </div>
-          ) : featuredProjects.length > 0 ? (
+          ) : portfolioProjects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredProjects.map((project, i) => {
-                const coverImage = project.files?.find((f) => f.mimeType?.startsWith("image/"));
-                const imageUrl = mediaSrc(coverImage?.path, `https://picsum.photos/seed/${project.id}/800/600`);
+              {portfolioProjects.map((project, i) => {
                 return (
-                  <FadeUp key={project.id} delay={i * 0.1}>
-                    <div className={`group relative overflow-hidden rounded-3xl border transition-all duration-500 hover:-translate-y-1 ${isDark ? "border-white/[0.08] hover:border-white/20" : "border-slate-200 hover:border-indigo-200/60 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60"}`}>
+                  <FadeUp key={project.id} delay={i * SHOWCASE_CARD_STAGGER}>
+                    <div
+                      className={`group showcase-interactive relative overflow-hidden rounded-3xl border transition-all duration-700 hover:-translate-y-1 cursor-pointer ${isDark ? "border-white/[0.08] hover:border-white/20" : "border-slate-200 hover:border-indigo-200/60 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60"}`}
+                      onClick={() => {
+                        setSelectedProject(project);
+                        setLightboxOpen(true);
+                      }}
+                    >
                       <div className="aspect-[4/3] overflow-hidden">
-                        <img src={imageUrl} alt={project.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" fetchPriority={i === 0 ? "high" : "low"} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <img src={resolveProjectShowcaseImage(project)} alt={project.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" fetchPriority={i === 0 ? "high" : "low"} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                       </div>
                       <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? "from-black/80 via-black/20 to-transparent" : "from-white/90 via-white/20 to-transparent"}`} />
                       <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
                         <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-indigo-400 mb-2 block">{project.category}</span>
                         <h3 className={`font-display text-2xl sm:text-3xl uppercase tracking-tight leading-none ${isDark ? "text-white" : "text-slate-900"}`}>{project.title}</h3>
+                        <p className={`mt-3 text-[11px] font-medium leading-relaxed line-clamp-2 ${isDark ? "text-white/70" : "text-slate-600"}`}>
+                          {stripMarkdown(project.description)}
+                        </p>
+                        <div className="mt-3 flex items-center gap-4">
+                          <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${isDark ? "text-white/45" : "text-slate-500"}`}>
+                            {project.user?.name || "Creator"}
+                          </span>
+                          <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${isDark ? "text-white/45" : "text-slate-500"}`}>
+                            {project.budget}
+                          </span>
+                        </div>
+                        <span className="mt-4 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-400 opacity-0 group-hover:opacity-100 transition-colors">
+                          Open Lightbox <ArrowUpRight className="h-3.5 w-3.5" />
+                        </span>
                         {project.repoUrl && (
                           <a href={project.repoUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="mt-4 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors opacity-0 group-hover:opacity-100">
                             View Project <ArrowUpRight className="h-3.5 w-3.5" />
@@ -194,6 +235,18 @@ export const Home = () => {
           )}
         </div>
       </section>
+
+      <Lightbox
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        slides={lightboxSlides}
+        carousel={{ finite: true }}
+        controller={{ closeOnBackdropClick: true }}
+        render={{
+          buttonPrev: lightboxSlides.length > 1 ? undefined : () => null,
+          buttonNext: lightboxSlides.length > 1 ? undefined : () => null,
+        }}
+      />
 
       {/* STATS */}
       <section className={`relative z-10 py-20 sm:py-28 px-4 border-t transition-colors duration-500 ${isDark ? "border-white/5 bg-white/[0.015]" : "border-slate-200 bg-slate-50/60"}`}>

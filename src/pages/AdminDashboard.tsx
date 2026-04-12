@@ -36,6 +36,8 @@ import PageHero from "../components/PageHero";
 import LazyMarkdown from "../components/LazyMarkdown";
 import { getRecentRoutePerf } from "../lib/route-performance";
 import { Project, User, Analytics, Testimonial, SubmissionNotification } from "../types";
+import { resolveProjectShowcaseImage } from "../lib/gallery-showcase";
+import { SHOWCASE_CARD_DURATION, SHOWCASE_CARD_STAGGER, SHOWCASE_EASE } from "../lib/showcase-motion";
 
 const SecurityMonitoring = lazy(() =>
   import("../components/SecurityMonitoring").then((m) => ({ default: m.SecurityMonitoring }))
@@ -2152,23 +2154,35 @@ export const AdminDashboard: React.FC = () => {
             className="space-y-8"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredProjects.map((project) => (
-                <div key={project.id} className={`rounded-[2.5rem] border overflow-hidden group transition-all ${
-                  theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
-                }`}>
+              {featuredProjects.map((project, i) => (
+                <motion.div
+                  key={project.id}
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ duration: SHOWCASE_CARD_DURATION, delay: i * SHOWCASE_CARD_STAGGER, ease: SHOWCASE_EASE }}
+                  className={`showcase-interactive rounded-[2.5rem] border overflow-hidden group transition-all duration-700 hover:-translate-y-1 ${
+                    theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 backdrop-blur-3xl border-white/10'
+                  }`}
+                >
                   <div className={`aspect-video relative overflow-hidden ${theme === 'light' ? 'bg-slate-100' : 'bg-[#0a0a0a]'}`}>
+                    <img
+                      src={resolveProjectShowcaseImage(project)}
+                      alt={project.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                     <div className="absolute bottom-6 left-6">
                       <span className="px-4 py-1.5 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full text-[9px] font-bold text-white uppercase tracking-[0.2em]">
                         {project.category}
                       </span>
                     </div>
-                    <button 
-                      onClick={() => handleToggleFeatured(project.id, false)}
-                      className="absolute top-6 right-6 p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-red-500 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="absolute top-6 right-6 text-[9px] font-black uppercase tracking-[0.2em] text-white/80">
+                      {project.timeline}
+                    </div>
                   </div>
                   <div className="p-8 space-y-6">
                     <h3 className={`font-display text-2xl uppercase tracking-tight group-hover:text-indigo-400 transition-colors ${
@@ -2190,14 +2204,28 @@ export const AdminDashboard: React.FC = () => {
                           theme === 'light' ? 'text-slate-400' : 'text-white/20'
                         }`}>{project.user?.name || "Unknown user"}</span>
                       </div>
-                      <Link to="/gallery" className={`p-2 rounded-lg transition-colors ${
-                        theme === 'light' ? 'bg-slate-100 text-slate-400 hover:text-slate-900' : 'bg-white/5 text-white/40 hover:text-white'
-                      }`}>
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${theme === 'light' ? 'text-slate-500' : 'text-white/45'}`}>
+                          {project.budget || "GH₵ TBD"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFeatured(project.id, false)}
+                          className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${
+                            theme === 'light' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                          }`}
+                        >
+                          Remove
+                        </button>
+                        <Link to="/gallery" className={`p-2 rounded-lg transition-colors ${
+                          theme === 'light' ? 'bg-slate-100 text-slate-400 hover:text-slate-900' : 'bg-white/5 text-white/40 hover:text-white'
+                        }`}>
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
               <Link 
                 to="/submit-project"

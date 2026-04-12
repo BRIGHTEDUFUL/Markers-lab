@@ -16,6 +16,8 @@ import { Project } from "../types";
 import SkeletonCard from "../components/SkeletonCard";
 import { useSmartNavigate } from "../hooks/useSmartNavigate";
 import { useOverlayBackHandler } from "../hooks/useOverlayBackHandler";
+import { resolveProjectShowcaseImage } from "../lib/gallery-showcase";
+import { SHOWCASE_CARD_DURATION, SHOWCASE_CARD_STAGGER, SHOWCASE_EASE } from "../lib/showcase-motion";
 
 const DashboardStatusChart = lazy(() => import("../components/charts/DashboardStatusChart"));
 
@@ -337,14 +339,40 @@ export const Dashboard: React.FC = () => {
             </div>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {filteredProjects.map((project) => (
-                <TiltCard
+              {filteredProjects.map((project, i) => (
+                <motion.div
                   key={project.id}
-                  className={`relative rounded-2xl sm:rounded-[2.5rem] border overflow-hidden transition-all duration-500 cursor-pointer group backdrop-blur-3xl ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-indigo-100/40 hover:border-indigo-500/50' : CARD_STATUS_COLORS[project.status] || "bg-white/5 border-white/10"}`}
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: SHOWCASE_CARD_DURATION, delay: i * SHOWCASE_CARD_STAGGER, ease: SHOWCASE_EASE }}
+                >
+                <TiltCard
+                  className={`showcase-interactive relative rounded-2xl sm:rounded-[2.5rem] border overflow-hidden transition-all duration-700 hover:-translate-y-1 cursor-pointer group backdrop-blur-3xl ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-indigo-100/40 hover:border-indigo-500/50' : CARD_STATUS_COLORS[project.status] || "bg-white/5 border-white/10"}`}
                   onClick={() => setSelectedProject(project)}
                 >
                   {/* Status Accent Bar */}
                   <div className={`absolute top-0 left-0 w-full h-1 sm:h-1.5 ${STATUS_DOTS[project.status].split(' ')[0]}`} />
+                  <div className="aspect-[16/10] relative overflow-hidden">
+                    <img
+                      src={resolveProjectShowcaseImage(project)}
+                      alt={project.title}
+                      loading="lazy"
+                      decoding="async"
+                      fetchPriority="low"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/90">
+                        {project.category.replace("_", " ")}
+                      </span>
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/80">
+                        {project.timeline}
+                      </span>
+                    </div>
+                  </div>
                   
                   <div className="p-6 sm:p-10">
                     <div className="flex justify-between items-start mb-6 sm:mb-8">
@@ -389,8 +417,8 @@ export const Dashboard: React.FC = () => {
                     </p>
     
                     <div className={`pt-6 sm:pt-8 flex items-center justify-between border-t transition-colors duration-500 ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
-                      <span className={`text-[8px] sm:text-[9px] font-black px-3 sm:px-4 py-1 sm:py-1.5 rounded-full uppercase tracking-[0.15em] sm:tracking-[0.2em] border transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50 text-slate-400 border-slate-100' : 'bg-white/5 text-white/20 border-white/5'}`}>
-                        {project.category.replace("_", " ")}
+                      <span className={`text-[8px] sm:text-[9px] font-black px-3 sm:px-4 py-1 sm:py-1.5 rounded-full uppercase tracking-[0.15em] sm:tracking-[0.2em] border transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50 text-slate-500 border-slate-100' : 'bg-white/5 text-white/45 border-white/5'}`}>
+                        {project.budget || "GH₵ TBD"}
                       </span>
                       <div className="flex items-center text-indigo-400 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                         Details <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-1" />
@@ -398,6 +426,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 </TiltCard>
+                </motion.div>
               ))}
             </div>
           ) : (
@@ -418,13 +447,22 @@ export const Dashboard: React.FC = () => {
                       <tr 
                         key={project.id}
                         onClick={() => setSelectedProject(project)}
-                        className={`group cursor-pointer border-b last:border-0 transition-all duration-300 ${theme === 'light' ? 'hover:bg-slate-50 border-slate-100' : 'hover:bg-white/[0.02] border-white/5'}`}
+                        className={`group cursor-pointer border-b last:border-0 transition-all duration-500 ${theme === 'light' ? 'hover:bg-slate-50 border-slate-100 hover:-translate-y-[1px]' : 'hover:bg-white/[0.02] border-white/5 hover:-translate-y-[1px]'}`}
                       >
                         <td className="px-10 py-8">
-                          <div className="space-y-1">
-                            <div className={`text-sm font-bold uppercase tracking-tight transition-colors duration-500 ${theme === 'light' ? 'text-slate-900 group-hover:text-indigo-600' : 'text-white group-hover:text-indigo-400'}`}>
-                              {project.title}
-                            </div>
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={resolveProjectShowcaseImage(project)}
+                              alt={project.title}
+                              loading="lazy"
+                              decoding="async"
+                              className="h-14 w-20 rounded-xl object-cover border border-white/10"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div className="space-y-1 min-w-0">
+                              <div className={`text-sm font-bold uppercase tracking-tight transition-colors duration-500 truncate ${theme === 'light' ? 'text-slate-900 group-hover:text-indigo-600' : 'text-white group-hover:text-indigo-400'}`}>
+                                {project.title}
+                              </div>
                             {/* Tags Chips */}
                             {project.tags && project.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mt-2">
@@ -444,6 +482,7 @@ export const Dashboard: React.FC = () => {
                             )}
                             <div className={`text-[10px] font-medium transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
                               {stripMarkdown(project.description).substring(0, 60)}...
+                            </div>
                             </div>
                           </div>
                         </td>

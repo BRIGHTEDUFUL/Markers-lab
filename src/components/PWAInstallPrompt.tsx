@@ -4,6 +4,11 @@ import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTouchFeedback } from "../hooks/useTouchFeedback";
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
 /**
  * PWAInstallPrompt — Native-style bottom sheet & desktop toast for PWA installation
  * 
@@ -19,24 +24,62 @@ import { useTouchFeedback } from "../hooks/useTouchFeedback";
  */
 const DISMISSED_KEY = "pwa-prompt-dismissed";
 
+const isIosDevice = () => {
+  if (typeof window === "undefined") return false;
+  const ua = window.navigator.userAgent;
+  const iOSUA = /iPad|iPhone|iPod/.test(ua);
+  // iPadOS 13+ may identify as Macintosh while still being touch-capable.
+  const iPadOSDesktopUA = window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1;
+  return iOSUA || iPadOSDesktopUA;
+};
+
+const isRunningStandalone = () => {
+  if (typeof window === "undefined") return false;
+  const nav = window.navigator as Navigator & { standalone?: boolean };
+  return nav.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+};
+
 const PWAInstallPrompt: React.FC = memo(() => {
   const { theme } = useTheme();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [isIos, setIsIos] = useState(false);
 
   useEffect(() => {
     // Don't show if already dismissed this session
     if (sessionStorage.getItem(DISMISSED_KEY)) return;
+    if (isRunningStandalone()) return;
+
+    let timeoutId = 0;
+
+    const ios = isIosDevice();
+    setIsIos(ios);
+
+    if (ios) {
+      timeoutId = window.setTimeout(() => setIsVisible(true), 3000);
+      return () => window.clearTimeout(timeoutId);
+    }
 
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       // 3s delay for non-intrusive UX
-      setTimeout(() => setIsVisible(true), 3000);
+      timeoutId = window.setTimeout(() => setIsVisible(true), 3000);
+    };
+
+    const onInstalled = () => {
+      setIsVisible(false);
+      setDeferredPrompt(null);
+      sessionStorage.setItem(DISMISSED_KEY, "1");
     };
 
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
   }, []);
 
   const handleInstall = useCallback(async () => {
@@ -65,16 +108,19 @@ const PWAInstallPrompt: React.FC = memo(() => {
           {/* Mobile bottom sheet */}
           <MobileBottomSheet
             theme={theme}
+            isIos={isIos}
             onInstall={handleInstall}
             onDismiss={handleDismiss}
           />
 
           {/* Desktop toast */}
-          <DesktopToast
-            theme={theme}
-            onInstall={handleInstall}
-            onDismiss={handleDismiss}
-          />
+          {!isIos && (
+            <DesktopToast
+              theme={theme}
+              onInstall={handleInstall}
+              onDismiss={handleDismiss}
+            />
+          )}
         </>
       )}
     </AnimatePresence>
@@ -86,9 +132,10 @@ const PWAInstallPrompt: React.FC = memo(() => {
  */
 const MobileBottomSheet: React.FC<{
   theme: "light" | "dark";
+  isIos: boolean;
   onInstall: () => void;
   onDismiss: () => void;
-}> = ({ theme, onInstall, onDismiss }) => {
+}> = ({ theme, isIos, onInstall, onDismiss }) => {
   const { handlers: installHandlers, isPressed: isInstallPressed } = useTouchFeedback(60);
   const { handlers: dismissHandlers, isPressed: isDismissPressed } = useTouchFeedback(60);
 
@@ -162,14 +209,16 @@ const MobileBottomSheet: React.FC<{
                   theme === "light" ? "text-slate-900" : "text-white"
                 }`}
               >
-                Add to Home Screen
+                {isIos ? "Install on iPhone" : "Add to Home Screen"}
               </h3>
               <p
                 className={`text-xs mt-1.5 leading-relaxed ${
                   theme === "light" ? "text-slate-600" : "text-white/60"
                 }`}
               >
-                Get instant access to Maker's Lab. Works offline and installs on your home screen.
+                {isIos
+                  ? "Open Share in Safari, then tap Add to Home Screen to install Maker's Lab."
+                  : "Get instant access to Maker's Lab. Works offline and installs on your home screen."}
               </p>
             </div>
 
@@ -197,7 +246,7 @@ const MobileBottomSheet: React.FC<{
             {/* Install button */}
             <motion.button
               {...installHandlers}
-              onClick={onInstall}
+              onClick={isIos ? onDismiss : onInstall}
               whileTap={isInstallPressed ? { scale: 0.95 } : { scale: 1 }}
               className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all shadow-lg ${
                 theme === "light"
@@ -207,7 +256,7 @@ const MobileBottomSheet: React.FC<{
               aria-label="Install the application"
             >
               <Download className="h-4 w-4" aria-hidden="true" />
-              Install App
+              {isIos ? "Got It" : "Install App"}
             </motion.button>
 
             {/* Dismiss button */}
@@ -235,7 +284,9 @@ const MobileBottomSheet: React.FC<{
               theme === "light" ? "text-slate-500" : "text-white/40"
             }`}
           >
-            You can install this app anytime from the share menu
+            {isIos
+              ? "iPhone steps: Share icon -> Add to Home Screen"
+              : "You can install this app anytime from the browser install menu"}
           </motion.p>
         </div>
       </motion.div>

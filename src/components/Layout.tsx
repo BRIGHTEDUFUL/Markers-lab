@@ -50,8 +50,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       NProgress.done();
     }, 200);
     
-    // Scroll to top on route change
-    window.scrollTo(0, 0);
+    // Scroll to top on route change without animation to avoid startup jump artifacts.
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     
     return () => {
       if (raf1) window.cancelAnimationFrame(raf1);

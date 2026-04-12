@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { fetchFeaturedGallery, fetchApprovedTestimonials } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
+import { curateShowcaseProjects, resolveProjectShowcaseImage } from "../lib/gallery-showcase";
 import { mediaSrc } from "../lib/media-url";
 import { Star, Quote, Rocket, ExternalLink, ArrowRight, CheckCircle, Users, Briefcase, Award, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 import PageHero from "../components/PageHero";
 import LazyMarkdown from "../components/LazyMarkdown";
 import { useTheme } from "../contexts/ThemeContext";
 import { Project, Testimonial } from "../types";
 import { useSmartNavigate } from "../hooks/useSmartNavigate";
 import { useOverlayBackHandler } from "../hooks/useOverlayBackHandler";
+import { SHOWCASE_CARD_DURATION, SHOWCASE_CARD_STAGGER, SHOWCASE_EASE } from "../lib/showcase-motion";
 
 const stripMarkdown = (text: string) => {
   return text
@@ -22,7 +26,19 @@ const stripMarkdown = (text: string) => {
 
 const TiltCard: React.FC<{ children: React.ReactNode; className: string; onClick?: () => void }> = ({ children, className, onClick }) => {
   return (
-    <div className={className} onClick={onClick}>
+    <div
+      className={`${className} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : -1}
+      onKeyDown={(e) => {
+        if (!onClick) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
       {children}
     </div>
   );
@@ -48,11 +64,21 @@ export const PublicGallery: React.FC = () => {
   };
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const { closeWithBack: closeSelectedProject } = useOverlayBackHandler(
     !!selectedProject,
     () => setSelectedProject(null),
     "gallery-project-modal"
   );
+
+  const lightboxSlides = useMemo(() => {
+    if (!selectedProject) return [] as Array<{ src: string }>;
+    const imageFiles = (selectedProject.files || []).filter((f) => f.mimeType?.startsWith("image/"));
+    if (!imageFiles.length) {
+      return [{ src: resolveProjectShowcaseImage(selectedProject) }];
+    }
+    return imageFiles.map((file) => ({ src: mediaSrc(file.path, resolveProjectShowcaseImage(selectedProject)) }));
+  }, [selectedProject]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,12 +95,13 @@ export const PublicGallery: React.FC = () => {
     fetchData();
   }, []);
 
-  const featuredProjects = projects.filter(p => p.featured);
-  const spotlightProject = featuredProjects[featuredProjects.length - 1]; // Most recent featured
+  const showcaseProjects = useMemo(() => curateShowcaseProjects(projects, 8), [projects]);
+  const featuredProjects = showcaseProjects.filter((p) => p.featured);
+  const spotlightProject = featuredProjects[0] || showcaseProjects[0];
 
-  const filteredProjects = activeCategory === "ALL" 
-    ? projects 
-    : projects.filter(p => p.category === activeCategory);
+  const filteredProjects = activeCategory === "ALL"
+    ? showcaseProjects
+    : showcaseProjects.filter((p) => p.category === activeCategory);
 
   if (loading) return (
     <div className="page-shell-flex h-screen">
@@ -110,24 +137,15 @@ export const PublicGallery: React.FC = () => {
             >
               {/* Spotlight Background */}
               <div className="absolute inset-0">
-                {(() => {
-                  const coverImage = spotlightProject.files?.find((f) => f.mimeType?.startsWith("image/"));
-                  const imageUrl = mediaSrc(
-                    coverImage?.path,
-                    `https://picsum.photos/seed/${spotlightProject.id}/1920/1080?blur=2`
-                  );
-                  return (
-                    <img 
-                      src={imageUrl} 
-                      alt={spotlightProject.title}
-                      loading="eager"
-                      decoding="async"
-                      fetchPriority="high"
-                      className={`w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110 ${theme === 'light' ? 'opacity-90' : 'opacity-60'}`}
-                      referrerPolicy="no-referrer"
-                    />
-                  );
-                })()}
+                <img
+                  src={resolveProjectShowcaseImage(spotlightProject)}
+                  alt={spotlightProject.title}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  className={`w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110 ${theme === 'light' ? 'opacity-90' : 'opacity-60'}`}
+                  referrerPolicy="no-referrer"
+                />
                 <div className={`absolute inset-0 transition-colors duration-700 ${theme === 'light' ? 'bg-gradient-to-r from-white via-white/60 to-transparent' : 'bg-gradient-to-r from-[#050505] via-[#050505]/60 to-transparent'}`} />
                 <div className={`absolute inset-0 transition-colors duration-700 ${theme === 'light' ? 'bg-gradient-to-t from-white via-transparent to-transparent' : 'bg-gradient-to-t from-[#050505] via-transparent to-transparent'}`} />
                 <div className="absolute inset-0 bg-indigo-500/5 mix-blend-overlay group-hover:bg-indigo-500/10 transition-colors duration-700" />
@@ -207,29 +225,23 @@ export const PublicGallery: React.FC = () => {
           {/* Projects Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
             {filteredProjects.map((project, i) => {
-              const coverImage = project.files?.find((f) => f.mimeType?.startsWith("image/"));
-              const imageUrl = mediaSrc(
-                coverImage?.path,
-                `https://picsum.photos/seed/${project.id}/1200/800?blur=2`
-              );
-
               return (
                 <motion.div
                   key={project.id}
                   initial={{ opacity: 0, y: 60 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, duration: 0.8 }}
+                  transition={{ delay: i * SHOWCASE_CARD_STAGGER, duration: SHOWCASE_CARD_DURATION, ease: SHOWCASE_EASE }}
                 >
                   <TiltCard
-                    className={`group relative overflow-hidden border rounded-[3rem] p-5 cursor-pointer transition-all duration-700 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60' : 'bg-slate-950/70 border-white/10 hover:border-white/22'}`}
+                    className={`group showcase-interactive relative overflow-hidden border rounded-[3rem] p-5 cursor-pointer transition-all duration-700 hover:-translate-y-1 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60' : 'bg-slate-950/70 border-white/10 hover:border-white/22'}`}
                     onClick={() => setSelectedProject(project)}
                   >
                     <div className={`aspect-[16/10] relative overflow-hidden rounded-[2.5rem] ${theme === 'light' ? 'bg-slate-100' : 'bg-[#0a0a0a]'}`}>
                       {/* High-end Image Display */}
                       <div className="absolute inset-0 transition-transform duration-1000 group-hover:scale-110">
-                        <img 
-                          src={imageUrl} 
+                        <img
+                          src={resolveProjectShowcaseImage(project)}
                           alt={project.title}
                           loading="lazy"
                           decoding="async"
@@ -305,11 +317,11 @@ export const PublicGallery: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-10">
                           <div className="flex flex-col items-end">
-                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-300'}`}>Valuation</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-300'}`}>Estimated Budget</span>
                             <span className={`text-sm font-bold transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{project.budget}</span>
                           </div>
                           <div className="flex flex-col items-end">
-                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-300'}`}>Cycle</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-300'}`}>Target Timeline</span>
                             <span className={`text-sm font-bold transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{project.timeline}</span>
                           </div>
                         </div>
@@ -449,21 +461,19 @@ export const PublicGallery: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2">
                   {/* Image Section */}
                   <div className="relative aspect-square lg:aspect-auto bg-slate-900 overflow-hidden">
-                    {(() => {
-                      const coverImage = selectedProject.files?.find((f) => f.mimeType?.startsWith("image/"));
-                      const imageUrl = mediaSrc(
-                        coverImage?.path,
-                        `https://picsum.photos/seed/${selectedProject.id}/1080/1080`
-                      );
-                      return (
-                        <img 
-                          src={imageUrl} 
-                          alt={selectedProject.title}
-                          className="w-full h-full object-cover opacity-80"
-                          referrerPolicy="no-referrer"
-                        />
-                      );
-                    })()}
+                    <img
+                      src={resolveProjectShowcaseImage(selectedProject)}
+                      alt={selectedProject.title}
+                      className="w-full h-full object-cover opacity-80"
+                      referrerPolicy="no-referrer"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setLightboxOpen(true)}
+                      className="absolute top-8 left-8 z-20 px-5 py-2 rounded-full bg-black/50 text-white border border-white/20 backdrop-blur-xl text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black/70 transition-colors"
+                    >
+                      Open Lightbox
+                    </button>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     <div className="absolute bottom-12 left-12 right-12 space-y-4">
                       <div className="flex items-center space-x-4">
@@ -539,6 +549,18 @@ export const PublicGallery: React.FC = () => {
             </div>
           )}
         </AnimatePresence>
+
+        <Lightbox
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          slides={lightboxSlides}
+          carousel={{ finite: true }}
+          controller={{ closeOnBackdropClick: true }}
+          render={{
+            buttonPrev: lightboxSlides.length > 1 ? undefined : () => null,
+            buttonNext: lightboxSlides.length > 1 ? undefined : () => null,
+          }}
+        />
       </div>
     </div>
   );

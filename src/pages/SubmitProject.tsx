@@ -32,22 +32,13 @@ const CATEGORIES = [
   { id: "Other", icon: Plus, description: "Custom technical solutions" }
 ];
 
-const BUDGET_RANGES = {
-  USD: [
-    "Under $5,000",
-    "$5,000 - $10,000",
-    "$10,000 - $25,000",
-    "$25,000 - $50,000",
-    "$50,000+"
-  ],
-  GHS: [
-    "GH₵ 300 - GH₵ 1,000",
-    "GH₵ 1,000 - GH₵ 5,000",
-    "GH₵ 5,000 - GH₵ 10,000",
-    "GH₵ 10,000 - GH₵ 25,000",
-    "GH₵ 25,000+"
-  ]
-};
+const BUDGET_RANGES: BudgetRange[] = [
+  "GH₵ 300 - GH₵ 1,000",
+  "GH₵ 1,000 - GH₵ 5,000",
+  "GH₵ 5,000 - GH₵ 10,000",
+  "GH₵ 10,000 - GH₵ 25,000",
+  "GH₵ 25,000+",
+];
 
 const TIMELINES = [
   "Less than 1 month",
@@ -78,8 +69,7 @@ export const SubmitProject: React.FC = () => {
   const [category, setCategory] = useState<Category>(CATEGORIES[0].id as Category);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [currency, setCurrency] = useState<"USD" | "GHS">("USD");
-  const [budget, setBudget] = useState<BudgetRange>(BUDGET_RANGES.USD[0] as BudgetRange);
+  const [budget, setBudget] = useState<BudgetRange>(BUDGET_RANGES[0]);
   const [timeline, setTimeline] = useState<Timeline>(TIMELINES[0] as Timeline);
   const [selectedPackage, setSelectedPackage] = useState<PricingTier>("Standard");
   const [repoUrl, setRepoUrl] = useState("");
@@ -352,7 +342,7 @@ export const SubmitProject: React.FC = () => {
         category="Project Submission Terminal"
         title={`Launch Your <br /><span class='text-transparent' style='-webkit-text-stroke: 1px ${theme === "light" ? "#0f172a" : "rgba(255,255,255,0.35)"}'>Vision</span>`}
         subtitle="Provide the technical specifications for your next digital masterpiece. Our team will analyze your requirements and architect a bespoke solution."
-        details="Share your project goals, budget, timeline, and scope. Include as much detail as possible about your vision, and we'll respond with a comprehensive technical proposal within 48 hours."
+        details="Share your project goals, estimated budget (GH₵), timeline, and scope. Include as much detail as possible about your vision, and we'll respond with a comprehensive technical proposal within 48 hours."
       />
 
       <div className="max-w-7xl mx-auto relative z-10 py-6 sm:py-20 px-4 sm:px-6 lg:px-8">
@@ -615,7 +605,6 @@ export const SubmitProject: React.FC = () => {
                             type="button"
                             onClick={() => {
                               setSelectedPackage(pkg.tier);
-                              setCurrency("GHS");
                               setBudget(PACKAGE_TO_BUDGET[pkg.tier]);
                               setTimeline(PACKAGE_TO_TIMELINE[pkg.tier]);
                             }}
@@ -641,39 +630,21 @@ export const SubmitProject: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Budget & Currency */}
+                    {/* Estimated Budget (GH₵ default) */}
                     <div className="space-y-4 sm:space-y-6">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 ml-3 sm:ml-4">
                         <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Estimated Budget</label>
-                        <div className={`flex p-1 rounded-full border transition-colors duration-500 w-fit ${theme === 'light' ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-                          {["USD", "GHS"].map((curr) => (
-                            <button
-                              key={curr}
-                              type="button"
-                              onClick={() => {
-                                setCurrency(curr as "USD" | "GHS");
-                                setBudget(BUDGET_RANGES[curr as "USD" | "GHS"][0] as BudgetRange);
-                              }}
-                              className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all ${
-                                currency === curr 
-                                  ? shouldReduceMotion
-                                    ? "bg-indigo-500 text-white shadow-sm shadow-indigo-500/15"
-                                    : "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
-                                  : theme === 'light' ? "text-slate-400 hover:text-slate-900" : "text-white/20 hover:text-white"
-                              }`}
-                            >
-                              {curr}
-                            </button>
-                          ))}
-                        </div>
+                        <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${theme === 'light' ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-white/60'}`}>
+                          GH₵ Default
+                        </span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        {BUDGET_RANGES[currency].map((range) => (
+                        {BUDGET_RANGES.map((range) => (
                           <button
                             key={range}
                             type="button"
-                            onClick={() => setBudget(range as BudgetRange)}
+                            onClick={() => setBudget(range)}
                             className={`px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
                               budget === range 
                                 ? shouldReduceMotion
@@ -878,7 +849,7 @@ export const SubmitProject: React.FC = () => {
                     </div>
                     <div>
                       <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Budget Allocation</p>
-                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{budget} {currency}</p>
+                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{budget}</p>
                     </div>
                     <div>
                       <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Selected Package</p>

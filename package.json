@@ -27,7 +27,8 @@
     "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "yet-another-react-lightbox": "^3.31.0"
   },
   "devDependencies": {
     "@types/node": "^22.19.17",
