@@ -113,6 +113,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { name: "Submit Project", path: "/submit-project", icon: Rocket, roles: ["USER", "ADMIN"] },
     { name: "Admin Panel", path: "/admin", icon: Settings, roles: ["ADMIN"] },
     { name: "Public Gallery", path: "/gallery", icon: Image, roles: ["USER", "ADMIN", "GUEST"] },
+    { name: "Pricing", path: "/pricing", icon: MessageSquare, roles: ["USER", "ADMIN", "GUEST"] },
     { name: "About", path: "/about", icon: Globe, roles: ["USER", "ADMIN", "GUEST"] },
     { name: "Contact", path: "/contact", icon: Mail, roles: ["USER", "ADMIN", "GUEST"] },
   ];
@@ -124,7 +125,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navInitials = user ? getUserInitials({ name: user.name, email: user.email }) : "";
 
   const footerPlatformLinks = useMemo(() => {
-    const items: { name: string; path: string }[] = [{ name: "Public Gallery", path: "/gallery" }];
+    const items: { name: string; path: string }[] = [
+      { name: "Public Gallery", path: "/gallery" },
+      { name: "Pricing", path: "/pricing" },
+    ];
     if (user) {
       items.push({ name: "Dashboard", path: "/dashboard" }, { name: "Submit Project", path: "/submit-project" });
       if (user.role === "ADMIN") items.push({ name: "Admin Panel", path: "/admin" });

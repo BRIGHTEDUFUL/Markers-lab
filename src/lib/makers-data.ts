@@ -11,6 +11,7 @@ import type {
   Category,
   BudgetRange,
   Timeline,
+  PricingTier,
 } from "../types";
 import { getUserDisplayName, isEmailLike } from "./user-display";
 
@@ -37,6 +38,7 @@ type ProjectRow = {
   tags: string | null;
   budget: string | null;
   timeline: string | null;
+  package_tier: string | null;
   status: string;
   repo_url: string | null;
   featured: boolean;
@@ -99,6 +101,7 @@ function mapProjectRow(r: ProjectRow, extras?: Partial<Project>): Project {
     tags: r.tags ? (JSON.parse(r.tags) as string[]) : [],
     budget: (r.budget || "") as BudgetRange,
     timeline: (r.timeline || "") as Timeline,
+    packageTier: (r.package_tier || undefined) as PricingTier | undefined,
     status: r.status as Project["status"],
     repoUrl: r.repo_url || undefined,
     featured: r.featured,
@@ -228,6 +231,7 @@ async function createSubmissionNotification(
     tags: string;
     budget: string;
     timeline: string;
+    packageTier?: PricingTier;
     repoUrl?: string;
   },
   localFiles: globalThis.File[]
@@ -245,6 +249,7 @@ async function createSubmissionNotification(
     tags: payload.tags ? (JSON.parse(payload.tags) as string[]) : [],
     budget: payload.budget,
     timeline: payload.timeline,
+    packageTier: payload.packageTier || null,
     repoUrl: payload.repoUrl || null,
     filesCount: localFiles.length,
     attachments: localFiles.map((f) => ({
@@ -601,6 +606,7 @@ export async function createProjectWithFiles(
     tags: string;
     budget: string;
     timeline: string;
+    packageTier?: PricingTier;
     repoUrl?: string;
   },
   localFiles: globalThis.File[]
@@ -616,6 +622,7 @@ export async function createProjectWithFiles(
         tags: payload.tags,
         budget: payload.budget,
         timeline: payload.timeline,
+        package_tier: payload.packageTier || null,
         repo_url: payload.repoUrl || null,
         status: "PENDING",
         featured: false,

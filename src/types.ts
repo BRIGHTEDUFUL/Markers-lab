@@ -42,6 +42,35 @@ export type BudgetRange =
   | "GH₵ 10,000 - GH₵ 25,000"
   | "GH₵ 25,000+";
 
+export type UserSegment =
+  | "Students"
+  | "Freelancers"
+  | "Entrepreneurs"
+  | "Startups"
+  | "Small Businesses"
+  | "Creators";
+
+export type PricingTier = "Standard" | "Premium" | "Executive";
+
+export interface SegmentProductAlignment {
+  segment: UserSegment;
+  summary: string;
+  products: string[];
+}
+
+export interface PricingPackage {
+  tier: PricingTier;
+  priceGhs: number;
+  studentPriceGhs?: number;
+  onboardingLabel?: string;
+  bestFor: string;
+  summary: string;
+  deliverables: string[];
+  turnaround: string;
+  support: string;
+  highlight?: boolean;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -50,6 +79,7 @@ export interface Project {
   tags: string[];
   budget: BudgetRange;
   timeline: Timeline;
+  packageTier?: PricingTier;
   status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "IN_PROGRESS" | "COMPLETED";
   repoUrl?: string;
   featured: boolean;

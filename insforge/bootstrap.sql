@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.projects (
   tags TEXT,
   budget TEXT,
   timeline TEXT,
+  package_tier TEXT,
   status TEXT NOT NULL DEFAULT 'PENDING',
   repo_url TEXT,
   featured BOOLEAN NOT NULL DEFAULT false,

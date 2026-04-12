@@ -25,6 +25,7 @@ const AdminDashboard = lazyWithPreload(() => import("./pages/AdminDashboard").th
 const PublicGallery = lazyWithPreload(() => import("./pages/PublicGallery").then(m => ({ default: m.PublicGallery })));
 const About = lazyWithPreload(() => import("./pages/About").then(m => ({ default: m.About })));
 const Contact = lazyWithPreload(() => import("./pages/Contact").then(m => ({ default: m.Contact })));
+const Pricing = lazyWithPreload(() => import("./pages/Pricing").then(m => ({ default: m.Pricing })));
 const Profile = lazyWithPreload(() => import("./pages/Profile").then(m => ({ default: m.Profile })));
 const SubmitProject = lazyWithPreload(() => import("./pages/SubmitProject").then(m => ({ default: m.SubmitProject })));
 
@@ -58,7 +59,7 @@ export default function App() {
       if (warmed) return;
       warmed = true;
 
-      const warmup: Array<Promise<unknown>> = [PublicGallery.preload(), About.preload(), Contact.preload()];
+      const warmup: Array<Promise<unknown>> = [PublicGallery.preload(), About.preload(), Contact.preload(), Pricing.preload()];
 
       if (user) {
         warmup.push(Dashboard.preload(), SubmitProject.preload(), Profile.preload());
@@ -103,6 +104,7 @@ export default function App() {
           <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
           <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
           <Route path="/gallery" element={<PublicGallery />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/submit-project" element={<ProtectedRoute><SubmitProject /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

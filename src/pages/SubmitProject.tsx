@@ -14,7 +14,9 @@ import { toast } from "sonner";
 import PageHero from "../components/PageHero";
 import LazyMarkdown from "../components/LazyMarkdown";
 import { useTheme } from "../contexts/ThemeContext";
-import { Category, Timeline, BudgetRange } from "../types";
+import { useAdaptiveMotion } from "../hooks/useAdaptiveMotion";
+import { Category, Timeline, BudgetRange, PricingTier } from "../types";
+import { PRICING_PACKAGES } from "../config/pricing";
 
 const CATEGORIES = [
   { id: "Website", icon: Globe, description: "Business, Landing Pages, Blogs" },
@@ -55,9 +57,22 @@ const TIMELINES = [
   "Flexible"
 ];
 
+const PACKAGE_TO_BUDGET: Record<PricingTier, BudgetRange> = {
+  Standard: "GH₵ 300 - GH₵ 1,000",
+  Premium: "GH₵ 1,000 - GH₵ 5,000",
+  Executive: "GH₵ 5,000 - GH₵ 10,000",
+};
+
+const PACKAGE_TO_TIMELINE: Record<PricingTier, Timeline> = {
+  Standard: "Less than 1 month",
+  Premium: "1-3 months",
+  Executive: "3-6 months",
+};
+
 export const SubmitProject: React.FC = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { shouldReduceMotion } = useAdaptiveMotion();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>(CATEGORIES[0].id as Category);
@@ -66,6 +81,7 @@ export const SubmitProject: React.FC = () => {
   const [currency, setCurrency] = useState<"USD" | "GHS">("USD");
   const [budget, setBudget] = useState<BudgetRange>(BUDGET_RANGES.USD[0] as BudgetRange);
   const [timeline, setTimeline] = useState<Timeline>(TIMELINES[0] as Timeline);
+  const [selectedPackage, setSelectedPackage] = useState<PricingTier>("Standard");
   const [repoUrl, setRepoUrl] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [fileProgress, setFileProgress] = useState<{ [key: number]: number }>({});
@@ -90,10 +106,24 @@ export const SubmitProject: React.FC = () => {
     () => (showAllFiles ? files : files.slice(0, 20)),
     [files, showAllFiles]
   );
+  const previewImageFile = useMemo(
+    () => files.find((file) => file.type.startsWith("image/")) || null,
+    [files]
+  );
+  const previewImageUrl = useMemo(
+    () => (previewImageFile ? URL.createObjectURL(previewImageFile) : ""),
+    [previewImageFile]
+  );
 
   useEffect(() => {
     if (files.length <= 20) setShowAllFiles(false);
   }, [files.length]);
+
+  useEffect(() => {
+    return () => {
+      if (previewImageUrl) URL.revokeObjectURL(previewImageUrl);
+    };
+  }, [previewImageUrl]);
 
   const handleAddTag = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && tagInput.trim()) {
@@ -119,7 +149,7 @@ export const SubmitProject: React.FC = () => {
         return true;
       });
       if (newFiles.length > 0) {
-        setFiles([...files, ...newFiles]);
+        setFiles((prev) => [...prev, ...newFiles]);
         toast.success(`Added ${newFiles.length} file(s)`);
       }
     }
@@ -147,7 +177,7 @@ export const SubmitProject: React.FC = () => {
         return true;
       });
       if (newFiles.length > 0) {
-        setFiles([...files, ...newFiles]);
+        setFiles((prev) => [...prev, ...newFiles]);
         toast.success(`Dropped ${newFiles.length} file(s)`);
       }
     }
@@ -190,6 +220,7 @@ export const SubmitProject: React.FC = () => {
           tags: JSON.stringify(tags),
           budget,
           timeline,
+          packageTier: selectedPackage,
           repoUrl: repoUrl || undefined,
         },
         files
@@ -510,16 +541,16 @@ export const SubmitProject: React.FC = () => {
               {/* Right Column: Logistics & Assets */}
               <div className="lg:col-span-5 space-y-6 lg:space-y-12">
                 {/* Live Preview Card */}
-                <div className={`backdrop-blur-3xl border p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 overflow-hidden group ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl' : 'bg-white/5 border-white/10'}`}>
+                <div className={`backdrop-blur-3xl border p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 overflow-hidden group ${theme === 'light' ? (shouldReduceMotion ? 'bg-white border-slate-200 shadow-sm shadow-slate-200/30' : 'bg-white border-slate-200 shadow-xl') : 'bg-white/5 border-white/10'}`}>
                   <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-8 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
                     <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
                     Live Preview
                   </h2>
                   
                   <div className={`aspect-[16/10] relative overflow-hidden rounded-2xl sm:rounded-[2rem] border transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-100' : 'bg-black/40 border-white/5'}`}>
-                    {files.length > 0 && files[0].type.startsWith("image/") ? (
+                    {previewImageFile && previewImageUrl ? (
                       <img 
-                        src={URL.createObjectURL(files[0])} 
+                        src={previewImageUrl}
                         alt="Preview" 
                         className="w-full h-full object-cover opacity-60"
                       />
@@ -555,13 +586,61 @@ export const SubmitProject: React.FC = () => {
                   </div>
                 </div>
 
-                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? (shouldReduceMotion ? 'bg-white border-slate-200 shadow-sm shadow-slate-200/30' : 'bg-white border-slate-200 shadow-lg shadow-slate-200/50') : 'bg-white/5 border-white/10'}`}>
                   <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-10 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
                     <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
-                    Logistics & Assets
+                    Planning, Budget & Assets
                   </h2>
 
                   <div className="space-y-8 sm:space-y-10">
+                    {/* Package Selection */}
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 ml-3 sm:ml-4">
+                        <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                          Preferred Package
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => navigate("/pricing")}
+                          className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors ${theme === 'light' ? 'text-indigo-600 hover:text-indigo-800' : 'text-indigo-400 hover:text-indigo-300'}`}
+                        >
+                          View Full Pricing
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                        {PRICING_PACKAGES.map((pkg) => (
+                          <button
+                            key={pkg.tier}
+                            type="button"
+                            onClick={() => {
+                              setSelectedPackage(pkg.tier);
+                              setCurrency("GHS");
+                              setBudget(PACKAGE_TO_BUDGET[pkg.tier]);
+                              setTimeline(PACKAGE_TO_TIMELINE[pkg.tier]);
+                            }}
+                            className={`text-left px-4 sm:px-5 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl border transition-all duration-300 ${
+                              selectedPackage === pkg.tier
+                                ? shouldReduceMotion
+                                  ? "bg-indigo-500 text-white border-indigo-500 shadow-sm shadow-indigo-500/15"
+                                  : "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20"
+                                : theme === 'light'
+                                ? "bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300"
+                                : "bg-white/5 border-white/10 text-white/70 hover:border-white/20"
+                            }`}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em]">{pkg.tier}</p>
+                              <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em]">GH₵ {pkg.priceGhs.toLocaleString("en-GH")}</p>
+                            </div>
+                            <p className={`mt-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] ${selectedPackage === pkg.tier ? 'text-white/90' : theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                              {pkg.bestFor}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Budget & Currency */}
                     <div className="space-y-4 sm:space-y-6">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 ml-3 sm:ml-4">
@@ -577,7 +656,9 @@ export const SubmitProject: React.FC = () => {
                               }}
                               className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all ${
                                 currency === curr 
-                                  ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
+                                  ? shouldReduceMotion
+                                    ? "bg-indigo-500 text-white shadow-sm shadow-indigo-500/15"
+                                    : "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
                                   : theme === 'light' ? "text-slate-400 hover:text-slate-900" : "text-white/20 hover:text-white"
                               }`}
                             >
@@ -595,7 +676,9 @@ export const SubmitProject: React.FC = () => {
                             onClick={() => setBudget(range as BudgetRange)}
                             className={`px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
                               budget === range 
-                                ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
+                                ? shouldReduceMotion
+                                  ? "bg-indigo-500 text-white border-indigo-500 shadow-sm shadow-indigo-500/15"
+                                  : "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
                                 : theme === 'light' ? "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300" : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
                             }`}
                           >
@@ -616,7 +699,9 @@ export const SubmitProject: React.FC = () => {
                             onClick={() => setTimeline(time as Timeline)}
                             className={`px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
                               timeline === time 
-                                ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
+                                ? shouldReduceMotion
+                                  ? "bg-indigo-500 text-white border-indigo-500 shadow-sm shadow-indigo-500/15"
+                                  : "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
                                 : theme === 'light' ? "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300" : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
                             }`}
                           >
@@ -794,6 +879,10 @@ export const SubmitProject: React.FC = () => {
                     <div>
                       <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Budget Allocation</p>
                       <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{budget} {currency}</p>
+                    </div>
+                    <div>
+                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Selected Package</p>
+                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPackage}</p>
                     </div>
                     <div>
                       <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Target Timeline</p>
