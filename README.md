@@ -55,7 +55,19 @@ Project management PWA backed by [InsForge](https://insforge.dev): Postgres, aut
 
 ## Deployment
 
-Build static assets with `npm run build` and host `dist/` on any static host (configure SPA fallback to `index.html`). Ensure production origins are allowed for InsForge auth and CORS as required by your InsForge project settings.
+**Hosted on InsForge** — frontend and backend fully integrated.
+
+- **Live App**: https://5ab7xs59.insforge.site
+- **Backend API**: https://5ab7xs59.us-east.insforge.app
+- **Edge Functions**: https://5ab7xs59.functions.insforge.app
+
+To deploy updates:
+```bash
+npm run build
+npx @insforge/cli deployments deploy . -y
+```
+
+For manual development or testing, build static assets with `npm run build` and host `dist/` on any static host (configure SPA fallback to `index.html`). Ensure production origins are allowed for InsForge auth and CORS as required by your InsForge project settings.
 
 ## Team Image Convention
 
