@@ -63,6 +63,23 @@ npx @insforge/cli db query "$(cat insforge/rls-policies.sql)"
 - ⚡ Email address login history
 - ⚡ Expiration cleanup queries
 
+## Hero Background Image (Backend + Frontend)
+
+If the old hero/background image still appears after replacing the file, set these deployment env vars so frontend pulls the backend URL and bypasses stale cache:
+
+```bash
+npx @insforge/cli deployments env set VITE_HERO_RING_IMAGE_URL https://<your-storage-or-cdn-url>/hero-ring.png
+npx @insforge/cli deployments env set VITE_HERO_RING_IMAGE_VERSION 2026-04-12-1
+```
+
+Then deploy again:
+
+```bash
+npx @insforge/cli deployments deploy ./dist
+```
+
+Whenever you change the image, bump `VITE_HERO_RING_IMAGE_VERSION` (for example `2026-04-12-2`) to force clients to fetch the new file.
+
 ## Verification
 
 After deployment, verify tables exist:

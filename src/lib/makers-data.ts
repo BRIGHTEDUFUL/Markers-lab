@@ -7,12 +7,17 @@ import type {
   Testimonial,
   AdminNote,
   Analytics,
+  SubmissionNotification,
   Category,
   BudgetRange,
   Timeline,
 } from "../types";
+import { getUserDisplayName, isEmailLike } from "./user-display";
 
 const BUCKET = "makers-lab";
+const OFFICIAL_INBOX_EMAIL =
+  (import.meta.env.VITE_OFFICIAL_INBOX_EMAIL as string | undefined)?.trim() ||
+  "creators.makerslab@gmail.com";
 
 type ProfileRow = {
   id: string;
@@ -67,6 +72,22 @@ type AdminNoteRow = {
   project_id: string;
   admin_id: string;
   created_at: string;
+};
+
+type SubmissionNotificationRow = {
+  id: string;
+  project_id: string;
+  user_id: string;
+  official_email: string;
+  delivery_status: "QUEUED" | "SENT" | "FAILED";
+  delivery_error: string | null;
+  dispatched_at: string | null;
+  acknowledged: boolean;
+  acknowledged_at: string | null;
+  acknowledged_by: string | null;
+  payload: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
 };
 
 function mapProjectRow(r: ProjectRow, extras?: Partial<Project>): Project {
@@ -130,10 +151,150 @@ function mapAdminNoteRow(r: AdminNoteRow, admin?: User): AdminNote {
   };
 }
 
+function mapSubmissionNotificationRow(
+  r: SubmissionNotificationRow,
+  extras?: Partial<SubmissionNotification>
+): SubmissionNotification {
+  return {
+    id: r.id,
+    projectId: r.project_id,
+    userId: r.user_id,
+    officialEmail: r.official_email,
+    deliveryStatus: r.delivery_status,
+    deliveryError: r.delivery_error || undefined,
+    dispatchedAt: r.dispatched_at || undefined,
+    acknowledged: r.acknowledged,
+    acknowledgedAt: r.acknowledged_at || undefined,
+    acknowledgedBy: r.acknowledged_by || undefined,
+    payload: r.payload || undefined,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+    ...extras,
+  };
+}
+
+async function invokeSubmissionEmailFunction(payload: Record<string, unknown>) {
+  const fns = ["send-project-submission-email", "project-submission-notify"];
+  let lastError: unknown = null;
+
+  for (const fnName of fns) {
+    try {
+      const { error } = await (insforge.functions as any).invoke(fnName, { body: payload });
+      if (!error) return { success: true as const };
+      lastError = error;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  return {
+    success: false as const,
+    error:
+      lastError instanceof Error
+        ? lastError.message
+        : typeof lastError === "object" && lastError !== null && "message" in lastError
+        ? String((lastError as { message: unknown }).message)
+        : "No submission email edge function available",
+  };
+}
+
+async function createSubmissionNotification(
+  project: ProjectRow,
+  userId: string,
+  payload: {
+    title: string;
+    description: string;
+    category: string;
+    tags: string;
+    budget: string;
+    timeline: string;
+    repoUrl?: string;
+  },
+  localFiles: globalThis.File[]
+) {
+  const { data: userProfile } = await insforge.database
+    .from("profiles")
+    .select("display_name,email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const snapshotPayload = {
+    title: payload.title,
+    description: payload.description,
+    category: payload.category,
+    tags: payload.tags ? (JSON.parse(payload.tags) as string[]) : [],
+    budget: payload.budget,
+    timeline: payload.timeline,
+    repoUrl: payload.repoUrl || null,
+    filesCount: localFiles.length,
+    attachments: localFiles.map((f) => ({
+      name: f.name,
+      size: f.size,
+      type: f.type || "application/octet-stream",
+    })),
+    submitterName: (userProfile as { display_name?: string | null } | null)?.display_name || "Unknown user",
+    submitterEmail: (userProfile as { email?: string | null } | null)?.email || "",
+  };
+
+  const { data: inserted, error: insErr } = await insforge.database
+    .from("submission_notifications")
+    .insert([
+      {
+        project_id: project.id,
+        user_id: userId,
+        official_email: OFFICIAL_INBOX_EMAIL,
+        payload: snapshotPayload,
+        delivery_status: "QUEUED",
+      },
+    ])
+    .select()
+    .single();
+
+  if (insErr) {
+    console.warn("[makers-data] submission notification insert failed:", insErr.message);
+    return;
+  }
+
+  const notification = inserted as SubmissionNotificationRow;
+  const dispatchPayload = {
+    notificationId: notification.id,
+    to: OFFICIAL_INBOX_EMAIL,
+    projectId: project.id,
+    projectTitle: project.title,
+    projectStatus: project.status,
+    submitter: {
+      id: userId,
+      name: snapshotPayload.submitterName,
+      email: snapshotPayload.submitterEmail,
+    },
+    submittedAt: project.created_at,
+    details: snapshotPayload,
+  };
+
+  const sendResult = await invokeSubmissionEmailFunction(dispatchPayload);
+  const updateRow: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (sendResult.success) {
+    updateRow.delivery_status = "SENT";
+    updateRow.dispatched_at = new Date().toISOString();
+    updateRow.delivery_error = null;
+  } else {
+    updateRow.delivery_status = "FAILED";
+    updateRow.delivery_error = sendResult.error;
+  }
+
+  const { error: upErr } = await insforge.database
+    .from("submission_notifications")
+    .update(updateRow)
+    .eq("id", notification.id);
+  if (upErr) {
+    console.warn("[makers-data] submission notification update failed:", upErr.message);
+  }
+}
+
 function profileToUser(p: ProfileRow): User {
   return {
     id: p.id,
-    name: p.display_name,
+    name: getUserDisplayName({ name: p.display_name, email: p.email }),
     email: p.email || "",
     role: p.role === "ADMIN" ? "ADMIN" : "USER",
     avatarUrl: p.avatar_url || undefined,
@@ -148,7 +309,7 @@ export function userFromAuthUser(raw: unknown): User | null {
   const id = o.id;
   if (typeof id !== "string") return null;
   const email = typeof o.email === "string" ? o.email : "";
-  let name = email || "Member";
+  let name = getUserDisplayName({ name: "", email });
   if (typeof o.name === "string" && o.name.trim()) name = o.name;
   else if (o.user_metadata && typeof o.user_metadata === "object") {
     const m = o.user_metadata as Record<string, unknown>;
@@ -185,20 +346,74 @@ export async function fetchSessionUser(): Promise<User | null> {
   const pr = prof as ProfileRow | null;
   const base = userFromAuthUser(u);
   if (!base) return null;
+  const resolvedName = getUserDisplayName({ name: pr?.display_name || base.name, email: base.email || pr?.email || "" });
   return {
     ...base,
     email: base.email || pr?.email || "",
-    name: pr?.display_name || base.name,
+    name: resolvedName,
     role: pr?.role === "ADMIN" ? "ADMIN" : "USER",
     avatarUrl: pr?.avatar_url || undefined,
     createdAt: pr?.created_at,
   };
 }
 
+/**
+ * Validate identity + password for login.
+ * Supports either email or username (profiles.display_name).
+ */
+export async function validateEmailPasswordLogin(identity: string, password: string) {
+  const trimmedIdentity = identity.trim();
+  if (!trimmedIdentity) {
+    return { success: false, error: "Email or username is required" };
+  }
+
+  if (!password || password.length < 6) {
+    return { success: false, error: "Invalid password" };
+  }
+
+  try {
+    let resolvedEmail = trimmedIdentity;
+
+    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedIdentity);
+    if (!looksLikeEmail) {
+      const { data: profile, error: profileError } = await insforge.database
+        .from("profiles")
+        .select("email")
+        .ilike("display_name", trimmedIdentity)
+        .not("email", "is", null)
+        .limit(1)
+        .maybeSingle();
+
+      if (profileError || !profile?.email) {
+        return { success: false, error: "Invalid email/username or password" };
+      }
+
+      resolvedEmail = profile.email;
+    }
+
+    const { data, error } = await insforge.auth.signInWithPassword({
+      email: resolvedEmail,
+      password,
+    });
+
+    if (error || !data?.user) {
+      return { success: false, error: error?.message || "Invalid credentials" };
+    }
+
+    return {
+      success: true,
+      userId: data.user.id,
+      email: resolvedEmail,
+    };
+  } catch (error: any) {
+    return { success: false, error: error?.message || "Authentication failed" };
+  }
+}
+
 async function ensureProfile(userId: string, displayName: string, email: string) {
   const { data: existing, error: selErr } = await insforge.database
     .from("profiles")
-    .select("id")
+    .select("id,display_name,email")
     .eq("id", userId)
     .maybeSingle();
   if (selErr) {
@@ -206,14 +421,31 @@ async function ensureProfile(userId: string, displayName: string, email: string)
     return;
   }
   if (existing) {
-    const { error: upErr } = await insforge.database.from("profiles").update({ email }).eq("id", userId);
+    const current = existing as { id: string; display_name?: string | null; email?: string | null };
+    const row: Record<string, string> = {};
+
+    if (email && current.email !== email) row.email = email;
+
+    const resolved = getUserDisplayName({
+      name: current.display_name || displayName,
+      email: email || current.email || "",
+    });
+    if (!current.display_name || isEmailLike(current.display_name) || current.display_name !== resolved) {
+      row.display_name = resolved;
+    }
+
+    if (!Object.keys(row).length) return;
+
+    const { error: upErr } = await insforge.database.from("profiles").update(row).eq("id", userId);
     if (upErr) console.warn("[makers-data] profiles update email:", upErr.message);
     return;
   }
+
+  const resolvedDisplayName = getUserDisplayName({ name: displayName, email });
   const { error: insErr } = await insforge.database.from("profiles").insert([
     {
       id: userId,
-      display_name: displayName || email || "Member",
+      display_name: resolvedDisplayName,
       role: "USER",
       email,
     },
@@ -389,9 +621,95 @@ export async function createProjectWithFiles(
     if (dbErr) throw dbErr;
   }
 
+  await createSubmissionNotification(project, userId, payload, localFiles);
+
   const list = await fetchMyProjects(userId);
   const done = list.find((p) => p.id === project.id);
   return done || mapProjectRow(project);
+}
+
+export async function fetchAdminSubmissionNotifications(limit: number = 50): Promise<SubmissionNotification[]> {
+  const { data, error } = await insforge.database
+    .from("submission_notifications")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+
+  const rows = (data || []) as SubmissionNotificationRow[];
+  if (!rows.length) return [];
+
+  const projectIds = [...new Set(rows.map((r) => r.project_id))];
+  const userIds = [...new Set(rows.map((r) => r.user_id))];
+  const [{ data: rawProjects, error: projectsError }, profileMap] = await Promise.all([
+    insforge.database.from("projects").select("*").in("id", projectIds),
+    profilesByIds(userIds),
+  ]);
+  if (projectsError) throw projectsError;
+
+  const richProjects = await attachProjectRelations((rawProjects || []) as ProjectRow[]);
+  const projectMap = new Map(richProjects.map((p) => [p.id, p]));
+
+  return rows.map((row) =>
+    mapSubmissionNotificationRow(row, {
+      project: projectMap.get(row.project_id),
+      user: profileMap.get(row.user_id) ? profileToUser(profileMap.get(row.user_id)!) : undefined,
+    })
+  );
+}
+
+export async function adminAcknowledgeSubmissionNotification(
+  notificationId: string,
+  acknowledged: boolean,
+  adminId?: string
+) {
+  const row: Record<string, unknown> = {
+    acknowledged,
+    acknowledged_at: acknowledged ? new Date().toISOString() : null,
+    acknowledged_by: acknowledged ? adminId || null : null,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await insforge.database
+    .from("submission_notifications")
+    .update(row)
+    .eq("id", notificationId);
+  if (error) throw error;
+}
+
+export async function adminRetrySubmissionNotificationEmail(notificationId: string) {
+  const { data: row, error } = await insforge.database
+    .from("submission_notifications")
+    .select("*")
+    .eq("id", notificationId)
+    .single();
+  if (error) throw error;
+
+  const n = row as SubmissionNotificationRow;
+  const payload = {
+    notificationId: n.id,
+    to: n.official_email,
+    projectId: n.project_id,
+    submitter: { id: n.user_id },
+    details: n.payload || {},
+    retriedAt: new Date().toISOString(),
+  };
+  const sendResult = await invokeSubmissionEmailFunction(payload);
+  const updateRow: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+  if (sendResult.success) {
+    updateRow.delivery_status = "SENT";
+    updateRow.dispatched_at = new Date().toISOString();
+    updateRow.delivery_error = null;
+  } else {
+    updateRow.delivery_status = "FAILED";
+    updateRow.delivery_error = sendResult.error;
+  }
+
+  const { error: upErr } = await insforge.database
+    .from("submission_notifications")
+    .update(updateRow)
+    .eq("id", notificationId);
+  if (upErr) throw upErr;
 }
 
 export async function fetchAdminProjects(): Promise<Project[]> {
@@ -458,21 +776,25 @@ export async function adminDeleteProject(id: string) {
 }
 
 export async function adminBulkUpdateProjects(ids: string[], patch: { status?: string; featured?: boolean }) {
-  for (const id of ids) {
-    const row: Record<string, unknown> = {};
-    if (patch.status !== undefined) row.status = patch.status;
-    if (patch.featured !== undefined) row.featured = patch.featured;
-    if (Object.keys(row).length) {
-      const { error } = await insforge.database.from("projects").update(row).eq("id", id);
-      if (error) throw error;
-    }
-  }
+  if (!ids.length) return;
+  const row: Record<string, unknown> = {};
+  if (patch.status !== undefined) row.status = patch.status;
+  if (patch.featured !== undefined) row.featured = patch.featured;
+  if (!Object.keys(row).length) return;
+  const { error } = await insforge.database.from("projects").update(row).in("id", ids);
+  if (error) throw error;
 }
 
 export async function adminBulkDeleteProjects(ids: string[]) {
-  for (const id of ids) {
-    await adminDeleteProject(id);
-  }
+  if (!ids.length) return;
+  const { data: files, error: fErr } = await insforge.database
+    .from("project_files")
+    .select("storage_key,bucket")
+    .in("project_id", ids);
+  if (fErr) throw fErr;
+  await removeStorageKeys((files || []) as { storage_key: string; bucket?: string | null }[]);
+  const { error } = await insforge.database.from("projects").delete().in("id", ids);
+  if (error) throw error;
 }
 
 export async function adminDeleteProjectFile(fileId: string) {
@@ -586,9 +908,8 @@ export async function adminSetUserRole(userId: string, role: "USER" | "ADMIN") {
 
 export async function adminDeleteUserProfile(userId: string) {
   const { data: plist } = await insforge.database.from("projects").select("id").eq("user_id", userId);
-  for (const p of (plist || []) as { id: string }[]) {
-    await adminDeleteProject(p.id);
-  }
+  const ids = ((plist || []) as { id: string }[]).map((p) => p.id);
+  if (ids.length) await adminBulkDeleteProjects(ids);
   const { error } = await insforge.database.from("profiles").delete().eq("id", userId);
   if (error) throw error;
 }
@@ -769,8 +1090,6 @@ export async function fetchUserSettings(userId: string) {
       theme: "dark",
       emailNotifications: true,
       marketingEmails: true,
-      twoFactorEnabled: false,
-      twoFactorMethod: null,
       privacyLevel: "private",
       bio: null,
     };
@@ -781,8 +1100,6 @@ export async function fetchUserSettings(userId: string) {
     theme: (data as any).theme || "dark",
     emailNotifications: (data as any).email_notifications ?? true,
     marketingEmails: (data as any).marketing_emails ?? true,
-    twoFactorEnabled: (data as any).two_factor_enabled ?? false,
-    twoFactorMethod: (data as any).two_factor_method,
     privacyLevel: (data as any).privacy_level || "private",
     bio: (data as any).bio,
   };
@@ -797,8 +1114,6 @@ export async function updateUserSettings(userId: string, patch: Record<string, u
   if (patch.theme !== undefined) updates.theme = patch.theme;
   if (patch.emailNotifications !== undefined) updates.email_notifications = patch.emailNotifications;
   if (patch.marketingEmails !== undefined) updates.marketing_emails = patch.marketingEmails;
-  if (patch.twoFactorEnabled !== undefined) updates.two_factor_enabled = patch.twoFactorEnabled;
-  if (patch.twoFactorMethod !== undefined) updates.two_factor_method = patch.twoFactorMethod;
   if (patch.privacyLevel !== undefined) updates.privacy_level = patch.privacyLevel;
   if (patch.bio !== undefined) updates.bio = patch.bio;
   

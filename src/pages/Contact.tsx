@@ -132,7 +132,7 @@ export const Contact: React.FC = () => {
                 </button>
               </motion.div>
             ) : (
-              <form onSubmit={handleSubmit} className={`space-y-5 sm:space-y-8 backdrop-blur-3xl border p-5 sm:p-12 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/2 border-white/5'}`}>
+              <form onSubmit={handleSubmit} className={`space-y-5 sm:space-y-8 backdrop-blur-3xl border p-5 sm:p-12 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-slate-950/72 border-white/10'}`}>
                 <div className="space-y-4 sm:space-y-6">
                   {/* Name Input */}
                   <div className="space-y-2 sm:space-y-3">

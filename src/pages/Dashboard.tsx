@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { lazy, Suspense, useState, useEffect, useMemo, useCallback, memo } from "react";
 import { fetchMyProjects, deleteMyProject } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
 import { 
@@ -7,18 +6,18 @@ import {
   Download, AlertCircle, ExternalLink, Calendar, BarChart3, 
   Filter, ChevronDown, Search, LayoutGrid, List
 } from "lucide-react";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { format } from "date-fns";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { useTheme } from "../contexts/ThemeContext";
 import PageHero from "../components/PageHero";
+import LazyMarkdown from "../components/LazyMarkdown";
 import { toast } from "sonner";
-import { 
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, 
-} from "recharts";
 import { Project } from "../types";
 import SkeletonCard from "../components/SkeletonCard";
+import { useSmartNavigate } from "../hooks/useSmartNavigate";
+import { useOverlayBackHandler } from "../hooks/useOverlayBackHandler";
+
+const DashboardStatusChart = lazy(() => import("../components/charts/DashboardStatusChart"));
 
 const stripMarkdown = (text: string) => {
   return text
@@ -29,37 +28,10 @@ const stripMarkdown = (text: string) => {
 };
 
 const TiltCard: React.FC<{ children: React.ReactNode; className: string; onClick: () => void }> = memo(({ children, className, onClick }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const rotateX = useTransform(y, [-100, 100], [15, -15]);
-  const rotateY = useTransform(x, [-100, 100], [-15, 15]);
-
-  const handleMouseMove = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    x.set(event.clientX - (rect.left + rect.width / 2));
-    y.set(event.clientY - (rect.top + rect.height / 2));
-  }, [x, y]);
-
-  const handleMouseLeave = useCallback(() => {
-    x.set(0);
-    y.set(0);
-  }, [x, y]);
-
   return (
-    <motion.div
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      whileHover={{ scale: 1.02, y: -12, boxShadow: "0 40px 80px -15px rgba(0, 0, 0, 0.3)" }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className={className}
-      onClick={onClick}
-    >
-      <div style={{ transform: "translateZ(50px)" }}>
-        {children}
-      </div>
-    </motion.div>
+    <div className={className} onClick={onClick}>
+      {children}
+    </div>
   );
 });
 
@@ -107,7 +79,7 @@ const CATEGORIES = [
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const navigate = useNavigate();
+  const smartNavigate = useSmartNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -125,6 +97,12 @@ export const Dashboard: React.FC = () => {
     message: "",
     onConfirm: () => {},
   });
+
+  const { closeWithBack: closeConfirmModal } = useOverlayBackHandler(
+    confirmModal.isOpen,
+    () => setConfirmModal(prev => ({ ...prev, isOpen: false })),
+    "dashboard-confirm-modal"
+  );
 
   const filteredProjects = useMemo(() => projects.filter(p => {
     const statusMatch = statusFilter === "ALL" || p.status === statusFilter;
@@ -205,7 +183,7 @@ export const Dashboard: React.FC = () => {
             <div className="h-1 w-12 bg-indigo-500" />
           </div>
           <button
-            onClick={() => navigate("/submit-project")}
+            onClick={() => smartNavigate("/submit-project", { asSectionSwitch: true })}
             className={`group relative px-8 sm:px-10 py-4 sm:py-5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] transition-all duration-500 overflow-hidden rounded-full shadow-lg ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600 shadow-slate-200' : 'bg-white text-black hover:bg-indigo-500 hover:text-white shadow-[0_0_40px_rgba(255,255,255,0.1)]'}`}
           >
             <span className="relative z-10 flex items-center justify-center">
@@ -241,33 +219,13 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className={`lg:col-span-2 backdrop-blur-3xl border p-6 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl hover:shadow-indigo-100/40' : 'bg-white/5 border-white/10'}`}>
               <div className="h-[250px] sm:h-[350px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={80}
-                      outerRadius={120}
-                      paddingAngle={10}
-                      dataKey="value"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={
-                          entry.status === "COMPLETED" ? "#22c55e" :
-                          entry.status === "PENDING" ? "#eab308" :
-                          entry.status === "IN_PROGRESS" ? "#6366f1" :
-                          entry.status === "IN_REVIEW" ? "#3b82f6" :
-                          "#ef4444"
-                        } stroke={theme === 'light' ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)"} strokeWidth={4} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: theme === 'light' ? "#fff" : "#0a0a0a", borderRadius: "24px", border: theme === 'light' ? "1px solid #e2e8f0" : "1px solid rgba(255,255,255,0.1)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.2)", padding: "20px" }}
-                      itemStyle={{ color: theme === 'light' ? "#0f172a" : "#fff", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.2em" }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <Suspense
+                  fallback={
+                    <div className={`h-full w-full rounded-2xl border ${theme === "light" ? "border-slate-200 bg-slate-50" : "border-white/10 bg-white/5"}`} />
+                  }
+                >
+                  <DashboardStatusChart chartData={chartData} theme={theme} />
+                </Suspense>
               </div>
             </div>
           </div>
@@ -550,9 +508,7 @@ export const Dashboard: React.FC = () => {
                   <h3 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-4 sm:mb-6 transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Project Brief</h3>
                   <div className={`p-6 sm:p-8 rounded-2xl sm:rounded-3xl border transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-100' : 'bg-white/2 border-white/5'}`}>
                     <div className={`text-xs sm:text-sm leading-relaxed prose prose-sm max-w-none font-sans transition-colors duration-500 ${theme === 'light' ? 'text-slate-600 prose-slate' : 'text-white/60 prose-invert'}`}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {selectedProject.description}
-                      </ReactMarkdown>
+                      <LazyMarkdown>{selectedProject.description}</LazyMarkdown>
                     </div>
                   </div>
                 </section>
@@ -670,7 +626,7 @@ export const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-4 w-full">
                   <button
-                    onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                    onClick={closeConfirmModal}
                     className={`flex-1 px-8 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${
                       theme === 'light' 
                         ? 'bg-slate-100 text-slate-900 hover:bg-slate-200' 

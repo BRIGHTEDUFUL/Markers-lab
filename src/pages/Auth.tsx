@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { insforge, insforgeConfigured } from "../lib/insforge-client";
-import { fetchSessionUser, userFromAuthUser, trackPasswordResetRequest, completePasswordReset, trackLoginAttempt, logAuditEvent, markEmailAsVerified } from "../lib/makers-data";
-import { validateEmailPasswordLogin, generateAndSendOTP, verifyOTPCode, getOrCreateGoogleUser, getUserSettings } from "../lib/oauth-2fa-api";
+import { fetchSessionUser, userFromAuthUser, trackPasswordResetRequest, completePasswordReset, trackLoginAttempt, logAuditEvent, markEmailAsVerified, validateEmailPasswordLogin } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, Globe, Zap, Cpu, ArrowLeft, Eye, EyeOff, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -10,7 +9,8 @@ import { useTheme } from "../contexts/ThemeContext";
 import StarField from "../components/StarField";
 import { useTouchFeedback } from "../hooks/useTouchFeedback";
 import GoogleSignInButton from "../components/GoogleSignInButton";
-import TwoFactorModal from "../components/TwoFactorModal";
+import { useAdaptiveMotion } from "../hooks/useAdaptiveMotion";
+import { useSmartNavigate } from "../hooks/useSmartNavigate";
 
 /**
  * Enhanced Auth Page with:
@@ -23,6 +23,7 @@ import TwoFactorModal from "../components/TwoFactorModal";
  */
 export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ initialMode = "login" }) => {
   const { theme } = useTheme();
+  const { shouldReduceMotion } = useAdaptiveMotion();
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,13 +44,10 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   const [passwordStrength, setPasswordStrength] = useState<"weak" | "fair" | "good" | "strong" | null>(null);
   const [newPasswordStrength, setNewPasswordStrength] = useState<"weak" | "fair" | "good" | "strong" | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [show2FAModal, setShow2FAModal] = useState(false);
-  const [pendingUserId, setPendingUserId] = useState("");
-  const [pendingUserEmail, setPendingUserEmail] = useState("");
-  const [has2FAEnabled, setHas2FAEnabled] = useState(false);
-  const { login } = useAuth();
+  const { login, authError, recoverSession } = useAuth();
   const { handlers: submitHandlers, isPressed: isSubmitPressed } = useTouchFeedback(80);
   const navigate = useNavigate();
+  const smartNavigate = useSmartNavigate();
   const location = useLocation();
 
   useEffect(() => {
@@ -64,6 +62,68 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
       setStep("reset");
     }
   }, [location.search]);
+
+  useEffect(() => {
+    if (authError) setError(authError);
+  }, [authError]);
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    const oauthError = q.get("error") || q.get("authError");
+    const oauthDesc = q.get("error_description") || q.get("message");
+    if (oauthError || oauthDesc) {
+      setError(formatAuthError(oauthDesc || oauthError));
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!insforgeConfigured) return;
+
+    const q = new URLSearchParams(location.search);
+    const hasOAuthCallback = q.has("code") || q.has("state") || q.has("auth_code");
+    if (!hasOAuthCallback) return;
+
+    let cancelled = false;
+
+    const finalizeOAuthLogin = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const authApi = insforge.auth as any;
+        if (q.get("code") && typeof authApi.exchangeCodeForSession === "function") {
+          await authApi.exchangeCodeForSession(q.get("code"));
+        }
+
+        let sessionUser = await fetchSessionUser();
+
+        if (!sessionUser) {
+          const { data } = await insforge.auth.getCurrentUser();
+          if (data?.user) {
+            sessionUser = userFromAuthUser(data.user as any);
+          }
+        }
+
+        if (!cancelled && sessionUser) {
+          login(sessionUser);
+          navigate("/dashboard", { replace: true });
+        } else if (!cancelled) {
+          setError("Google sign-in did not create a valid session. Please try again.");
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setError(formatAuthError(err?.message || "Google authentication error"));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    finalizeOAuthLogin();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [insforgeConfigured, location.search, login, navigate]);
 
   // Calculate password strength
   useEffect(() => {
@@ -106,6 +166,56 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   }, [newPassword]);
 
   const redirectTo = `${window.location.origin}/login`;
+
+  const formatAuthError = (raw?: string | null) => {
+    const msg = (raw || "").toLowerCase();
+    if (!msg) return "Authentication failed. Please try again.";
+    if (msg.includes("invalid") && msg.includes("credential")) {
+      return "Invalid email or password.";
+    }
+    if (msg.includes("email") && msg.includes("verify")) {
+      return "Verify your email first, then sign in.";
+    }
+    if (msg.includes("token") || msg.includes("refresh") || msg.includes("expired") || msg.includes("401")) {
+      return "Session expired. Please sign in again.";
+    }
+    if (msg.includes("network") || msg.includes("fetch") || msg.includes("timeout")) {
+      return "Network issue. Check your connection and retry.";
+    }
+    return raw || "Authentication failed. Please try again.";
+  };
+
+  const ensureAuthProfile = async (userId: string, displayName: string, userEmail: string) => {
+    try {
+      const { data: existing } = await insforge.database
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (existing) {
+        await insforge.database
+          .from("profiles")
+          .update({
+            display_name: displayName || userEmail || "Member",
+            email: userEmail,
+          })
+          .eq("id", userId);
+        return;
+      }
+
+      await insforge.database.from("profiles").insert([
+        {
+          id: userId,
+          display_name: displayName || userEmail || "Member",
+          role: "USER",
+          email: userEmail,
+        },
+      ]);
+    } catch (profileErr) {
+      console.warn("Failed to persist profile details:", profileErr);
+    }
+  };
 
   // Forgot Password Handler
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -230,7 +340,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         setNewPassword("");
         setConfirmPassword("");
         setOtp("");
-        navigate("/login");
+        navigate("/login", { replace: true });
       }, 2000);
     } catch (err: any) {
       setError(err?.message || "Error resetting password");
@@ -253,20 +363,23 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
       const { data, error: oauthErr } = await insforge.auth.signInWithOAuth({
         provider: "google",
         redirectTo,
-        skipBrowserRedirect: false,
+        skipBrowserRedirect: true,
       });
 
       if (oauthErr) {
-        setError(oauthErr.message || "Google authentication failed");
+        setError(formatAuthError(oauthErr.message || "Google authentication failed"));
         return;
       }
 
-      // OAuth redirects to provider
-      if (data?.url) {
-        window.location.href = data.url;
+      if (!data?.url) {
+        setError("Could not start Google sign-in. Please try again.");
+        return;
       }
+
+      // Explicit redirect keeps flow deterministic across browsers/webviews.
+      window.location.assign(data.url);
     } catch (err: any) {
-      setError(err?.message || "Google authentication error");
+      setError(formatAuthError(err?.message || "Google authentication error"));
     } finally {
       setGoogleLoading(false);
     }
@@ -282,64 +395,43 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
       if (mode === "login") {
-        // Use new 2FA-aware email login
         const result = await validateEmailPasswordLogin(email, password);
+        const loginIdentity = result.email || email;
         if (!result.success) {
           // Track failed login attempt
-          await trackLoginAttempt(email, false, {
+          await trackLoginAttempt(loginIdentity, false, {
             ipAddress: "browser",
             userAgent: navigator.userAgent,
             failedReason: result.error,
           });
-          setError(result.error || "Login failed");
+          setError(formatAuthError(result.error || "Login failed"));
           return;
         }
 
-        // Login successful, check if 2FA is enabled
-        if (result.requiresTwoFA) {
-          // Store user info and show 2FA modal
-          setPendingUserId(result.userId || "");
-          setPendingUserEmail(email);
-          setHas2FAEnabled(true);
-          setShow2FAModal(true);
-          
-          // Generate and send OTP
-          const otpResult = await generateAndSendOTP(result.userId || "", email);
-          if (!otpResult.success) {
-            setError(otpResult.error || "Failed to generate OTP");
-            setShow2FAModal(false);
-            return;
-          }
-          
-          // Track successful password validation (before 2FA)
-          await trackLoginAttempt(email, true, {
+        // Direct login flow (2FA removed)
+        let u = await fetchSessionUser();
+        if (!u) u = userFromAuthUser({ id: result.userId, email: loginIdentity } as any);
+        if (u) {
+          login(u);
+          await trackLoginAttempt(loginIdentity, true, {
             userId: result.userId,
             userAgent: navigator.userAgent,
           });
+          navigate("/dashboard", { replace: true });
         } else {
-          // No 2FA, proceed with normal login
-          // Get session user
-          let u = await fetchSessionUser();
-          if (!u) u = userFromAuthUser({ id: result.userId, email } as any);
-          if (u) {
-            login(u);
-            // Track successful login
-            await trackLoginAttempt(email, true, {
-              userId: result.userId,
-              userAgent: navigator.userAgent,
-            });
-            navigate("/dashboard");
-          } else {
-            setError("Profile could not be loaded. Check database policies.");
-            return;
-          }
+          setError("Profile could not be loaded. Check database policies.");
+          return;
         }
         return;
       }
-      const { data, error: regErr } = await insforge.auth.signUp({
+      const { data, error: regErr } = await (insforge.auth as any).signUp({
         email,
         password,
         name,
+        userMetadata: {
+          name,
+          full_name: name,
+        },
         redirectTo,
       });
       if (regErr) {
@@ -348,9 +440,14 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
           status: "failed",
           errorMessage: regErr.message,
         });
-        setError(regErr.message || "Registration failed");
+        setError(formatAuthError(regErr.message || "Registration failed"));
         return;
       }
+
+      if (data?.user?.id) {
+        await ensureAuthProfile(data.user.id, name, email);
+      }
+
       if (data?.requireEmailVerification) {
         setPendingEmail(email);
         setPendingName(name);
@@ -367,73 +464,10 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         let u = await fetchSessionUser();
         if (!u) u = userFromAuthUser(data.user);
         if (u) login(u);
-        navigate("/dashboard");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle 2FA OTP verification
-  const handle2FAVerify = async (otpCode: string): Promise<{ success: boolean; error?: string }> => {
-    setLoading(true);
-    setError("");
-    try {
-      const result = await verifyOTPCode(pendingUserId, otpCode);
-      if (!result.success) {
-        setError(result.error || "Invalid or expired OTP");
-        return { success: false, error: result.error || "Invalid or expired OTP" };
-      }
-
-      // OTP verified successfully, log user in
-      let u = await fetchSessionUser();
-      if (!u) u = userFromAuthUser({ id: pendingUserId, email: pendingUserEmail } as any);
-      if (u) {
-        login(u);
-        // Track successful 2FA login
-        await logAuditEvent("login_success_2fa", "auth", pendingUserId, {
-          userId: pendingUserId,
-        });
-        // Close modal and navigate
-        setShow2FAModal(false);
-        navigate("/dashboard");
-        return { success: true };
-      } else {
-        setError("Profile could not be loaded after 2FA verification");
-        return { success: false, error: "Profile could not be loaded" };
+        navigate("/dashboard", { replace: true });
       }
     } catch (err: any) {
-      setError(err?.message || "OTP verification failed");
-      return { success: false, error: err?.message || "OTP verification failed" };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle 2FA modal close
-  const handle2FACancel = () => {
-    setShow2FAModal(false);
-    setError("");
-    setPendingUserId("");
-    setPendingUserEmail("");
-    setHas2FAEnabled(false);
-  };
-
-  // Handle 2FA OTP resend
-  const handle2FAResend = async (): Promise<{ success: boolean; error?: string }> => {
-    setLoading(true);
-    setError("");
-    try {
-      const result = await generateAndSendOTP(pendingUserId, pendingUserEmail);
-      if (!result.success) {
-        setError(result.error || "Failed to resend OTP");
-        return { success: false, error: result.error || "Failed to resend OTP" };
-      }
-      // OTP resent successfully
-      return { success: true };
-    } catch (err: any) {
-      setError(err?.message || "Failed to resend OTP");
-      return { success: false, error: err?.message || "Failed to resend OTP" };
+      setError(formatAuthError(err?.message || "Authentication failed"));
     } finally {
       setLoading(false);
     }
@@ -454,6 +488,14 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         return;
       }
       if (data?.user) {
+        if (data.user.id) {
+          await ensureAuthProfile(
+            data.user.id,
+            pendingName || data.user.email || "Member",
+            data.user.email || pendingEmail
+          );
+        }
+
         // Mark email as verified in profiles table
         if (data.user.id) {
           await markEmailAsVerified(data.user.id);
@@ -462,7 +504,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         let u = await fetchSessionUser();
         if (!u) u = userFromAuthUser(data.user);
         if (u) login(u);
-        navigate("/dashboard");
+        navigate("/dashboard", { replace: true });
       }
     } finally {
       setLoading(false);
@@ -473,28 +515,21 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
     <div className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden">
       {/* Background stars — behind everything */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <StarField count={50} theme={theme} salt={2000} />
+        <StarField count={shouldReduceMotion ? 14 : 32} theme={theme} salt={2000} />
       </div>
-
-      {/* 2FA Modal */}
-      <AnimatePresence>
-        {show2FAModal && (
-          <TwoFactorModal
-            email={pendingUserEmail}
-            onVerify={handle2FAVerify}
-            onCancel={handle2FACancel}
-            onResend={handle2FAResend}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Back to Home — only visible on mobile (desktop has the left panel) */}
       <Link
         to="/"
+        replace
+        onClick={(e) => {
+          e.preventDefault();
+          smartNavigate("/", { asSectionSwitch: true });
+        }}
         className={`lg:hidden fixed top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 rounded-full border backdrop-blur-md text-[10px] font-bold uppercase tracking-widest transition-colors ${
           theme === "light"
             ? "bg-white/80 border-slate-200 text-slate-600 hover:text-slate-900"
-            : "bg-black/40 border-white/10 text-white/50 hover:text-white"
+            : "bg-black/40 border-white/10 text-white/80 hover:text-white"
         }`}
       >
         <ArrowLeft className="h-3.5 w-3.5" />
@@ -540,7 +575,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className={`text-lg font-light max-w-md leading-relaxed transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}
+              className={`text-lg font-light max-w-md leading-relaxed transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/70'}`}
             >
               Join the elite circle of creators, engineers, and visionaries shaping the next generation of digital excellence.
             </motion.p>
@@ -558,8 +593,8 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               { icon: Cpu, label: "Smart" }
             ].map((item, i) => (
               <div key={i} className="space-y-2">
-                <item.icon className={`h-5 w-5 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/20'}`} />
-                <p className={`text-[9px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>{item.label}</p>
+                <item.icon className={`h-5 w-5 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/55'}`} />
+                <p className={`text-[9px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/75'}`}>{item.label}</p>
               </div>
             ))}
           </motion.div>
@@ -597,7 +632,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               <div className="space-y-3">
                 <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border transition-colors duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                  <span className={`text-[9px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                  <span className={`text-[9px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/75'}`}>
                     {mode === "login" ? "Authentication Required" : "New Partnership"}
                   </span>
                 </div>
@@ -914,7 +949,14 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     animate={{ opacity: 1, x: 0 }}
                     className="bg-red-500/10 text-red-500 p-4 text-[10px] font-bold uppercase tracking-widest border border-red-500/20"
                   >
-                    {error}
+                    <div>{error}</div>
+                    <button
+                      type="button"
+                      onClick={recoverSession}
+                      className="mt-3 text-[9px] underline tracking-widest"
+                    >
+                      Reset Session
+                    </button>
                   </motion.div>
                 )}
                 
@@ -952,24 +994,26 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
                   >
-                    <label className={`block text-[10px] font-bold mb-2 uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-gray-500'}`}>Identity (Email)</label>
+                    <label className={`block text-[10px] font-bold mb-2 uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-gray-500'}`}>
+                      {mode === "login" ? "Identity (Email or Username)" : "Identity (Email)"}
+                    </label>
                     <div className="relative">
                       <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${theme === 'light' ? 'text-slate-300 group-focus-within:text-slate-900' : 'text-gray-600 group-focus-within:text-white'}`} />
                       <input
-                        type="email"
+                        type={mode === "login" ? "text" : "email"}
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onBlur={() => setTouched({ ...touched, email: true })}
-                        autoComplete="email"
-                        inputMode="email"
+                        autoComplete={mode === "login" ? "username" : "email"}
+                        inputMode={mode === "login" ? "text" : "email"}
                         enterKeyHint="next"
                         className={`block w-full pl-12 pr-4 py-4 border text-sm transition-all outline-none rounded-lg sm:rounded-none ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white focus:border-indigo-500 focus:bg-white/10'}`}
-                        placeholder="USER@MAKERSLAB.COM"
-                        aria-label="Email address"
+                        placeholder={mode === "login" ? "EMAIL OR USERNAME" : "USER@MAKERSLAB.COM"}
+                        aria-label={mode === "login" ? "Email or username" : "Email address"}
                       />
                     </div>
-                    {touched.email && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                    {mode === "register" && touched.email && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
                       <motion.div 
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -1130,7 +1174,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                   <button 
                     onClick={() => {
                       setMode(mode === "login" ? "register" : "login");
-                      navigate(mode === "login" ? "/register" : "/login");
+                      navigate(mode === "login" ? "/register" : "/login", { replace: true });
                     }} 
                     className="text-indigo-500 hover:text-indigo-600 transition-colors"
                   >

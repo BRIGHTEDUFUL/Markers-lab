@@ -19,7 +19,8 @@ const team = [
   {
     name: "Abena Antwiwaa Quarshie",
     role: "Head of Marketing & Growth",
-    image: "/team/abene.png",
+    image: "/team/abena-antwiwaa-quarshie-v2.png?v=2026-04-12-4",
+    fallbackImage: "/team/abena-antwiwaa-quarshie.png?v=2026-04-12-4",
     tag: "Brand · Campaigns · Growth",
     bio: "Abena translates Maker's Lab's technical excellence into compelling narratives that reach the right audiences. She leads brand strategy, campaign execution, and growth initiatives — ensuring the studio's work is seen by the clients who deserve it most.",
     icon: Megaphone,
@@ -70,7 +71,7 @@ export const About: React.FC = () => {
                 </span>
               </h2>
             </div>
-            <p className={`max-w-sm font-heading text-base font-light leading-relaxed ${isDark ? "text-white/50" : "text-slate-500"}`}>
+            <p className={`max-w-sm font-heading text-base font-light leading-relaxed ${isDark ? "text-white/75" : "text-slate-500"}`}>
               Every engagement receives direct attention from the people who actually design, build, and ship your product.
             </p>
           </div>
@@ -94,6 +95,7 @@ export const About: React.FC = () => {
                     <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     <InteractiveImage
                       src={member.image}
+                      fallbackSrc={member.fallbackImage}
                       alt={member.name}
                       active={activeIndex === i}
                       onActivate={() => setActiveIndex(prev => prev === i ? null : i)}
@@ -117,12 +119,12 @@ export const About: React.FC = () => {
                 <div className={`relative z-[2] -mt-6 mx-3 rounded-2xl border p-6 shadow-xl backdrop-blur-2xl sm:mx-4 sm:p-7 transition-all duration-500 group-hover:shadow-indigo-500/10 ${isDark ? "border-white/[0.1] bg-[#0a0a0f]/80 shadow-black/60" : "border-slate-200/90 bg-white/90 shadow-slate-200/50"}`}>
                   <h3 className={`font-display text-xl uppercase tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>{member.name}</h3>
                   <p className={`mt-1 font-mono text-[9px] font-bold uppercase tracking-[0.25em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>{member.tag}</p>
-                  <div className={`mt-1 flex items-center gap-1.5 ${isDark ? "text-white/30" : "text-slate-400"}`}>
+                  <div className={`mt-1 flex items-center gap-1.5 ${isDark ? "text-white/60" : "text-slate-400"}`}>
                     <MapPin className="h-3 w-3 flex-shrink-0" />
                     <span className="font-mono text-[9px] uppercase tracking-[0.2em]">{member.location}</span>
                   </div>
                   <div className={`mt-4 border-t pt-4 ${isDark ? "border-white/[0.08]" : "border-slate-200/80"}`}>
-                    <p className={`text-sm font-light leading-relaxed ${isDark ? "text-white/55" : "text-slate-600"}`}>{member.bio}</p>
+                    <p className={`text-sm font-light leading-relaxed ${isDark ? "text-white/78" : "text-slate-600"}`}>{member.bio}</p>
                   </div>
                 </div>
               </motion.article>
@@ -142,10 +144,10 @@ export const About: React.FC = () => {
                 <span className="font-serif italic normal-case text-indigo-500 text-[clamp(1.75rem,4vw,3.5rem)]">experience</span>
               </h2>
             </motion.div>
-            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.08 }} className={`max-w-xl font-heading text-base font-light leading-relaxed md:text-lg ${isDark ? "text-white/55" : "text-slate-600"}`}>
+            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.08 }} className={`max-w-xl font-heading text-base font-light leading-relaxed md:text-lg ${isDark ? "text-white/78" : "text-slate-600"}`}>
               Maker's Lab was built on the belief that great software is never accidental. Led by Bright Eduful, every engagement is a genuine partnership — one where strategy, design, and engineering move in lockstep from the first conversation to the final deployment.
             </motion.p>
-            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.14 }} className={`max-w-xl font-heading text-base font-light leading-relaxed md:text-lg ${isDark ? "text-white/55" : "text-slate-600"}`}>
+            <motion.p initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.14 }} className={`max-w-xl font-heading text-base font-light leading-relaxed md:text-lg ${isDark ? "text-white/78" : "text-slate-600"}`}>
               We don't operate a ticket queue. We don't hand work off to junior contractors. When you engage Maker's Lab, you work directly with the people who will architect, build, and ship your product.
             </motion.p>
             <div className="flex flex-wrap gap-3 pt-2">
@@ -154,7 +156,7 @@ export const About: React.FC = () => {
                 { k: "Delivery", v: "Design Systems → Production" },
                 { k: "Approach", v: "Partnership, not outsourcing" },
               ].map((chip) => (
-                <div key={chip.k} className={`rounded-full border px-4 py-2.5 backdrop-blur-md ${isDark ? "border-white/[0.1] bg-white/[0.04] text-white/80" : "border-slate-200/90 bg-white/60 text-slate-800"}`}>
+                <div key={chip.k} className={`rounded-full border px-4 py-2.5 backdrop-blur-md ${isDark ? "border-white/[0.14] bg-white/[0.06] text-white/90" : "border-slate-200/90 bg-white/60 text-slate-800"}`}>
                   <p className={`font-mono text-[9px] font-bold uppercase tracking-[0.2em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>{chip.k}</p>
                   <p className="mt-0.5 text-xs font-light">{chip.v}</p>
                 </div>
@@ -165,18 +167,18 @@ export const About: React.FC = () => {
           <motion.div initial={{ opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }} className="relative lg:col-span-5">
             <div className={`relative aspect-[4/5] overflow-hidden rounded-3xl sm:aspect-square ${isDark ? "ring-1 ring-white/[0.1] shadow-[0_40px_120px_-40px_rgba(99,102,241,0.25)]" : "ring-1 ring-slate-200/90 shadow-[0_40px_100px_-40px_rgba(79,70,229,0.3)]"}`}>
               <div className={`absolute inset-0 z-[1] bg-gradient-to-tr opacity-80 mix-blend-soft-light ${isDark ? "from-violet-600/25 via-transparent to-indigo-600/20" : "from-indigo-500/20 via-transparent to-cyan-500/15"}`} />
-              <img src="/team/bright-eduful.png" alt="Bright Eduful — Founder & Lead Engineer" className="h-full w-full object-cover object-top" sizes="(max-width: 1024px) 100vw, 40vw" />
+              <img src="/team/bright-eduful.png" alt="Bright Eduful — Founder & Lead Engineer" loading="lazy" decoding="async" fetchPriority="low" className="h-full w-full object-cover object-top" sizes="(max-width: 1024px) 100vw, 40vw" />
             </div>
             <div className={`absolute -bottom-4 -right-4 hidden rounded-2xl border px-4 py-3 backdrop-blur-xl sm:flex sm:items-center sm:gap-3 ${isDark ? "border-white/10 bg-black/50" : "border-slate-200/90 bg-white/90"}`}>
               <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
-              <span className={`font-mono text-[10px] uppercase tracking-widest ${isDark ? "text-white/60" : "text-slate-600"}`}>Accepting partners</span>
+              <span className={`font-mono text-[10px] uppercase tracking-widest ${isDark ? "text-white/85" : "text-slate-600"}`}>Accepting partners</span>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* ── VALUES ───────────────────────────────────────────────── */}
-      <section className={`relative z-10 border-y px-4 py-20 sm:py-28 transition-colors duration-700 ${isDark ? "border-white/[0.06] bg-white/[0.02]" : "border-slate-200/80 bg-white/40"}`}>
+      <section className={`relative z-10 border-y px-4 py-20 sm:py-28 transition-colors duration-700 ${isDark ? "border-white/[0.08] bg-slate-950/70" : "border-slate-200/80 bg-white/40"}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14 sm:mb-16">
             <span className={`font-mono text-[10px] font-bold uppercase tracking-[0.35em] ${isDark ? "text-indigo-400" : "text-indigo-600"}`}>How We Work</span>
@@ -194,7 +196,7 @@ export const About: React.FC = () => {
                   <v.icon className="h-7 w-7" />
                 </div>
                 <h3 className={`font-display text-lg uppercase tracking-tight md:text-xl ${isDark ? "text-white" : "text-slate-900"}`}>{v.title}</h3>
-                <p className={`mt-4 font-heading text-sm font-light leading-relaxed md:text-base ${isDark ? "text-white/45" : "text-slate-600"}`}>{v.desc}</p>
+                <p className={`mt-4 font-heading text-sm font-light leading-relaxed md:text-base ${isDark ? "text-white/75" : "text-slate-600"}`}>{v.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -209,7 +211,7 @@ export const About: React.FC = () => {
             Ready to{" "}
             <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-500 bg-clip-text text-transparent">collaborate?</span>
           </h2>
-          <p className={`font-heading text-base font-light leading-relaxed max-w-xl mx-auto ${isDark ? "text-white/50" : "text-slate-500"}`}>
+          <p className={`font-heading text-base font-light leading-relaxed max-w-xl mx-auto ${isDark ? "text-white/78" : "text-slate-500"}`}>
             Whether you have a fully-formed brief or just an idea worth exploring, we'd like to hear from you. Every great product starts with a conversation.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">

@@ -55,18 +55,18 @@ ALTER TABLE public.two_factor_attempts ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS oauth_accounts_user_read ON public.oauth_accounts;
 CREATE POLICY oauth_accounts_user_read
   ON public.oauth_accounts FOR SELECT
-  USING (user_id = auth.uid() OR public.makers_is_admin());
+  USING (user_id = (SELECT auth.uid()) OR public.makers_is_admin());
 
 DROP POLICY IF EXISTS oauth_accounts_user_insert ON public.oauth_accounts;
 CREATE POLICY oauth_accounts_user_insert
   ON public.oauth_accounts FOR INSERT
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (user_id = (SELECT auth.uid()));
 
 DROP POLICY IF EXISTS oauth_accounts_user_update ON public.oauth_accounts;
 CREATE POLICY oauth_accounts_user_update
   ON public.oauth_accounts FOR UPDATE
-  USING (user_id = auth.uid() OR public.makers_is_admin())
-  WITH CHECK (user_id = auth.uid() OR public.makers_is_admin());
+  USING (user_id = (SELECT auth.uid()) OR public.makers_is_admin())
+  WITH CHECK (user_id = (SELECT auth.uid()) OR public.makers_is_admin());
 
 DROP POLICY IF EXISTS oauth_accounts_admin_delete ON public.oauth_accounts;
 CREATE POLICY oauth_accounts_admin_delete
@@ -82,7 +82,7 @@ CREATE POLICY two_factor_attempts_system_insert
 DROP POLICY IF EXISTS two_factor_attempts_user_read ON public.two_factor_attempts;
 CREATE POLICY two_factor_attempts_user_read
   ON public.two_factor_attempts FOR SELECT
-  USING (user_id = auth.uid() OR public.makers_is_admin());
+  USING (user_id = (SELECT auth.uid()) OR public.makers_is_admin());
 
 -- STEP 7: Create function to check if user has Google OAuth account
 DROP FUNCTION IF EXISTS public.has_oauth_account(uuid, text);

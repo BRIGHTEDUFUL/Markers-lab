@@ -98,8 +98,6 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
   theme TEXT NOT NULL DEFAULT 'dark',
   email_notifications BOOLEAN NOT NULL DEFAULT true,
   marketing_emails BOOLEAN NOT NULL DEFAULT true,
-  two_factor_enabled BOOLEAN NOT NULL DEFAULT false,
-  two_factor_method TEXT,
   privacy_level TEXT NOT NULL DEFAULT 'private',
   bio TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

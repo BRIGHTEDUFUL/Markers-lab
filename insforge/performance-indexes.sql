@@ -41,6 +41,10 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_testimonials_user_id
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_profiles_email
   ON public.profiles (email);
 
+-- auth login: case-insensitive lookup by display_name
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_profiles_display_name_lower
+  ON public.profiles ((lower(display_name)));
+
 -- ============================================================
 -- Verify indexes
 -- ============================================================

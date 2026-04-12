@@ -1,12 +1,18 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import NProgress from "nprogress";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { LayoutDashboard, Settings, LogOut, Menu, X, Rocket, User as UserIcon, MessageSquare, Image, Mail, Globe, ChevronRight, Sun, Moon } from "lucide-react";
-import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
+import { motion, MotionConfig, AnimatePresence } from "motion/react";
 import { Toaster } from "sonner";
+import { useAdaptiveMotion } from "../hooks/useAdaptiveMotion";
+import { useSmartNavigate } from "../hooks/useSmartNavigate";
+import { useOverlayBackHandler } from "../hooks/useOverlayBackHandler";
+import { getParentRoute, isRootExitRoute, normalizePathname } from "../navigation/route-hierarchy";
+import { getUserDisplayName, getUserInitials } from "../lib/user-display";
+import { beginRouteMeasure, endRouteMeasure } from "../lib/route-performance";
 
 import PWAInstallPrompt from "./PWAInstallPrompt";
 import HeroRingBackdrop from "./HeroRingBackdrop";
@@ -15,13 +21,30 @@ import BottomNav from "./BottomNav";
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { shouldReduceMotion } = useAdaptiveMotion();
   const navigate = useNavigate();
+  const smartNavigate = useSmartNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { scrollY } = useScroll();
+  const [isNavScrolled, setIsNavScrolled] = useState(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
+  const navScrolledRef = useRef(false);
+  const showBackToTopRef = useRef(false);
 
   // Route transition progress
   useEffect(() => {
+    const routeMeasureToken = `${location.pathname}-${Date.now()}`;
+    beginRouteMeasure(routeMeasureToken);
+
+    let raf1 = 0;
+    let raf2 = 0;
+
+    raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        endRouteMeasure(routeMeasureToken, location.pathname);
+      });
+    });
+
     NProgress.start();
     const timeout = setTimeout(() => {
       NProgress.done();
@@ -31,46 +54,59 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     window.scrollTo(0, 0);
     
     return () => {
+      if (raf1) window.cancelAnimationFrame(raf1);
+      if (raf2) window.cancelAnimationFrame(raf2);
       clearTimeout(timeout);
       NProgress.done();
     };
   }, [location.pathname]);
   
-  const navBackground = useTransform(
-    scrollY,
-    [0, 50],
-    [
-      "rgba(var(--nav-bg-rgb), 0)", 
-      "rgba(var(--nav-bg-rgb), 0.8)"
-    ]
-  );
-  
-  const navBorder = useTransform(
-    scrollY,
-    [0, 50],
-    [
-      "rgba(var(--nav-border-rgb), 0)", 
-      "rgba(var(--nav-border-rgb), 0.1)"
-    ]
-  );
-
   useEffect(() => {
-    const root = window.document.documentElement;
-    const isDark = theme === 'dark';
-    root.style.setProperty('--nav-bg-rgb', isDark ? '5, 5, 5' : '255, 255, 255');
-    root.style.setProperty('--nav-border-rgb', isDark ? '255, 255, 255' : '15, 23, 42');
-  }, [theme]);
-  
-  const navPadding = useTransform(
-    scrollY,
-    [0, 50],
-    ["2rem", "1rem"]
-  );
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktopViewport(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
+
+  const closeMenu = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
+
+  const { closeWithBack: closeMenuWithBack, closeSilently: closeMenuSilently } = useOverlayBackHandler(
+    isMenuOpen,
+    closeMenu,
+    "layout-menu-drawer"
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onPopState = (event: PopStateEvent) => {
+      const currentPath = normalizePathname(window.location.pathname);
+
+      // At app home, allow standalone/browser to exit naturally when history is exhausted.
+      if (isRootExitRoute(currentPath)) return;
+
+      const idx = typeof (event.state as { idx?: unknown } | null)?.idx === "number"
+        ? ((event.state as { idx?: number }).idx as number)
+        : -1;
+      const parent = getParentRoute(currentPath);
+
+      if (parent && idx < 0) {
+        navigate(parent, { replace: true });
+      }
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [navigate]);
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["USER", "ADMIN"] },
@@ -84,6 +120,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const filteredNavItems = navItems.filter(item => 
     !item.roles || item.roles.includes(user?.role || "GUEST")
   );
+  const navDisplayName = user ? getUserDisplayName({ name: user.name, email: user.email }) : "";
+  const navInitials = user ? getUserInitials({ name: user.name, email: user.email }) : "";
 
   const footerPlatformLinks = useMemo(() => {
     const items: { name: string; path: string }[] = [{ name: "Public Gallery", path: "/gallery" }];
@@ -97,19 +135,47 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let raf = 0;
     const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 500);
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        const y = window.scrollY;
+        const nextShowBackToTop = y > 500;
+        const nextNavScrolled = y > 24;
+
+        if (showBackToTopRef.current !== nextShowBackToTop) {
+          showBackToTopRef.current = nextShowBackToTop;
+          setShowBackToTop(nextShowBackToTop);
+        }
+
+        if (navScrolledRef.current !== nextNavScrolled) {
+          navScrolledRef.current = nextNavScrolled;
+          setIsNavScrolled(nextNavScrolled);
+        }
+      });
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
   }, []);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const isHomeRoute = location.pathname === "/";
+  const shouldForceReducedMotion = shouldReduceMotion || !isHomeRoute;
+
   return (
-    <div className="relative min-h-screen min-h-[100dvh] text-foreground flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+    <MotionConfig reducedMotion={shouldForceReducedMotion ? "always" : "user"}>
+      <div className="relative min-h-screen min-h-[100dvh] text-foreground flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300">
       <HeroRingBackdrop theme={theme} variant="global" />
       <Helmet>
         <title>Maker’s Lab | Where Ideas Merge with Execution</title>
@@ -137,20 +203,28 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </AnimatePresence>
 
       <motion.nav
-        style={{ 
-          backgroundColor: navBackground,
-          borderColor: navBorder,
-          paddingTop: navPadding,
-          paddingBottom: navPadding
-        }}
-        className={`fixed top-0 left-0 right-0 z-[100] backdrop-blur-xl border-b transition-all duration-500 ${
-          theme === 'light' ? 'border-slate-200' : 'border-white/10'
+        className={`fixed top-0 left-0 right-0 z-[100] border-b transition-all duration-300 ${
+          isNavScrolled
+            ? theme === 'light'
+              ? 'bg-white/92 border-slate-200/80 backdrop-blur-lg py-4'
+              : 'bg-[#050505]/88 border-white/10 backdrop-blur-lg py-4'
+            : theme === 'light'
+            ? 'bg-white/20 border-transparent backdrop-blur-sm py-8'
+            : 'bg-transparent border-transparent py-8'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-12 sm:h-14 lg:h-16">
             <div className="flex-1 flex items-center">
-              <Link to="/" className="flex items-center space-x-2 sm:space-x-3 group">
+              <Link
+                to="/"
+                replace
+                onClick={(e) => {
+                  e.preventDefault();
+                  smartNavigate("/", { asSectionSwitch: true });
+                }}
+                className="flex items-center space-x-2 sm:space-x-3 group"
+              >
                 <motion.div 
                   whileHover={{ rotate: 15, scale: 1.1 }}
                   className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all duration-500 shadow-lg relative overflow-hidden ${
@@ -174,6 +248,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   <Link
                     key={item.path}
                     to={item.path}
+                    replace
+                    onClick={(e) => {
+                      e.preventDefault();
+                      smartNavigate(item.path, { asSectionSwitch: true });
+                    }}
                     className="relative px-4 xl:px-5 py-2 group"
                   >
                     <span className={`relative z-10 text-[10px] font-bold uppercase tracking-[0.25em] transition-all duration-300 ${
@@ -243,22 +322,25 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
               {user ? (
                 <div className="flex items-center space-x-3 sm:space-x-4">
-                  <Link to="/profile" className={`flex items-center space-x-2 sm:space-x-3 px-3 sm:px-5 py-2 sm:py-2.5 border rounded-full transition-all group overflow-hidden relative shadow-sm ${
+                  <Link to="/profile" replace onClick={(e) => {
+                    e.preventDefault();
+                    smartNavigate("/profile", { asSectionSwitch: true });
+                  }} className={`flex items-center space-x-2 sm:space-x-3 px-3 sm:px-5 py-2 sm:py-2.5 border rounded-full transition-all group overflow-hidden relative shadow-sm ${
                     theme === 'light' ? 'bg-slate-100 border-slate-200 shadow-slate-200/50' : 'bg-white/5 border-white/10 shadow-white/5'
                   }`}>
                     <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                     {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user.name} className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full object-cover ring-2 transition-all group-hover:ring-indigo-500/50 ${
+                      <img src={user.avatarUrl} alt={navDisplayName} className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full object-cover ring-2 transition-all group-hover:ring-indigo-500/50 ${
                         theme === 'light' ? 'ring-slate-200' : 'ring-white/20'
                       }`} />
                     ) : (
                       <div className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full flex items-center justify-center ring-2 transition-all group-hover:ring-indigo-500/50 ${
                         theme === 'light' ? 'bg-indigo-500/10 ring-indigo-500/20' : 'bg-indigo-500/20 ring-indigo-500/40'
                       }`}>
-                        <UserIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-indigo-500" />
+                        <span className="text-[9px] sm:text-[10px] font-bold text-indigo-500 uppercase">{navInitials}</span>
                       </div>
                     )}
-                    <span className="relative z-10 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-muted-foreground group-hover:text-foreground transition-colors truncate max-w-[80px] sm:max-w-none">{user.name}</span>
+                    <span className="relative z-10 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-muted-foreground group-hover:text-foreground transition-colors truncate max-w-[80px] sm:max-w-none">{navDisplayName}</span>
                   </Link>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
@@ -272,11 +354,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </div>
               ) : (
                 <div className="flex items-center space-x-4 lg:space-x-8">
-                  <Link to="/login" className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-muted-foreground hover:text-foreground transition-colors relative group">
+                  <Link to="/login" replace onClick={(e) => {
+                    e.preventDefault();
+                    smartNavigate("/login", { asSectionSwitch: true });
+                  }} className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-muted-foreground hover:text-foreground transition-colors relative group">
                     Login
                     <span className="absolute -bottom-1 left-0 w-0 h-px bg-indigo-500 transition-all duration-300 group-hover:w-full" />
                   </Link>
-                  <Link to="/register" className="relative group px-6 sm:px-10 py-2.5 sm:py-3.5 overflow-hidden rounded-full shadow-xl shadow-indigo-500/20">
+                  <Link to="/register" replace onClick={(e) => {
+                    e.preventDefault();
+                    smartNavigate("/register", { asSectionSwitch: true });
+                  }} className="relative group px-6 sm:px-10 py-2.5 sm:py-3.5 overflow-hidden rounded-full shadow-xl shadow-indigo-500/20">
                     <div className={`absolute inset-0 transition-transform duration-500 group-hover:scale-110 ${
                       theme === 'light' ? 'bg-slate-900' : 'bg-white'
                     }`} />
@@ -294,7 +382,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 whileTap={{ scale: 0.9 }}
                 onClick={toggleTheme}
                 className={`p-2.5 rounded-xl border focus:outline-none transition-all duration-500 relative overflow-hidden shadow-sm ${
-                  theme === 'light' ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' : 'bg-white/5 border-white/10 text-muted-foreground'
+                  theme === 'light' ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' : 'bg-white/5 border-white/10 text-white/85'
                 }`}
               >
                 <div className="relative z-10 flex items-center justify-center w-5 h-5">
@@ -325,9 +413,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                onClick={() => {
+                  if (isMenuOpen) {
+                    closeMenuWithBack();
+                  } else {
+                    setIsMenuOpen(true);
+                  }
+                }}
                 className={`p-2 sm:p-3 rounded-full border focus:outline-none transition-all shadow-sm ${
-                  theme === 'light' ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' : 'bg-white/5 border-white/10 text-muted-foreground'
+                  theme === 'light' ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' : 'bg-white/5 border-white/10 text-white/85'
                 }`}
               >
                 {isMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
@@ -343,7 +437,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                onClick={() => setIsMenuOpen(false)}
+                onClick={closeMenuWithBack}
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[105]"
               />
               <motion.div
@@ -362,7 +456,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </div>
                     <span className="text-xl font-display font-bold text-foreground tracking-tighter uppercase">Maker’s Lab</span>
                   </div>
-                  <button onClick={() => setIsMenuOpen(false)} className="p-2 text-muted-foreground hover:text-foreground">
+                  <button onClick={closeMenuWithBack} className="p-2 text-muted-foreground hover:text-foreground">
                     <X className="h-6 w-6" />
                   </button>
                 </div>
@@ -377,7 +471,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     >
                       <Link
                         to={item.path}
-                        onClick={() => setIsMenuOpen(false)}
+                        replace
+                        onClick={(e) => {
+                          e.preventDefault();
+                          closeMenuSilently();
+                          smartNavigate(item.path, { asSectionSwitch: true });
+                        }}
                         className={`group flex items-center justify-between p-5 rounded-2xl transition-all shadow-sm ${
                           location.pathname === item.path
                             ? theme === 'light' ? "bg-indigo-50 border border-indigo-200 text-indigo-600 shadow-sm shadow-indigo-100/50" : "bg-indigo-500/10 border border-indigo-500/20 text-foreground"
@@ -399,27 +498,32 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <>
                       <Link
                         to="/profile"
-                        onClick={() => setIsMenuOpen(false)}
+                        replace
+                        onClick={(e) => {
+                          e.preventDefault();
+                          closeMenuSilently();
+                          smartNavigate("/profile", { asSectionSwitch: true });
+                        }}
                         className={`flex items-center space-x-4 p-4 rounded-2xl border shadow-sm ${
                           theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 shadow-slate-100/50' : 'bg-foreground/5 border-border text-foreground'
                         }`}
                       >
                         {user.avatarUrl ? (
-                          <img src={user.avatarUrl} alt={user.name} className="h-10 w-10 rounded-full object-cover" />
+                          <img src={user.avatarUrl} alt={navDisplayName} className="h-10 w-10 rounded-full object-cover" />
                         ) : (
                           <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
                             theme === 'light' ? 'bg-indigo-50' : 'bg-indigo-500/20'
                           }`}>
-                            <UserIcon className="h-5 w-5 text-indigo-500" />
+                            <span className="text-xs font-bold uppercase text-indigo-500">{navInitials}</span>
                           </div>
                         )}
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-widest">{user.name}</p>
+                          <p className="text-xs font-bold uppercase tracking-widest">{navDisplayName}</p>
                           <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{user.role}</p>
                         </div>
                       </Link>
                       <button
-                        onClick={() => { handleLogout(); setIsMenuOpen(false); }}
+                        onClick={() => { closeMenuSilently(); handleLogout(); }}
                         className={`w-full flex items-center space-x-4 p-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] ${
                           theme === 'light' ? 'bg-red-50 text-red-600' : 'bg-red-500/10 text-red-500'
                         }`}
@@ -430,10 +534,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </>
                   ) : (
                     <div className="grid grid-cols-1 gap-3">
-                      <Link to="/login" onClick={() => setIsMenuOpen(false)} className={`flex items-center justify-center p-4 rounded-2xl border text-[10px] font-bold uppercase tracking-[0.2em] ${
+                      <Link to="/login" replace onClick={(e) => {
+                        e.preventDefault();
+                        closeMenuSilently();
+                        smartNavigate("/login", { asSectionSwitch: true });
+                      }} className={`flex items-center justify-center p-4 rounded-2xl border text-[10px] font-bold uppercase tracking-[0.2em] ${
                         theme === 'light' ? 'border-slate-200 text-slate-900' : 'border-border text-foreground'
                       }`}>Login</Link>
-                      <Link to="/register" onClick={() => setIsMenuOpen(false)} className={`flex items-center justify-center p-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] ${
+                      <Link to="/register" replace onClick={(e) => {
+                        e.preventDefault();
+                        closeMenuSilently();
+                        smartNavigate("/register", { asSectionSwitch: true });
+                      }} className={`flex items-center justify-center p-4 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] ${
                         theme === 'light' ? 'bg-slate-900 text-white' : 'bg-foreground text-background'
                       }`}>Get Started</Link>
                     </div>
@@ -445,13 +557,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </AnimatePresence>
       </motion.nav>
 
-      <main className="relative z-[1] flex flex-grow flex-col pb-16 lg:pb-0">
+      <main className="relative z-[1] flex flex-grow flex-col pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] lg:pb-0">
         {children}
       </main>
 
       <Toaster position="top-right" theme={theme as 'light' | 'dark'} richColors />
       <PWAInstallPrompt />
-      <BottomNav />
+      {!isDesktopViewport && <BottomNav />}
 
       <footer className={`relative z-[1] border-t py-12 sm:py-24 backdrop-blur-md ${theme === 'light' ? 'border-slate-200 bg-white/80' : 'border-border/80 bg-card/45'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -472,7 +584,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <ul className="space-y-4">
                 {footerPlatformLinks.map((item) => (
                   <li key={item.path}>
-                    <Link to={item.path} className="text-muted-foreground hover:text-foreground text-[10px] font-bold uppercase tracking-widest transition-colors">{item.name}</Link>
+                    <Link
+                      to={item.path}
+                      replace
+                      onClick={(e) => {
+                        e.preventDefault();
+                        smartNavigate(item.path, { asSectionSwitch: true });
+                      }}
+                      className="text-muted-foreground hover:text-foreground text-[10px] font-bold uppercase tracking-widest transition-colors"
+                    >
+                      {item.name}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -495,7 +617,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </MotionConfig>
   );
 };
 

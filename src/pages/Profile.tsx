@@ -4,14 +4,19 @@ import { fetchMyProjects, updateMyProfile, fetchSessionUser } from "../lib/maker
 import { User, Camera, Save, Loader2, AlertCircle, CheckCircle2, Rocket, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAdaptiveMotion } from "../hooks/useAdaptiveMotion";
+import { getUserDisplayName, getUserHandle, getUserInitials } from "../lib/user-display";
 
 import PageHero from "../components/PageHero";
-import TwoFactorSettings from "../components/TwoFactorSettings";
 
 export const Profile: React.FC = () => {
   const { theme } = useTheme();
+  const { shouldReduceMotion } = useAdaptiveMotion();
   const { user, setUser } = useAuth();
-  const [name, setName] = useState(user?.name || "");
+  const displayName = getUserDisplayName({ name: user?.name, email: user?.email });
+  const userHandle = getUserHandle({ name: user?.name, email: user?.email });
+  const userInitials = getUserInitials({ name: user?.name, email: user?.email });
+  const [name, setName] = useState(displayName);
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatarUrl || null);
   const [loading, setLoading] = useState(false);
@@ -21,7 +26,7 @@ export const Profile: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (user?.name != null) setName(user.name);
+    if (user) setName(getUserDisplayName({ name: user.name, email: user.email }));
     if (user?.avatarUrl) setAvatarPreview(user.avatarUrl);
   }, [user?.id, user?.name, user?.avatarUrl]);
 
@@ -119,14 +124,16 @@ export const Profile: React.FC = () => {
             <div className="flex flex-col items-center space-y-4 sm:space-y-6">
               <div className="relative group">
                 <motion.div 
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
                   className={`h-28 w-28 sm:h-40 sm:w-40 rounded-full shadow-2xl overflow-hidden flex items-center justify-center border-4 transition-all duration-500 relative cursor-pointer ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
                   ) : (
-                    <User className={`h-14 w-14 sm:h-20 sm:w-20 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/20'}`} />
+                    <span className={`font-display text-3xl sm:text-5xl uppercase tracking-tight transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/70'}`}>
+                      {userInitials}
+                    </span>
                   )}
                   
                   {/* Hover Overlay */}
@@ -137,8 +144,8 @@ export const Profile: React.FC = () => {
                 
                 <motion.button
                   type="button"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                  whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.9 }}
                   onClick={() => fileInputRef.current?.click()}
                   className={`absolute bottom-0 right-0 sm:bottom-2 sm:right-2 p-2 sm:p-3 rounded-full shadow-xl transition-all z-10 ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600' : 'bg-white text-black hover:bg-indigo-500 hover:text-white'}`}
                 >
@@ -154,8 +161,8 @@ export const Profile: React.FC = () => {
                 />
               </div>
               <div className="text-center space-y-1.5 sm:space-y-2">
-                <h3 className={`text-xl sm:text-2xl font-display uppercase tracking-tight transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{user?.name}</h3>
-                <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>{user?.email}</p>
+                <h3 className={`text-xl sm:text-2xl font-display uppercase tracking-tight transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{displayName}</h3>
+                <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>@{userHandle}</p>
               </div>
             </div>
 
@@ -216,18 +223,6 @@ export const Profile: React.FC = () => {
             </div>
           </form>
         </motion.div>
-
-        {/* Two-Factor Authentication Settings */}
-        {user?.id && user?.email && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mt-12 sm:mt-16"
-          >
-            <TwoFactorSettings userId={user.id} email={user.email} />
-          </motion.div>
-        )}
       </div>
     </div>
   );

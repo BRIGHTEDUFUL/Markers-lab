@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useHeroRingSrc } from "../hooks/useHeroRingSrc";
 
@@ -41,22 +41,35 @@ type Props = {
 const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "hero" }) => {
   const { src, onImgError } = useHeroRingSrc();
   const reduceMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   const isLight = theme === "light";
   const isAmbient = variant === "authAmbient";
   const isPanel = variant === "authPanel";
   const isPage = variant === "page";
   const isGlobal = variant === "global";
   const isCover = isPanel;
+  const allowMotion = !isGlobal;
 
   const pulse =
+    allowMotion &&
     !reduceMotion &&
+    !isMobile &&
     !isLight &&
-    (variant === "hero" || variant === "page" || variant === "authPanel" || isGlobal);
+    (variant === "hero" || variant === "page" || variant === "authPanel");
 
   const imgMotion = pulse
-    ? { scale: isGlobal ? ([1, 1.018, 1] as const) : ([1, 1.035, 1] as const) }
-    : isLight && !reduceMotion && !isAmbient
-      ? { scale: isGlobal ? ([1, 1.008, 1] as const) : ([1, 1.012, 1] as const) }
+    ? { scale: isGlobal ? [1, 1.018, 1] : [1, 1.035, 1] }
+    : allowMotion && isLight && !reduceMotion && !isAmbient && !isMobile
+      ? { scale: isGlobal ? [1, 1.008, 1] : [1, 1.012, 1] }
       : false;
 
   const transition = pulse
@@ -70,7 +83,7 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
       ? isGlobal
         ? "opacity-[0.65] mix-blend-multiply sm:opacity-[0.72]"
         : "opacity-[0.55] mix-blend-screen sm:opacity-[0.62] md:opacity-[0.58]"
-      : `${isAmbient ? "opacity-40 sm:opacity-50" : isPanel ? "opacity-80 sm:opacity-90" : isGlobal ? "opacity-100" : "opacity-85 sm:opacity-95"}`
+      : `${isAmbient ? "opacity-35 sm:opacity-45" : isPanel ? "opacity-72 sm:opacity-82" : isGlobal ? "opacity-[0.88]" : "opacity-75 sm:opacity-88"}`
   } ${!isLight && (isPage || isGlobal) && !isPanel && !isAmbient ? "md:opacity-100" : isLight && isPage ? "md:opacity-95" : ""}`;
 
   const imgStyle = isLight
@@ -96,7 +109,7 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
       {/* Base: matches page chrome */}
       <div
         className={`absolute inset-0 transition-colors duration-700 ${
-          isLight ? "bg-slate-50" : "bg-[#030303]"
+          isLight ? "bg-slate-50" : "bg-[#02030a]"
         }`}
       />
 
@@ -128,7 +141,7 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
         className={`absolute inset-0 transition-opacity duration-700 ${
           isLight
             ? "bg-[radial-gradient(ellipse_80%_65%_at_50%_42%,rgba(99,102,241,0.10),transparent_60%)]"
-            : "bg-[radial-gradient(ellipse_80%_62%_at_50%_44%,rgba(251,191,36,0.14),transparent_58%)]"
+            : "bg-[radial-gradient(ellipse_80%_62%_at_50%_44%,rgba(251,191,36,0.08),transparent_58%)]"
         }`}
       />
 
@@ -142,7 +155,7 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
             : isAmbient
               ? "bg-gradient-to-b from-black/70 via-black/25 to-black/80"
               : isGlobal
-                ? "bg-gradient-to-b from-black/20 via-transparent to-black/65"
+                ? "bg-gradient-to-b from-black/35 via-black/10 to-black/82"
                 : "bg-gradient-to-b from-black/50 via-black/10 to-black/[0.88]"
         }`}
       />
@@ -153,7 +166,7 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
               ? "opacity-85 bg-[radial-gradient(ellipse_95%_75%_at_50%_48%,transparent_0%,transparent_45%,rgba(248,250,252,0.22)_78%,rgba(248,250,252,0.42)_100%)]"
               : "opacity-100 bg-[radial-gradient(ellipse_90%_70%_at_50%_50%,transparent_0%,transparent_42%,rgba(248,250,252,0.60)_78%,rgb(248,250,252)_100%)]"
             : isGlobal
-              ? "opacity-70 bg-[radial-gradient(ellipse_96%_78%_at_50%_50%,transparent_22%,rgba(0,0,0,0.30)_100%)]"
+              ? "opacity-95 bg-[radial-gradient(ellipse_96%_78%_at_50%_50%,transparent_18%,rgba(0,0,0,0.58)_100%)]"
               : "opacity-88 bg-[radial-gradient(ellipse_95%_75%_at_50%_50%,transparent_30%,rgba(0,0,0,0.48)_100%)]"
         }`}
       />

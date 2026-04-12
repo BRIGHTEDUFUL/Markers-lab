@@ -8,6 +8,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { mediaSrc } from "../lib/media-url";
 import { Project } from "../types";
 import StarField from "../components/StarField";
+import { useAdaptiveMotion } from "../hooks/useAdaptiveMotion";
 
 const FadeUp: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({
   children, delay = 0, className = "",
@@ -26,6 +27,7 @@ const FadeUp: React.FC<{ children: React.ReactNode; delay?: number; className?: 
 export const Home = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { shouldReduceMotion } = useAdaptiveMotion();
   const isDark = theme === "dark";
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +48,7 @@ export const Home = () => {
           <div className={`absolute inset-0 mask-radial opacity-[0.08] ${isDark ? "bg-grid-white" : "bg-grid-slate-900"}`} />
           <div className={`absolute inset-0 ${isDark ? "bg-[radial-gradient(ellipse_70%_55%_at_50%_45%,transparent_25%,rgba(3,3,3,0.5)_100%)]" : "bg-[radial-gradient(ellipse_70%_55%_at_50%_45%,transparent_25%,rgba(248,250,252,0.55)_100%)]"}`} />
         </div>
-        <StarField count={55} theme={theme} salt={1000} />
+        <StarField count={shouldReduceMotion ? 18 : 44} theme={theme} salt={1000} />
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative z-10 mb-8">
           <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-bold uppercase tracking-[0.25em] transition-colors duration-500 ${isDark ? "border-white/10 bg-white/5 text-indigo-400" : "border-indigo-200 bg-white/60 text-indigo-600"}`}>
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
@@ -60,13 +62,13 @@ export const Home = () => {
             transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
             className={`font-display text-[17vw] sm:text-[14vw] md:text-[12vw] lg:text-[10vw] leading-[0.84] uppercase tracking-tighter ${isDark ? "text-white" : "text-slate-900"}`}
           >
-            <motion.span animate={{ rotate: [-1.5, 1.5] }} transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} style={{ originX: 0.5, originY: 0, display: "inline-block" }} className={`bg-clip-text text-transparent ${isDark ? "bg-gradient-to-b from-white via-white to-white/40" : "text-slate-900"}`}>
+            <motion.span animate={shouldReduceMotion ? undefined : { rotate: [-1.5, 1.5] }} transition={shouldReduceMotion ? undefined : { duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} style={{ originX: 0.5, originY: 0, display: "inline-block" }} className={`bg-clip-text text-transparent ${isDark ? "bg-gradient-to-b from-white via-white to-white/40" : "text-slate-900"}`}>
               Websites
             </motion.span>
             <br />
             <span className="text-transparent" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.35)" : "1.5px rgba(15,23,42,0.3)" }}>Web Apps</span>
             <br />
-            <motion.span animate={{ scaleX: [1, 1.06, 0.96, 1.03, 0.99, 1], scaleY: [1, 0.96, 1.06, 0.97, 1.01, 1] }} transition={{ duration: 2, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }} style={{ display: "inline-block", willChange: "transform" }} className={`bg-clip-text text-transparent ${isDark ? "bg-gradient-to-t from-white/40 via-white to-white" : "bg-gradient-to-t from-slate-900/40 via-slate-900 to-slate-900"}`}>
+            <motion.span animate={shouldReduceMotion ? undefined : { scaleX: [1, 1.06, 0.96, 1.03, 0.99, 1], scaleY: [1, 0.96, 1.06, 0.97, 1.01, 1] }} transition={shouldReduceMotion ? undefined : { duration: 2, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }} style={{ display: "inline-block", willChange: "transform" }} className={`bg-clip-text text-transparent ${isDark ? "bg-gradient-to-t from-white/40 via-white to-white" : "bg-gradient-to-t from-slate-900/40 via-slate-900 to-slate-900"}`}>
               &amp; More
             </motion.span>
           </motion.h1>
@@ -86,7 +88,7 @@ export const Home = () => {
           </Link>
         </motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
-          <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }} className={`w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1.5 ${isDark ? "border-white/20" : "border-slate-300"}`}>
+          <motion.div animate={shouldReduceMotion ? undefined : { y: [0, 8, 0] }} transition={shouldReduceMotion ? undefined : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }} className={`w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1.5 ${isDark ? "border-white/20" : "border-slate-300"}`}>
             <div className={`w-1 h-2 rounded-full ${isDark ? "bg-white/40" : "bg-slate-400"}`} />
           </motion.div>
         </motion.div>
@@ -94,7 +96,7 @@ export const Home = () => {
 
       {/* MARQUEE */}
       <section className={`relative z-10 py-5 border-y overflow-hidden transition-colors duration-500 ${isDark ? "border-white/5 bg-white/[0.02]" : "border-slate-200 bg-slate-100/40"}`}>
-        <div className="flex animate-marquee whitespace-nowrap">
+        <div className={`flex whitespace-nowrap ${shouldReduceMotion ? "" : "animate-marquee"}`}>
           {[...Array(12)].map((_, i) => (
             <span key={i} className={`mx-10 font-display text-sm uppercase tracking-[0.3em] ${isDark ? "text-white/15" : "text-slate-900/10"}`}>
               Websites &nbsp;·&nbsp; Web Apps &nbsp;·&nbsp; Digital Experiences &nbsp;·&nbsp; Innovation &nbsp;·&nbsp;
@@ -168,7 +170,7 @@ export const Home = () => {
                   <FadeUp key={project.id} delay={i * 0.1}>
                     <div className={`group relative overflow-hidden rounded-3xl border transition-all duration-500 hover:-translate-y-1 ${isDark ? "border-white/[0.08] hover:border-white/20" : "border-slate-200 hover:border-indigo-200/60 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60"}`}>
                       <div className="aspect-[4/3] overflow-hidden">
-                        <img src={imageUrl} alt={project.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <img src={imageUrl} alt={project.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" fetchPriority={i === 0 ? "high" : "low"} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                       </div>
                       <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? "from-black/80 via-black/20 to-transparent" : "from-white/90 via-white/20 to-transparent"}`} />
                       <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
@@ -222,7 +224,7 @@ export const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
             {([
               { quote: "Bright's architectural vision transformed a complex project into an elegant, scalable system. His attention to detail and commitment to execution excellence is what sets Maker's Lab apart.", author: "Bright Eduful", role: "Founder & Lead Engineer", img: "/team/bright-eduful.png" },
-              { quote: "Abena's strategic approach to growth marketing helped us reach the right audience at the right time. Her campaigns are data-driven yet creative — exactly what we needed.", author: "Abena Antwiwaa Quarshie", role: "Head of Marketing & Growth", img: "/team/abene.png" },
+              { quote: "Abena's strategic approach to growth marketing helped us reach the right audience at the right time. Her campaigns are data-driven yet creative — exactly what we needed.", author: "Abena Antwiwaa Quarshie", role: "Head of Marketing & Growth", img: "/team/abena-antwiwaa-quarshie-v2.png?v=2026-04-12-4" },
               { quote: "Ralph's engineering discipline ensured our systems remained performant and maintainable through every iteration. His integrations were flawless and his code was pristine.", author: "Ralph Andy Menz", role: "Senior Software Developer", img: "/team/ralph-andy-menz.png" },
             ] as const).map((t, i) => (
               <FadeUp key={i} delay={i * 0.1}>
@@ -235,7 +237,7 @@ export const Home = () => {
                   <Quote className={`h-7 w-7 mb-4 opacity-15 ${isDark ? "text-white" : "text-slate-900"}`} />
                   <p className={`text-base sm:text-lg font-light leading-relaxed italic mb-8 ${isDark ? "text-white/70" : "text-slate-600"}`}>{t.quote}</p>
                   <div className="flex items-center gap-4">
-                    <img src={t.img} alt={t.author} loading="lazy" decoding="async" referrerPolicy="no-referrer" className={`h-11 w-11 rounded-full object-cover border-2 transition-all duration-500 group-hover:border-indigo-500 ${isDark ? "border-white/20" : "border-slate-200"}`} />
+                    <img src={t.img} alt={t.author} loading="lazy" decoding="async" fetchPriority="low" referrerPolicy="no-referrer" className={`h-11 w-11 rounded-full object-cover border-2 transition-all duration-500 group-hover:border-indigo-500 ${isDark ? "border-white/20" : "border-slate-200"}`} />
                     <div>
                       <div className={`text-sm font-bold uppercase tracking-wider ${isDark ? "text-white" : "text-slate-900"}`}>{t.author}</div>
                       <div className={`text-[10px] uppercase tracking-[0.2em] ${isDark ? "text-white/35" : "text-slate-400"}`}>{t.role}</div>

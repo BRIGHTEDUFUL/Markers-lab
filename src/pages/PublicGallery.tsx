@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { fetchFeaturedGallery, fetchApprovedTestimonials } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
 import { mediaSrc } from "../lib/media-url";
 import { Star, Quote, Rocket, ExternalLink, ArrowRight, CheckCircle, Users, Briefcase, Award, Search } from "lucide-react";
-import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { motion, AnimatePresence } from "motion/react";
 import PageHero from "../components/PageHero";
+import LazyMarkdown from "../components/LazyMarkdown";
 import { useTheme } from "../contexts/ThemeContext";
 import { Project, Testimonial } from "../types";
+import { useSmartNavigate } from "../hooks/useSmartNavigate";
+import { useOverlayBackHandler } from "../hooks/useOverlayBackHandler";
 
 const stripMarkdown = (text: string) => {
   return text
@@ -20,50 +21,17 @@ const stripMarkdown = (text: string) => {
 };
 
 const TiltCard: React.FC<{ children: React.ReactNode; className: string; onClick?: () => void }> = ({ children, className, onClick }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const rotateX = useTransform(y, [-100, 100], [15, -15]);
-  const rotateY = useTransform(x, [-100, 100], [-15, 15]);
-
-  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    x.set(event.clientX - centerX);
-    y.set(event.clientY - centerY);
-  }
-
-  function handleMouseLeave() {
-    x.set(0);
-    y.set(0);
-  }
-
   return (
-    <motion.div
-      style={{
-        rotateX,
-        rotateY,
-        transformStyle: "preserve-3d",
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      whileHover={{ scale: 1.05 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className={className}
-      onClick={onClick}
-    >
-      <div style={{ transform: "translateZ(50px)" }}>
-        {children}
-      </div>
-    </motion.div>
+    <div className={className} onClick={onClick}>
+      {children}
+    </div>
   );
 };
 
 export const PublicGallery: React.FC = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const navigate = useNavigate();
+  const smartNavigate = useSmartNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,13 +41,18 @@ export const PublicGallery: React.FC = () => {
 
   const handleCTA = () => {
     if (user) {
-      navigate("/submit-project");
+      smartNavigate("/submit-project", { asSectionSwitch: true });
     } else {
-      navigate("/register");
+      smartNavigate("/register", { asSectionSwitch: true });
     }
   };
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const { closeWithBack: closeSelectedProject } = useOverlayBackHandler(
+    !!selectedProject,
+    () => setSelectedProject(null),
+    "gallery-project-modal"
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -132,7 +105,7 @@ export const PublicGallery: React.FC = () => {
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className={`relative aspect-[21/9] w-full overflow-hidden rounded-[3rem] border transition-all duration-700 group cursor-pointer ${theme === 'light' ? 'bg-white border-slate-200 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)]' : 'bg-white/5 border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)]'}`}
+              className={`relative aspect-[21/9] w-full overflow-hidden rounded-[3rem] border transition-all duration-700 group cursor-pointer ${theme === 'light' ? 'bg-white border-slate-200 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)]' : 'bg-slate-950/70 border-white/12 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)]'}`}
               onClick={() => setSelectedProject(spotlightProject)}
             >
               {/* Spotlight Background */}
@@ -147,6 +120,9 @@ export const PublicGallery: React.FC = () => {
                     <img 
                       src={imageUrl} 
                       alt={spotlightProject.title}
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
                       className={`w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110 ${theme === 'light' ? 'opacity-90' : 'opacity-60'}`}
                       referrerPolicy="no-referrer"
                     />
@@ -167,7 +143,7 @@ export const PublicGallery: React.FC = () => {
                   >
                     Featured Spotlight
                   </motion.span>
-                  <span className={`text-[10px] font-bold uppercase tracking-[0.4em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-[0.4em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/75'}`}>
                     {spotlightProject.category.replace("_", " ")}
                   </span>
                 </div>
@@ -187,7 +163,7 @@ export const PublicGallery: React.FC = () => {
                     </div>
                     <div className="flex flex-col">
                       <span className={`text-[12px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{spotlightProject.user?.name ?? "Creator"}</span>
-                      <span className={`text-[10px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>Lead Architect</span>
+                      <span className={`text-[10px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-300'}`}>Lead Architect</span>
                     </div>
                   </div>
                   <div className={`h-16 w-[1px] transition-colors duration-500 ${theme === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
@@ -214,7 +190,7 @@ export const PublicGallery: React.FC = () => {
                 className={`px-8 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-500 border relative overflow-hidden group ${
                   activeCategory === cat
                   ? theme === 'light' ? "bg-indigo-600 text-white border-indigo-600 shadow-xl shadow-indigo-200" : "bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.2)]"
-                  : theme === 'light' ? "bg-white text-slate-500 border-slate-300 hover:border-slate-400 hover:text-slate-900" : "bg-white/5 text-white/40 border-white/10 hover:border-white/30 hover:text-white"
+                  : theme === 'light' ? "bg-white text-slate-500 border-slate-300 hover:border-slate-400 hover:text-slate-900" : "bg-slate-950/70 text-white/82 border-white/15 hover:border-white/35 hover:text-white"
                 }`}
               >
                 <span className="relative z-10">{cat.replace("_", " ")}</span>
@@ -246,7 +222,7 @@ export const PublicGallery: React.FC = () => {
                   transition={{ delay: i * 0.1, duration: 0.8 }}
                 >
                   <TiltCard
-                    className={`group relative overflow-hidden border rounded-[3rem] p-5 cursor-pointer transition-all duration-700 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60' : 'bg-white/2 border-white/5 hover:border-white/20'}`}
+                    className={`group relative overflow-hidden border rounded-[3rem] p-5 cursor-pointer transition-all duration-700 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60' : 'bg-slate-950/70 border-white/10 hover:border-white/22'}`}
                     onClick={() => setSelectedProject(project)}
                   >
                     <div className={`aspect-[16/10] relative overflow-hidden rounded-[2.5rem] ${theme === 'light' ? 'bg-slate-100' : 'bg-[#0a0a0a]'}`}>
@@ -255,6 +231,9 @@ export const PublicGallery: React.FC = () => {
                         <img 
                           src={imageUrl} 
                           alt={project.title}
+                          loading="lazy"
+                          decoding="async"
+                          fetchPriority="low"
                           className={`w-full h-full object-cover transition-opacity duration-1000 ${theme === 'light' ? 'opacity-90 group-hover:opacity-100' : 'opacity-70 group-hover:opacity-95'}`}
                           referrerPolicy="no-referrer"
                         />
@@ -310,7 +289,7 @@ export const PublicGallery: React.FC = () => {
                         </div>
                       </div>
                       
-                      <p className={`font-sans text-lg font-light leading-relaxed line-clamp-3 transition-colors duration-500 ${theme === 'light' ? 'text-slate-600' : 'text-gray-500'}`}>
+                      <p className={`font-sans text-lg font-light leading-relaxed line-clamp-3 transition-colors duration-500 ${theme === 'light' ? 'text-slate-600' : 'text-gray-300'}`}>
                         {stripMarkdown(project.description)}
                       </p>
 
@@ -321,16 +300,16 @@ export const PublicGallery: React.FC = () => {
                           </div>
                           <div className="flex flex-col">
                             <span className={`text-[11px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{project.user?.name ?? "Creator"}</span>
-                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>Lead Architect</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-300'}`}>Lead Architect</span>
                           </div>
                         </div>
                         <div className="flex items-center space-x-10">
                           <div className="flex flex-col items-end">
-                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>Valuation</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-300'}`}>Valuation</span>
                             <span className={`text-sm font-bold transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{project.budget}</span>
                           </div>
                           <div className="flex flex-col items-end">
-                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-600'}`}>Cycle</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-300'}`}>Cycle</span>
                             <span className={`text-sm font-bold transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{project.timeline}</span>
                           </div>
                         </div>
@@ -347,7 +326,7 @@ export const PublicGallery: React.FC = () => {
               <div className={`inline-flex p-6 rounded-full border transition-colors duration-500 ${theme === 'light' ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}>
                 <Search className={`h-8 w-8 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/20'}`} />
               </div>
-              <p className={`font-heading text-xl transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-gray-500'}`}>No projects found in this category yet.</p>
+              <p className={`font-heading text-xl transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/75'}`}>No projects found in this category yet.</p>
             </div>
           )}
         </section>
@@ -432,6 +411,11 @@ export const PublicGallery: React.FC = () => {
             <motion.div whileHover={{ scale: 1.05, y: -5 }} whileTap={{ scale: 0.95 }}>
               <Link
                 to={user ? "/dashboard" : "/login"}
+                replace
+                onClick={(e) => {
+                  e.preventDefault();
+                  smartNavigate(user ? "/dashboard" : "/login", { asSectionSwitch: true });
+                }}
                 className={`inline-block px-20 py-10 border font-bold uppercase tracking-[0.4em] text-[11px] transition-all duration-700 ${theme === 'light' ? 'border-slate-200 text-slate-900 hover:bg-slate-900 hover:text-white' : 'border-white/20 text-white hover:bg-white hover:text-black'}`}
               >
                 {user ? "Access Terminal" : "Sign In"}
@@ -454,7 +438,7 @@ export const PublicGallery: React.FC = () => {
               >
                 {/* Close Button */}
                 <button 
-                  onClick={() => setSelectedProject(null)}
+                  onClick={closeSelectedProject}
                   className={`absolute top-8 right-8 p-4 rounded-full z-20 transition-all ${
                     theme === 'light' ? 'bg-slate-100 text-slate-900 hover:bg-slate-200' : 'bg-white/5 text-white hover:bg-white/10'
                   }`}
@@ -519,9 +503,7 @@ export const PublicGallery: React.FC = () => {
                       <div className={`prose prose-lg max-w-none font-serif italic ${
                         theme === 'light' ? 'text-slate-600 prose-slate' : 'text-gray-400 prose-invert'
                       }`}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {selectedProject.description}
-                        </ReactMarkdown>
+                        <LazyMarkdown>{selectedProject.description}</LazyMarkdown>
                       </div>
                     </div>
 
@@ -541,7 +523,7 @@ export const PublicGallery: React.FC = () => {
                         </motion.a>
                       )}
                       <motion.button
-                        onClick={() => setSelectedProject(null)}
+                        onClick={closeSelectedProject}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className={`flex-1 px-10 py-6 border text-center font-bold uppercase tracking-[0.3em] text-[10px] transition-all ${

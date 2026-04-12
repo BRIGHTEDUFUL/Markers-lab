@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 
 interface InteractiveImageProps {
   src: string;
+  fallbackSrc?: string;
   alt: string;
   className?: string;
   /** Whether this image is currently active (colored) — controlled from parent for single-active logic */
@@ -22,6 +23,7 @@ interface InteractiveImageProps {
  */
 const InteractiveImage: React.FC<InteractiveImageProps> = ({
   src,
+  fallbackSrc,
   alt,
   className = "",
   active = false,
@@ -29,7 +31,14 @@ const InteractiveImage: React.FC<InteractiveImageProps> = ({
 }) => {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [triedFallback, setTriedFallback] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    setCurrentSrc(src);
+    setTriedFallback(false);
+  }, [src, fallbackSrc]);
 
   // Colored when: hovered (desktop) OR focused (keyboard) OR tapped/active (mobile)
   const isColored = hovered || focused || active;
@@ -53,6 +62,13 @@ const InteractiveImage: React.FC<InteractiveImageProps> = ({
     [onActivate]
   );
 
+  const handleImageError = useCallback(() => {
+    if (!triedFallback && fallbackSrc) {
+      setCurrentSrc(fallbackSrc);
+      setTriedFallback(true);
+    }
+  }, [fallbackSrc, triedFallback]);
+
   return (
     <div
       role="button"
@@ -70,10 +86,12 @@ const InteractiveImage: React.FC<InteractiveImageProps> = ({
       {/* The image — grayscale by default, color on active */}
       <img
         ref={imgRef}
-        src={src}
+        src={currentSrc}
         alt={alt}
         loading="lazy"
         decoding="async"
+        fetchPriority="low"
+        onError={handleImageError}
         className="h-full w-full object-cover object-top"
         style={{
           filter: isColored ? "grayscale(0%) brightness(1.02)" : "grayscale(100%) brightness(0.92)",

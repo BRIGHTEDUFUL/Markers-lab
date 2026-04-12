@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { LogIn } from 'lucide-react';
 
 interface GoogleSignInButtonProps {
   onSuccess: (googleData: any) => void;
@@ -23,90 +22,24 @@ export function GoogleSignInButton({
 }: GoogleSignInButtonProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const handleGoogleSuccess = (response: any) => {
+  const handleGoogleClick = () => {
     try {
-      if (!response.credential) {
-        throw new Error('No credential returned from Google');
-      }
-
-      // Decode JWT token from Google
-      const token = response.credential;
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        throw new Error('Invalid token format');
-      }
-
-      const decoded = JSON.parse(
-        Buffer.from(parts[1], 'base64').toString('utf-8')
-      );
-
-      const googleData = {
-        id: decoded.sub,
-        email: decoded.email,
-        name: decoded.name,
-        picture: decoded.picture,
-        emailVerified: decoded.email_verified,
-      };
-
       setError(null);
-      onSuccess(googleData);
+      onSuccess({ provider: 'google' });
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to process Google sign-in';
+      const errorMessage = err.message || 'Failed to start Google sign-in';
       setError(errorMessage);
       onError?.(errorMessage);
     }
   };
 
-  const handleGoogleError = () => {
-    const errorMessage = 'Failed to sign in with Google';
-    setError(errorMessage);
-    onError?.(errorMessage);
-  };
-
   return (
     <div className="w-full">
-      {/* Google Sign-In Script */}
-      <script
-        src="https://accounts.google.com/gsi/client"
-        async
-        defer
-      ></script>
-
-      {/* Google Sign-In Button Container */}
-      <div
-        id="g_id_onload"
-        data-client_id={import.meta.env.VITE_GOOGLE_CLIENT_ID}
-        data-callback="handleGoogleSuccess"
-        data-nonce=""
-        data-auto_prompt="false"
-      ></div>
-
-      <div
-        id="g_id_signin"
-        data-type="standard"
-        data-size="large"
-        data-theme="dark"
-        data-text="signin_with"
-        data-shape="rectangular"
-        data-logo_alignment="left"
-        className="w-full flex justify-center"
-      ></div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="mt-3 p-2 bg-red-900/30 border border-red-700 rounded text-red-200 text-sm">
-          {error}
-        </div>
-      )}
-
-      {/* Alternative: Custom Button */}
       <button
-        onClick={() => {
-          // This would integrate with your auth API
-          console.log('Custom Google button clicked');
-        }}
+        type="button"
+        onClick={handleGoogleClick}
         disabled={isLoading}
-        className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
       >
         <svg
           className="w-5 h-5"
@@ -120,6 +53,13 @@ export function GoogleSignInButton({
         </svg>
         {isLoading ? 'Signing in...' : 'Sign in with Google'}
       </button>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mt-3 p-2 bg-red-900/30 border border-red-700 rounded text-red-200 text-sm">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

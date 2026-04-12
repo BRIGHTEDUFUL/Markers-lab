@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createProjectWithFiles } from "../lib/makers-data";
 import { useAuth } from "../contexts/AuthContext";
@@ -11,9 +11,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import PageHero from "../components/PageHero";
+import LazyMarkdown from "../components/LazyMarkdown";
 import { useTheme } from "../contexts/ThemeContext";
 import { Category, Timeline, BudgetRange } from "../types";
 
@@ -78,8 +77,23 @@ export const SubmitProject: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [showDescriptionPreview, setShowDescriptionPreview] = useState(false);
+  const [showAllFiles, setShowAllFiles] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  const deferredDescription = useDeferredValue(description);
+  const totalFilesSizeMB = useMemo(
+    () => (files.reduce((acc, f) => acc + f.size, 0) / 1024 / 1024).toFixed(2),
+    [files]
+  );
+  const visibleFiles = useMemo(
+    () => (showAllFiles ? files : files.slice(0, 20)),
+    [files, showAllFiles]
+  );
+
+  useEffect(() => {
+    if (files.length <= 20) setShowAllFiles(false);
+  }, [files.length]);
 
   const handleAddTag = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && tagInput.trim()) {
@@ -188,7 +202,7 @@ export const SubmitProject: React.FC = () => {
 
       setSuccess(true);
       toast.success("Project submitted successfully!");
-      setTimeout(() => navigate("/dashboard"), 2000);
+      setTimeout(() => navigate("/dashboard", { replace: true }), 2000);
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error
@@ -435,9 +449,7 @@ export const SubmitProject: React.FC = () => {
                           />
                         ) : (
                           <div className={`w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border min-h-[200px] sm:min-h-[260px] prose prose-sm max-w-none transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200 prose-slate' : 'bg-white/2 border-white/10 prose-invert'}`}>
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {description || "*No description provided yet.*"}
-                            </ReactMarkdown>
+                            <LazyMarkdown>{deferredDescription || "*No description provided yet.*"}</LazyMarkdown>
                           </div>
                         )}
                       </div>
@@ -662,19 +674,22 @@ export const SubmitProject: React.FC = () => {
                                 </p>
                                 <div className={`w-1 h-1 rounded-full ${theme === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
                                 <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
-                                  {(files.reduce((acc, f) => acc + f.size, 0) / 1024 / 1024).toFixed(2)} MB Total
+                                  {totalFilesSizeMB} MB Total
                                 </p>
                               </div>
                               <button
                                 type="button"
-                                onClick={() => setFiles([])}
+                                onClick={() => {
+                                  setFiles([]);
+                                  setShowAllFiles(false);
+                                }}
                                 className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${theme === 'light' ? 'text-red-500 hover:text-red-700' : 'text-red-400 hover:text-red-300'}`}
                               >
                                 Clear All
                               </button>
                             </div>
                             <div className="space-y-2">
-                              {files.map((file, idx) => (
+                              {visibleFiles.map((file, idx) => (
                                 <motion.div
                                   key={`${file.name}-${idx}`}
                                   initial={{ x: -20, opacity: 0 }}
@@ -705,6 +720,15 @@ export const SubmitProject: React.FC = () => {
                                   </button>
                                 </motion.div>
                               ))}
+                              {files.length > 20 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowAllFiles((prev) => !prev)}
+                                  className={`w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${theme === 'light' ? 'bg-slate-50 text-slate-600 hover:bg-slate-100' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                                >
+                                  {showAllFiles ? "Show Fewer Files" : `Show All ${files.length} Files`}
+                                </button>
+                              )}
                             </div>
                           </motion.div>
                         )}

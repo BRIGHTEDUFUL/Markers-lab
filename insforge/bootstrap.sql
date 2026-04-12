@@ -58,3 +58,19 @@ CREATE TABLE IF NOT EXISTS public.admin_notes (
   admin_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS public.submission_notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL UNIQUE REFERENCES public.projects(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  official_email TEXT NOT NULL,
+  delivery_status TEXT NOT NULL DEFAULT 'QUEUED',
+  delivery_error TEXT,
+  dispatched_at TIMESTAMPTZ,
+  acknowledged BOOLEAN NOT NULL DEFAULT false,
+  acknowledged_at TIMESTAMPTZ,
+  acknowledged_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  payload JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

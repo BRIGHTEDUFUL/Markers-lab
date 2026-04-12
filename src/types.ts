@@ -101,6 +101,24 @@ export interface Analytics {
   categoryCounts: { category: string; _count: number }[];
 }
 
+export interface SubmissionNotification {
+  id: string;
+  projectId: string;
+  userId: string;
+  officialEmail: string;
+  deliveryStatus: "QUEUED" | "SENT" | "FAILED";
+  deliveryError?: string;
+  dispatchedAt?: string;
+  acknowledged: boolean;
+  acknowledgedAt?: string;
+  acknowledgedBy?: string;
+  payload?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  project?: Project;
+  user?: User;
+}
+
 export interface LoginAttempt {
   id: string;
   email: string;

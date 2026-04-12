@@ -3,7 +3,8 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "env": {
-    "VITE_API_URL": "@vite_api_url"
+    "VITE_INSFORGE_OSS_HOST": "@vite_insforge_oss_host",
+    "VITE_INSFORGE_ANON_KEY": "@vite_insforge_anon_key"
   },
   "envPrefix": "VITE_",
   "rewrites": [

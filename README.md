@@ -29,6 +29,8 @@ Project management PWA backed by [InsForge](https://insforge.dev): Postgres, aut
 
    - `VITE_INSFORGE_OSS_HOST` — e.g. `https://<appkey>.<region>.insforge.app`
    - `VITE_INSFORGE_ANON_KEY` — from `npx @insforge/cli current --json`
+   - `VITE_HERO_RING_IMAGE_URL` — backend/public URL for the hero background image (optional)
+   - `VITE_HERO_RING_IMAGE_VERSION` — increment when image changes (forces fresh image instead of stale cache)
 
 3. Run the dev server (port 3000):
 
@@ -54,3 +56,9 @@ Project management PWA backed by [InsForge](https://insforge.dev): Postgres, aut
 ## Deployment
 
 Build static assets with `npm run build` and host `dist/` on any static host (configure SPA fallback to `index.html`). Ensure production origins are allowed for InsForge auth and CORS as required by your InsForge project settings.
+
+## Team Image Convention
+
+- Store team photos under `public/team/`.
+- Use kebab-case full-name filenames for consistency, e.g. `abena-antwiwaa-quarshie.png`.
+- Reference team photos by a single canonical path across pages to avoid drift.

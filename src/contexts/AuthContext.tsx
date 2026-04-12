@@ -6,9 +6,11 @@ import { User } from "../types";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  authError: string | null;
   login: (user: User) => void;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  recoverSession: () => Promise<void>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
@@ -17,17 +19,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const checkAuth = async () => {
     try {
       if (!insforgeConfigured) {
         setUser(null);
+        setAuthError("Authentication is not configured.");
         return;
       }
       const u = await fetchSessionUser();
       setUser(u);
-    } catch {
+      setAuthError(null);
+    } catch (err: any) {
       setUser(null);
+      const msg = typeof err?.message === "string" ? err.message : "";
+      if (/refresh|token|jwt|expired|unauthorized|401/i.test(msg)) {
+        setAuthError("Your session expired. Please log in again.");
+      } else {
+        setAuthError("Could not verify your session. Please log in again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -39,15 +50,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = (u: User) => {
     setUser(u);
+    setAuthError(null);
   };
 
   const logout = async () => {
-    await insforge.auth.signOut();
+    try {
+      await insforge.auth.signOut();
+    } catch {
+      // If sign-out API fails, clear local auth state anyway.
+    }
     setUser(null);
+    setAuthError(null);
+  };
+
+  const recoverSession = async () => {
+    setLoading(true);
+    try {
+      await logout();
+      await checkAuth();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth, setUser }}>
+    <AuthContext.Provider value={{ user, loading, authError, login, logout, checkAuth, recoverSession, setUser }}>
       {children}
     </AuthContext.Provider>
   );
