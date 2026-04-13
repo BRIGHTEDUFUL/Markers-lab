@@ -11,7 +11,7 @@ type LazyRouteComponent = React.LazyExoticComponent<React.ComponentType<any>> & 
 const lazyWithPreload = <T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ): LazyRouteComponent => {
-  const Component = lazy(factory) as LazyRouteComponent;
+  const Component = lazy(factory) as unknown as LazyRouteComponent;
   Component.preload = factory;
   return Component;
 };

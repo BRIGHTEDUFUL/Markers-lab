@@ -57,17 +57,19 @@ Project management PWA backed by [InsForge](https://insforge.dev): Postgres, aut
 
 **Hosted on InsForge** — frontend and backend fully integrated.
 
-- **Live App**: https://5ab7xs59.insforge.site
-- **Backend API**: https://5ab7xs59.us-east.insforge.app
-- **Edge Functions**: https://5ab7xs59.functions.insforge.app
+- **🌐 Live App**: https://5ab7xs59.insforge.site
+- **📡 Backend API**: https://5ab7xs59.us-east.insforge.app
+- **⚡ Edge Functions**: https://5ab7xs59.functions.insforge.app
+- **📊 InsForge Dashboard**: https://app.insforge.dev
 
-To deploy updates:
+### Quick Deploy
 ```bash
 npm run build
 npx @insforge/cli deployments deploy . -y
 ```
 
-For manual development or testing, build static assets with `npm run build` and host `dist/` on any static host (configure SPA fallback to `index.html`). Ensure production origins are allowed for InsForge auth and CORS as required by your InsForge project settings.
+For comprehensive deployment instructions, see [DEPLOYMENT_RUNBOOK.md](DEPLOYMENT_RUNBOOK.md).  
+For security details, see [SECURITY_AUDIT.md](SECURITY_AUDIT.md).
 
 ## Team Image Convention
 

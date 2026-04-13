@@ -1,3 +1,6 @@
+// @ts-ignore - Deno runtime globals
+/* global Deno */
+
 type SubmissionPayload = {
   notificationId?: string;
   to?: string;
@@ -50,13 +53,16 @@ export default async function handler(req: Request) {
   if (req.method === "OPTIONS") return json(200, { ok: true });
   if (req.method !== "POST") return json(405, { ok: false, error: "Method not allowed" });
 
+  // @ts-ignore - Deno runtime globals
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  // @ts-ignore - Deno runtime globals
   const configuredFrom = Deno.env.get("OFFICIAL_FROM_EMAIL")?.trim() || "";
-  const officialInboxEmail =
-    Deno.env.get("OFFICIAL_INBOX_EMAIL")?.trim() || "creators.makerslab@gmail.com";
+  // @ts-ignore - Deno runtime globals
+  const officialInboxEmail = Deno.env.get("OFFICIAL_INBOX_EMAIL")?.trim() || "creators.makerslab@gmail.com";
+  // @ts-ignore - Deno runtime globals
   const brandName = Deno.env.get("BRAND_NAME")?.trim() || "Makers Lab";
-  const adminDashboardUrl =
-    Deno.env.get("ADMIN_DASHBOARD_URL")?.trim() || "https://5ab7xs59.insforge.site/admin";
+  // @ts-ignore - Deno runtime globals
+  const adminDashboardUrl = Deno.env.get("ADMIN_DASHBOARD_URL")?.trim() || "https://5ab7xs59.insforge.site/admin";
   const fromEmail = configuredFrom.includes("@")
     ? configuredFrom
     : `${brandName} <onboarding@resend.dev>`;

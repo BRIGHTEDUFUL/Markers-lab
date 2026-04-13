@@ -110,7 +110,6 @@ const BottomNav: React.FC = memo(() => {
           return (
             <NavLinkItem
               key={path}
-              path={path}
               icon={Icon}
               label={label}
               isActive={isActive}
