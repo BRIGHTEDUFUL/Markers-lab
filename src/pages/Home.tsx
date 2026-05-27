@@ -5,7 +5,7 @@ import { ArrowRight, ArrowUpRight, Zap, Shield, Globe, Star, Quote } from "lucid
 import { motion } from "motion/react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-import { fetchFeaturedGallery } from "../lib/makers-data";
+import { fetchFeaturedGallery } from "../lib/api";
 import { useTheme } from "../contexts/ThemeContext";
 import { pickFeaturedShowcase, resolveProjectShowcaseImage } from "../lib/gallery-showcase";
 import { SHOWCASE_CARD_DURATION, SHOWCASE_CARD_STAGGER, SHOWCASE_EASE } from "../lib/showcase-motion";
@@ -89,7 +89,7 @@ export const Home = () => {
               Websites
             </motion.span>
             <br />
-            <span className="text-transparent" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.35)" : "1.5px rgba(15,23,42,0.3)" }}>Web Apps</span>
+            <span className="text-transparent" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.35)" : "1.5px #0f172a" }}>Web Apps</span>
             <br />
             <motion.span animate={shouldReduceMotion ? undefined : { scaleX: [1, 1.06, 0.96, 1.03, 0.99, 1], scaleY: [1, 0.96, 1.06, 0.97, 1.01, 1] }} transition={shouldReduceMotion ? undefined : { duration: 2, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }} style={{ display: "inline-block", willChange: "transform" }} className={`bg-clip-text text-transparent ${isDark ? "bg-gradient-to-t from-white/40 via-white to-white" : "bg-gradient-to-t from-slate-900/40 via-slate-900 to-slate-900"}`}>
               &amp; More

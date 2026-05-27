@@ -18,6 +18,16 @@ type CacheEntry<T> = {
 class QueryCache {
   private cache = new Map<string, CacheEntry<unknown>>();
   private inflight = new Map<string, Promise<unknown>>();
+  private maxEntries: number;
+
+  constructor(options?: { maxEntries?: number }) {
+    this.maxEntries = options?.maxEntries ?? 100;
+  }
+
+  /** Current number of cached entries (useful for debugging) */
+  get size(): number {
+    return this.cache.size;
+  }
 
   async fetch<T>(
     key: string,
@@ -45,6 +55,7 @@ class QueryCache {
 
     const promise = fetcher().then((value) => {
       this.cache.set(key, { value, expiresAt: Date.now() + ttlMs });
+      this.evictIfNeeded();
       this.inflight.delete(key);
       return value;
     }).catch((err) => {
@@ -60,6 +71,7 @@ class QueryCache {
     if (this.inflight.has(key)) return;
     const promise = fetcher().then((value) => {
       this.cache.set(key, { value, expiresAt: Date.now() + ttlMs });
+      this.evictIfNeeded();
       this.inflight.delete(key);
     }).catch(() => {
       this.inflight.delete(key);
@@ -79,6 +91,14 @@ class QueryCache {
       if (key.startsWith(prefix)) this.cache.delete(key);
     }
   }
+  /** Evict oldest entries when cache exceeds maxEntries */
+  private evictIfNeeded() {
+    while (this.cache.size > this.maxEntries) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) this.cache.delete(oldestKey);
+      else break;
+    }
+  }
 }
 
-export const queryCache = new QueryCache();
+export const queryCache = new QueryCache({ maxEntries: 100 });

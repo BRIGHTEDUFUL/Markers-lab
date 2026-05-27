@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { insforge, insforgeConfigured } from "../lib/insforge-client";
-import { fetchSessionUser } from "../lib/makers-data";
+import { fetchSessionUser } from "../lib/api";
 import { User } from "../types";
 
 interface AuthContextType {

@@ -81,13 +81,13 @@ const HeroRingBackdrop: React.FC<Props> = ({ theme, className = "", variant = "h
   const imgClass = `h-full w-full ${objectFit} object-center select-none transition-opacity duration-700 ${
     isLight
       ? isGlobal
-        ? "opacity-[0.65] mix-blend-multiply sm:opacity-[0.72]"
-        : "opacity-[0.55] mix-blend-screen sm:opacity-[0.62] md:opacity-[0.58]"
+        ? "opacity-[0.06] mix-blend-multiply sm:opacity-[0.08]"
+        : "opacity-[0.05] mix-blend-multiply sm:opacity-[0.07] md:opacity-[0.08]"
       : `${isAmbient ? "opacity-35 sm:opacity-45" : isPanel ? "opacity-72 sm:opacity-82" : isGlobal ? "opacity-[0.88]" : "opacity-75 sm:opacity-88"}`
-  } ${!isLight && (isPage || isGlobal) && !isPanel && !isAmbient ? "md:opacity-100" : isLight && isPage ? "md:opacity-95" : ""}`;
+  } ${!isLight && (isPage || isGlobal) && !isPanel && !isAmbient ? "md:opacity-100" : ""}`;
 
   const imgStyle = isLight
-    ? { filter: "saturate(1.05) contrast(1.02)" as const }
+    ? { filter: "invert(1) saturate(1.2) contrast(0.95)" as const }
     : { filter: "saturate(1.08) contrast(1.05)" as const };
 
   const ringImage = (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { insforge, insforgeConfigured } from "../lib/insforge-client";
-import { fetchSessionUser, userFromAuthUser, trackPasswordResetRequest, completePasswordReset, trackLoginAttempt, logAuditEvent, markEmailAsVerified, validateEmailPasswordLogin } from "../lib/makers-data";
+import { fetchSessionUser, userFromAuthUser, trackPasswordResetRequest, completePasswordReset, trackLoginAttempt, logAuditEvent, markEmailAsVerified, validateEmailPasswordLogin } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { Rocket, Mail, Lock, User as UserIcon, ArrowRight, Loader2, Globe, Zap, Cpu, ArrowLeft, Eye, EyeOff, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -89,9 +89,8 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
       setLoading(true);
       setError("");
       try {
-        const authApi = insforge.auth as any;
-        if (q.get("code") && typeof authApi.exchangeCodeForSession === "function") {
-          await authApi.exchangeCodeForSession(q.get("code"));
+        if (q.get("code")) {
+          await insforge.auth.exchangeOAuthCode(q.get("code")!);
         }
 
         let sessionUser = await fetchSessionUser();
@@ -99,7 +98,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         if (!sessionUser) {
           const { data } = await insforge.auth.getCurrentUser();
           if (data?.user) {
-            sessionUser = userFromAuthUser(data.user as any);
+            sessionUser = userFromAuthUser(data.user);
           }
         }
 
@@ -109,9 +108,10 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
         } else if (!cancelled) {
           setError("Google sign-in did not create a valid session. Please try again.");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!cancelled) {
-          setError(formatAuthError(err?.message || "Google authentication error"));
+          const msg = err instanceof Error ? err.message : "Google authentication error";
+          setError(formatAuthError(msg));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -378,8 +378,9 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
 
       // Explicit redirect keeps flow deterministic across browsers/webviews.
       window.location.assign(data.url);
-    } catch (err: any) {
-      setError(formatAuthError(err?.message || "Google authentication error"));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Google authentication error";
+      setError(formatAuthError(msg));
     } finally {
       setGoogleLoading(false);
     }
@@ -566,7 +567,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               className={`font-display text-6xl md:text-7xl uppercase tracking-tighter leading-[0.85] transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}
             >
               The Future <br />
-              <span className="text-transparent italic" style={{ WebkitTextStroke: `1px ${theme === 'light' ? 'rgba(15,23,42,0.3)' : 'rgba(255,255,255,0.3)'}` }}>
+              <span className="text-transparent italic" style={{ WebkitTextStroke: `1px ${theme === 'light' ? '#0f172a' : 'rgba(255,255,255,0.3)'}` }}>
                 Is Built
               </span> <br />
               Here.
@@ -1155,13 +1156,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
 
                   {/* Google OAuth Button */}
                   <GoogleSignInButton
-                    onSuccess={(googleData) => {
-                      // Google OAuth successful, handle user creation/linking
-                      handleGoogleAuth();
-                    }}
-                    onError={(error) => {
-                      setError(error || "Google sign-in failed");
-                    }}
+                    onClick={handleGoogleAuth}
                     isLoading={googleLoading}
                   />
                 </div>

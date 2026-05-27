@@ -4,7 +4,7 @@
  */
 const HERO_RING_IMAGE_BASE =
   (import.meta.env.VITE_HERO_RING_IMAGE_URL as string | undefined)?.trim() ||
-  "/hero-ring.png";
+  "/hero-moon.png";
 
 /**
  * Version token to bust stale browser/service-worker caches.

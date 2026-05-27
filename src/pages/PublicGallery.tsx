@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { fetchFeaturedGallery, fetchApprovedTestimonials } from "../lib/makers-data";
+import { fetchFeaturedGallery, fetchApprovedTestimonials } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { curateShowcaseProjects, resolveProjectShowcaseImage } from "../lib/gallery-showcase";
 import { mediaSrc } from "../lib/media-url";

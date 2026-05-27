@@ -68,8 +68,23 @@ npm run build
 npx @insforge/cli deployments deploy . -y
 ```
 
-For comprehensive deployment instructions, see [DEPLOYMENT_RUNBOOK.md](DEPLOYMENT_RUNBOOK.md).  
-For security details, see [SECURITY_AUDIT.md](SECURITY_AUDIT.md).
+For comprehensive deployment instructions, see [DEPLOYMENT_RUNBOOK.md](docs/DEPLOYMENT_RUNBOOK.md).
+For security details, see [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md).
+
+## Documentation
+
+Detailed documentation has been moved to the [`docs/`](docs/) directory:
+
+- [Architecture](docs/ARCHITECTURE.md) — system architecture overview
+- [Backend API Reference](docs/BACKEND_API_REFERENCE.md) — PostgREST API endpoints
+- [Backend Architecture](docs/BACKEND_ARCHITECTURE.md) — backend design decisions
+- [Backend Audit](docs/BACKEND_AUDIT.md) — backend security audit
+- [Backend Implementation](docs/BACKEND_IMPLEMENTATION.md) — implementation details
+- [Backend Setup Guide](docs/BACKEND_SETUP_GUIDE.md) — backend setup instructions
+- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) — deployment walkthrough
+- [Deployment Runbook](docs/DEPLOYMENT_RUNBOOK.md) — operational runbook
+- [Security Audit](docs/SECURITY_AUDIT.md) — security assessment
+- [Project Summary](docs/PROJECT_SUMMARY.md) — project overview and status
 
 ## Team Image Convention
 

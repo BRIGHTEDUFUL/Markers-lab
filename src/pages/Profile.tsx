@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { fetchMyProjects, updateMyProfile, fetchSessionUser } from "../lib/makers-data";
+import { fetchMyProjects, updateMyProfile, fetchSessionUser } from "../lib/api";
 import { User, Camera, Save, Loader2, AlertCircle, CheckCircle2, Rocket, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "../contexts/ThemeContext";

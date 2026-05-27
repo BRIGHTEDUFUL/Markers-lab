@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
-import Layout from "./components/Layout";
+import Layout from "./components/layout/Layout";
 import LoadingScreen from "./components/LoadingScreen";
 
 type LazyRouteComponent = React.LazyExoticComponent<React.ComponentType<any>> & {

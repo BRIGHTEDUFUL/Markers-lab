@@ -19,7 +19,7 @@ import {
   adminDeleteAdminNote,
   adminUpdateUserProfile,
   adminReassignProject,
-} from "../lib/makers-data";
+} from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { 

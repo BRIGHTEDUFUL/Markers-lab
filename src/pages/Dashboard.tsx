@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useEffect, useMemo, useCallback, memo } from "react";
-import { fetchMyProjects, deleteMyProject } from "../lib/makers-data";
+import { fetchMyProjects, deleteMyProject } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { 
   FileText, Clock, ChevronRight, Loader2, Plus, XCircle, 

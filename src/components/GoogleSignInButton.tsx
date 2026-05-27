@@ -1,35 +1,31 @@
 import { useState } from 'react';
 
 interface GoogleSignInButtonProps {
-  onSuccess: (googleData: any) => void;
-  onError?: (error: string) => void;
+  /** Called when the user clicks the button. The parent handles the actual OAuth flow. */
+  onClick: () => void;
   isLoading?: boolean;
 }
 
 /**
  * Google Sign-In Button Component
- * Integrates with Google OAuth 2.0
- * 
- * Prerequisites:
- * - Install: npm install @react-oauth/google
- * - Add GoogleOAuthProvider wrapper to App.tsx around Auth component
- * - Set VITE_GOOGLE_CLIENT_ID in environment
+ *
+ * Triggers the InsForge PKCE OAuth flow via `insforge.auth.signInWithOAuth()`.
+ * The parent component owns the actual OAuth logic — this button just renders
+ * the UI and calls `onClick` when tapped.
  */
 export function GoogleSignInButton({
-  onSuccess,
-  onError,
+  onClick,
   isLoading = false,
 }: GoogleSignInButtonProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const handleGoogleClick = () => {
+  const handleClick = () => {
     try {
       setError(null);
-      onSuccess({ provider: 'google' });
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to start Google sign-in';
+      onClick();
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start Google sign-in';
       setError(errorMessage);
-      onError?.(errorMessage);
     }
   };
 
@@ -37,7 +33,7 @@ export function GoogleSignInButton({
     <div className="w-full">
       <button
         type="button"
-        onClick={handleGoogleClick}
+        onClick={handleClick}
         disabled={isLoading}
         className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-medium transition-colors disabled:opacity-50"
       >

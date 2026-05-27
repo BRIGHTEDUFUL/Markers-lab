@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   adminGetRecentLoginAttempts,
   adminGetAuditLogs,
-} from "../lib/makers-data";
+} from "../lib/api";
 import { useTheme } from "../contexts/ThemeContext";
 import {
   AlertTriangle,

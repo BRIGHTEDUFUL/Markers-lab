@@ -62,7 +62,7 @@ export const Pricing = () => {
                 isDark ? "text-white" : "text-slate-900"
               }`}
             >
-              Pick The <span className="text-transparent italic" style={{ WebkitTextStroke: isDark ? "1px rgba(255,255,255,0.4)" : "1px rgba(15,23,42,0.35)" }}>Right Package</span>
+              Pick The <span className="text-transparent italic" style={{ WebkitTextStroke: isDark ? "1px rgba(255,255,255,0.4)" : "1px #0f172a" }}>Right Package</span>
             </h1>
             <p className={`max-w-3xl mx-auto mt-8 text-base sm:text-lg font-light leading-relaxed ${isDark ? "text-white/65" : "text-slate-600"}`}>
               Start with Standard, grow into Premium, or scale with Executive. Every package is priced in Ghana Cedi and tailored for practical outcomes.

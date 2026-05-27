@@ -1,6 +1,6 @@
 import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProjectWithFiles } from "../lib/makers-data";
+import { createProjectWithFiles } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { 
   Rocket, Upload, X, Plus, Info, DollarSign, Calendar, 
