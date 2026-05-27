@@ -214,7 +214,7 @@ INSERT allowed FOR ALL (system tracking)
 
 ---
 
-## 🛠️ Backend API Functions (makers-data.ts)
+## 🛠️ Backend API Functions (src/lib/api/)
 
 ### Password Reset Functions
 
@@ -222,7 +222,7 @@ INSERT allowed FOR ALL (system tracking)
 **Purpose**: Log password reset request after email sent
 
 ```typescript
-import { trackPasswordResetRequest } from "makers-data";
+import { trackPasswordResetRequest } from "../lib/api";
 
 // In handleForgotPassword():
 await trackPasswordResetRequest(user.id, email, {
@@ -607,11 +607,11 @@ FROM profiles;
 
 ## 📚 Related Files
 
-- **[tables-critical.sql](insforge/tables-critical.sql)** — Create new tables & indexes
-- **[rls-policies.sql](insforge/rls-policies.sql)** — Implement security policies
-- **[performance-indexes.sql](insforge/performance-indexes.sql)** — Query optimization
-- **[src/lib/makers-data.ts](src/lib/makers-data.ts)** — Backend API functions
-- **[src/pages/Auth.tsx](src/pages/Auth.tsx)** — Frontend integration
+- **[tables-critical.sql](../insforge/tables-critical.sql)** — Create new tables & indexes
+- **[rls-policies.sql](../insforge/rls-policies.sql)** — Implement security policies
+- **[performance-indexes.sql](../insforge/performance-indexes.sql)** — Query optimization
+- **[src/lib/api/](../src/lib/api/index.ts)** — Backend API functions
+- **[src/pages/Auth.tsx](../src/pages/Auth.tsx)** — Frontend integration
 
 ---
 
@@ -665,4 +665,4 @@ FROM profiles;
 
 See backend audit report: `BACKEND_AUDIT.md`
 
-For implementation questions, refer to the function signatures in `makers-data.ts`.
+For implementation questions, refer to the function signatures in [`src/lib/api/`](../src/lib/api/).

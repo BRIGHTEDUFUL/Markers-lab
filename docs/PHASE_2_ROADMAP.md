@@ -84,7 +84,7 @@ ALTER TABLE user_settings ADD COLUMN two_factor_verified_at TIMESTAMPTZ;
 
 **Modify:**
 - `src/pages/Auth.tsx` - Add 2FA verification screen after password login
-- `src/lib/makers-data.ts` - Add functions:
+- `src/lib/api/` - Add functions (to submodules / barrel exports):
   - `generateTOTPSecret(userId)`
   - `verifyTOTPCode(userId, code)`
   - `generateBackupCodes(userId, count)`
@@ -397,7 +397,7 @@ src/
 │   └── Auth.tsx (MODIFY - add 2FA screen)
 │
 ├── lib/
-│   ├── makers-data.ts (MODIFY - add new functions)
+│   ├── api/ (MODIFY - add new functions)
 │   ├── totp-helper.ts (NEW)
 │   ├── device-fingerprint.ts (NEW)
 │   ├── geolocation.ts (NEW)

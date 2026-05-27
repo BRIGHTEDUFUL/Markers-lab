@@ -10,7 +10,7 @@
 **Purpose**: Log password reset request after email sent
 
 ```typescript
-import { trackPasswordResetRequest } from "../lib/makers-data";
+import { trackPasswordResetRequest } from "../lib/api";
 
 // After Insforge sends reset email
 await trackPasswordResetRequest(user.id, email, {
@@ -41,7 +41,7 @@ await trackPasswordResetRequest(user.id, email, {
 **Purpose**: Mark password reset as used after successful change
 
 ```typescript
-import { completePasswordReset } from "../lib/makers-data";
+import { completePasswordReset } from "../lib/api";
 
 // After insforge.auth.updateUser({ password })
 await completePasswordReset(userId);
@@ -63,7 +63,7 @@ await completePasswordReset(userId);
 **Purpose**: Query recent reset attempts for rate limiting
 
 ```typescript
-import { getRecentPasswordResets } from "../lib/makers-data";
+import { getRecentPasswordResets } from "../lib/api";
 
 // Check rate limit before allowing new request
 const attempts = await getRecentPasswordResets(userId, 60);
@@ -91,7 +91,7 @@ if (attempts.length > 3) {
 **Purpose**: Log every login attempt (success and failure)
 
 ```typescript
-import { trackLoginAttempt } from "../lib/makers-data";
+import { trackLoginAttempt } from "../lib/api";
 
 // On login success
 await trackLoginAttempt(email, true, {
@@ -132,7 +132,7 @@ await trackLoginAttempt(email, false, {
 **Purpose**: Detect ongoing brute force attacks from IP
 
 ```typescript
-import { checkBruteForceAttempts } from "../lib/makers-data";
+import { checkBruteForceAttempts } from "../lib/api";
 
 // Check for brute force activity
 const failedAttempts = await checkBruteForceAttempts(clientIp, 15);
@@ -166,7 +166,7 @@ if (failedAttempts > 10) {
 **Purpose**: Track all critical admin actions and events
 
 ```typescript
-import { logAuditEvent } from "../lib/makers-data";
+import { logAuditEvent } from "../lib/api";
 
 // Example 1: Admin rejects project
 await logAuditEvent("project_rejected", "projects", projectId, {
@@ -239,7 +239,7 @@ ADMIN:
 **Purpose**: Get user preferences and configuration
 
 ```typescript
-import { fetchUserSettings } from "../lib/makers-data";
+import { fetchUserSettings } from "../lib/api";
 
 const settings = await fetchUserSettings(userId);
 
@@ -269,7 +269,7 @@ if (settings.theme === 'light') {
 **Purpose**: Update user preferences
 
 ```typescript
-import { updateUserSettings } from "../lib/makers-data";
+import { updateUserSettings } from "../lib/api";
 
 // Update multiple settings
 await updateUserSettings(userId, {
@@ -306,7 +306,7 @@ await updateUserSettings(userId, {
 **Purpose**: Mark email as verified after OTP validation
 
 ```typescript
-import { markEmailAsVerified } from "../lib/makers-data";
+import { markEmailAsVerified } from "../lib/api";
 
 // After successful email OTP verification
 await markEmailAsVerified(userId);
@@ -332,7 +332,7 @@ const profile = await fetchSessionUser(); // Returns with email_verified flag
 **Purpose**: Get recent login attempts for security monitoring
 
 ```typescript
-import { adminGetRecentLoginAttempts } from "../lib/makers-data";
+import { adminGetRecentLoginAttempts } from "../lib/api";
 
 // Admin dashboard: security monitoring
 const attempts = await adminGetRecentLoginAttempts(100);
@@ -371,7 +371,7 @@ failures.forEach(attempt => {
 **Purpose**: Query audit logs for compliance and investigation
 
 ```typescript
-import { adminGetAuditLogs } from "../lib/makers-data";
+import { adminGetAuditLogs } from "../lib/api";
 
 // Get password reset attempts
 const resets = await adminGetAuditLogs({

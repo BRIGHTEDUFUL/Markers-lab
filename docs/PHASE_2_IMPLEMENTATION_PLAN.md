@@ -143,7 +143,7 @@ CREATE TABLE backup_codes (
 
 **Step 1.2: Backend Functions (3-4 hours)**
 ```typescript
-// In lib/makers-data.ts
+// In src/lib/api/
 
 export async function generateTwoFactorOTP(userId: string, email: string): Promise<{
   otp: string;

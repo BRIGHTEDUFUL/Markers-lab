@@ -56,7 +56,7 @@
 
 ### Updated Source Files
 
-#### 3. **src/lib/makers-data.ts** 🔄 UPDATED
+#### 3. **src/lib/api/** 🔄 UPDATED
 **Added 16 new functions** for backend operations:
 
 **Password Reset Functions** (3):
@@ -201,7 +201,7 @@
 
 ### Files
 - **SQL**: 2 new files (tables, policies)
-- **TypeScript**: 2 updated files (makers-data, Auth)
+- **TypeScript**: 2 updated files (src/lib/api/, Auth)
 - **Documentation**: 2 new guides + audit report
 
 ---
@@ -213,7 +213,7 @@
 - [x] RLS policies fully implemented
 - [x] All 16 backend functions written
 - [x] Auth.tsx integrated with all functions
-- [x] makers-data.ts updated with new APIs
+- [x] src/lib/api/ updated with new APIs
 - [x] TypeScript types verified
 - [x] Build successful (zero errors)
 - [x] Production ready
@@ -284,9 +284,9 @@
 
 ### For Developers
 1. Read [BACKEND_IMPLEMENTATION.md](BACKEND_IMPLEMENTATION.md) for complete reference
-2. Study [rls-policies.sql](insforge/rls-policies.sql) for security model
-3. Review [Auth.tsx](src/pages/Auth.tsx) for integration patterns
-4. Check [makers-data.ts](src/lib/makers-data.ts) for API functions
+2. Study [rls-policies.sql](../insforge/rls-policies.sql) for security model
+3. Review [Auth.tsx](../src/pages/Auth.tsx) for integration patterns
+4. Check [src/lib/api/](../src/lib/api/index.ts) for API functions
 
 ### For Admins
 1. Use [BACKEND_SETUP_GUIDE.md](BACKEND_SETUP_GUIDE.md) for deployment
@@ -351,10 +351,10 @@ npm run dev
 - [Backend Audit Report](BACKEND_AUDIT.md)
 
 **Code Changes**:
-- [makers-data.ts](src/lib/makers-data.ts#L590) - Backend functions
-- [Auth.tsx](src/pages/Auth.tsx#L1) - Frontend integration
-- [tables-critical.sql](insforge/tables-critical.sql) - Database schema
-- [rls-policies.sql](insforge/rls-policies.sql) - Security policies
+- [src/lib/api/](../src/lib/api/index.ts) - Backend functions
+- [Auth.tsx](../src/pages/Auth.tsx#L1) - Frontend integration
+- [tables-critical.sql](../insforge/tables-critical.sql) - Database schema
+- [rls-policies.sql](../insforge/rls-policies.sql) - Security policies
 
 ---
 

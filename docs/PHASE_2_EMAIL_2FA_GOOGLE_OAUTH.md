@@ -159,7 +159,7 @@ CREATE POLICY two_factor_attempts_admin_read ON two_factor_attempts FOR SELECT
 ### Email 2FA Functions
 
 ```typescript
-// lib/makers-data.ts
+// src/lib/api/
 
 export async function generateEmailOTP(
   email: string
@@ -474,7 +474,7 @@ src/
 │   └── ... (existing)
 │
 ├── lib/
-│   ├── makers-data.ts (MODIFIED - add 2FA & OAuth functions)
+│   ├── api/ (MODIFIED - add 2FA & OAuth functions)
 │   ├── oauth-helper.ts (NEW - Google OAuth utilities)
 │   └── ... (existing)
 │

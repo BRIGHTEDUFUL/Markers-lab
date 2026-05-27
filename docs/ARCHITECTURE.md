@@ -73,8 +73,13 @@ src/
 │   ├── PublicGallery.tsx
 │   └── ...
 ├── components/              # Reusable UI components
-│   ├── Layout.tsx            # Main layout wrapper
-│   ├── BottomNav.tsx         # Mobile navigation
+│   ├── layout/               # Decomposed layout components
+│   │   ├── Layout.tsx        # Main layout wrapper / shell
+│   │   ├── TopNavBar.tsx     # Desktop top navigation bar
+│   │   ├── SideMenu.tsx      # Mobile side drawer
+│   │   ├── RouteTransition.tsx # NProgress route transition indicator
+│   │   └── BackToTop.tsx     # Floating scroll-to-top button
+│   ├── BottomNav.tsx         # Mobile bottom navigation
 │   ├── ErrorBoundary.tsx     # Error handling
 │   └── ...
 ├── contexts/                # React Context
@@ -85,6 +90,14 @@ src/
 │   ├── useSmartNavigate.ts
 │   └── ...
 ├── lib/                     # Utilities
+│   ├── api/                  # Modularized API layer
+│   │   ├── index.ts          # Barrel export file
+│   │   ├── auth.ts           # Authentication tracking & security APIs
+│   │   ├── projects.ts       # Project CRUD & gallery management
+│   │   ├── admin.ts          # Admin dashboard analytics & audit logs
+│   │   ├── profiles.ts       # Profile & settings persistence
+│   │   ├── notifications.ts  # Submission notifications
+│   │   └── mappers.ts        # Database-to-domain row mappers
 │   ├── insforge-client.ts    # SDK initialization
 │   ├── query-cache.ts        # Caching layer
 │   └── ...
@@ -98,13 +111,17 @@ src/
   ├── <AuthContext.Provider>
   │   ├── <ThemeContext.Provider>
   │   │   ├── <Layout>
+  │   │   │   ├── <TopNavBar>
+  │   │   │   ├── <SideMenu> (Mobile drawer)
+  │   │   │   ├── <RouteTransition> (NProgress)
   │   │   │   ├── <ErrorBoundary>
   │   │   │   │   └── <Route>
   │   │   │   │       └── <Page Component>
   │   │   │   │           ├── <Hero>
   │   │   │   │           ├── <Card>
   │   │   │   │           └── <Form>
-  │   │   │   └── <BottomNav>
+  │   │   │   ├── <BottomNav> (Mobile menu)
+  │   │   │   └── <BackToTop> (Floating scroll button)
   │   │   └── <Toast/Notifications>
 ```
 

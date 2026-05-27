@@ -53,7 +53,7 @@ The following are **already integrated** in the latest build:
 - `logAuditEvent()` - Tracks critical actions
 - `markEmailAsVerified()` - Marks email verified
 
-✅ **makers-data.ts** - New API functions:
+✅ **src/lib/api/** - New API functions:
 ```typescript
 // Password Reset Functions
 trackPasswordResetRequest()
@@ -277,7 +277,7 @@ FROM profiles;
 
 - [ ] **Frontend Integration Verified**
   - [ ] Auth.tsx using new functions ✅
-  - [ ] makers-data.ts functions callable ✅
+  - [ ] src/lib/api/ functions callable ✅
   - [ ] No TypeScript errors ✅
   - [ ] Build successful ✅
 
@@ -306,9 +306,9 @@ FROM profiles;
 3. [InsForge RLS Documentation](https://docs.insforge.app/security/rls)
 
 **Code Examples**:
-- Password reset integration: `src/pages/Auth.tsx` (lines 95-130)
-- Login tracking: `src/pages/Auth.tsx` (lines 270-290)
-- API functions: `src/lib/makers-data.ts` (lines 590+)
+- Password reset integration: [`src/pages/Auth.tsx`](../src/pages/Auth.tsx)
+- Login tracking: [`src/pages/Auth.tsx`](../src/pages/Auth.tsx)
+- API functions: [`src/lib/api/`](../src/lib/api/index.ts)
 
 ---
 

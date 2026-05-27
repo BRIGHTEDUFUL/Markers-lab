@@ -77,8 +77,8 @@
                        │ JavaScript SDK Layer
                        │
 ┌─────────────────────────────────────────────────────────────────┐
-│              MAKERS-DATA.TS (Backend API Layer)                  │
-│  (TypeScript functions for database operations)                 │
+│              SRC/LIB/API/ (Backend API Layer)                   │
+│  (Modular TypeScript files for database operations)             │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
 │  Auth & Security Functions:                                      │

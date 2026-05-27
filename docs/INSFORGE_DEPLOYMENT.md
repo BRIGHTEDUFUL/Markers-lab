@@ -102,7 +102,7 @@ Should return 5 rows.
 ## Post-Deployment
 
 1. ✅ Frontend code is already integrated
-2. ✅ All API functions are ready in `src/lib/makers-data.ts`
+2. ✅ All API functions are ready in `src/lib/api/`
 3. ✅ Security monitoring dashboard is live in Admin Console
 4. ✅ Build verified: No errors, production-ready
 

@@ -311,7 +311,7 @@ CREATE POLICY "Only admins view login attempts"
 
 ---
 
-## 📊 Missing/Incomplete API Functions in makers-data.ts
+## 📊 Missing/Incomplete API Functions in src/lib/api/
 
 ### ✅ Existing Functions (27 total)
 - `fetchSessionUser()` - Get current user
@@ -459,4 +459,4 @@ ALTER TABLE public.projects
 
 **Report Generated:** April 10, 2026
 **Database:** InsForge Postgres
-**Framework:** React + TSX (makers-data.ts)
+**Framework:** React + TSX (src/lib/api/)
