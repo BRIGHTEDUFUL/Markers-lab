@@ -90,24 +90,24 @@ export const Profile: React.FC = () => {
         {/* Project Stats Summary */}
         <div className="grid grid-cols-3 gap-4 mb-12 sm:mb-16">
           {([
-            { label: "Total Projects", value: stats.total, icon: Rocket, boxLight: "bg-indigo-50 text-indigo-600", boxDark: "bg-indigo-500/20 text-indigo-400" },
-            { label: "Pending Review", value: stats.pending, icon: Clock, boxLight: "bg-amber-50 text-amber-600", boxDark: "bg-amber-500/20 text-amber-400" },
-            { label: "Approved Assets", value: stats.approved, icon: CheckCircle, boxLight: "bg-emerald-50 text-emerald-600", boxDark: "bg-emerald-500/20 text-emerald-400" },
+            { label: "Total Projects", value: stats.total, icon: Rocket, boxStyle: "bg-primary-container text-on-primary-container" },
+            { label: "Pending Review", value: stats.pending, icon: Clock, boxStyle: "bg-tertiary-container text-on-tertiary-container" },
+            { label: "Approved Assets", value: stats.approved, icon: CheckCircle, boxStyle: "bg-secondary-container text-on-secondary-container" },
           ] as const).map((stat, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className={`p-6 rounded-3xl border text-center space-y-3 transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/40' : 'bg-white/5 border-white/10'}`}
+              className="glass-card p-6 rounded-3xl text-center space-y-3"
             >
-              <div className={`h-10 w-10 rounded-2xl mx-auto flex items-center justify-center ${theme === "light" ? stat.boxLight : stat.boxDark}`}>
+              <div className={`h-10 w-10 rounded-2xl mx-auto flex items-center justify-center border border-outline-variant ${stat.boxStyle}`}>
                 <stat.icon className="h-5 w-5" />
               </div>
-              <div className={`text-2xl font-display uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+              <div className="text-2xl font-display uppercase tracking-tight text-on-surface">
                 {stat.value}
               </div>
-              <div className={`text-[8px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+              <div className="text-[8px] font-bold uppercase tracking-widest text-on-surface-variant/60">
                 {stat.label}
               </div>
             </motion.div>
@@ -117,7 +117,7 @@ export const Profile: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`backdrop-blur-3xl rounded-2xl sm:rounded-[2.5rem] border overflow-hidden transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}
+          className="glass-card rounded-2xl sm:rounded-[2.5rem] overflow-hidden"
         >
           <form onSubmit={handleSubmit} className="p-5 sm:p-12 space-y-8 sm:space-y-12">
             {/* Avatar Section */}
@@ -125,13 +125,13 @@ export const Profile: React.FC = () => {
               <div className="relative group">
                 <motion.div 
                   whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
-                  className={`h-28 w-28 sm:h-40 sm:w-40 rounded-full shadow-2xl overflow-hidden flex items-center justify-center border-4 transition-all duration-500 relative cursor-pointer ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}
+                  className="h-28 w-28 sm:h-40 sm:w-40 rounded-full shadow-2xl overflow-hidden flex items-center justify-center border-4 border-outline-variant bg-surface-container-low transition-all duration-500 relative cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
                   ) : (
-                    <span className={`font-display text-3xl sm:text-5xl uppercase tracking-tight transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/70'}`}>
+                    <span className="font-display text-3xl sm:text-5xl uppercase tracking-tight text-on-surface-variant transition-colors duration-500">
                       {userInitials}
                     </span>
                   )}
@@ -147,7 +147,7 @@ export const Profile: React.FC = () => {
                   whileHover={shouldReduceMotion ? undefined : { scale: 1.1 }}
                   whileTap={shouldReduceMotion ? undefined : { scale: 0.9 }}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`absolute bottom-0 right-0 sm:bottom-2 sm:right-2 p-2 sm:p-3 rounded-full shadow-xl transition-all z-10 ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600' : 'bg-white text-black hover:bg-indigo-500 hover:text-white'}`}
+                  className="absolute bottom-0 right-0 sm:bottom-2 sm:right-2 p-2 sm:p-3 rounded-full shadow-xl transition-all z-10 bg-primary text-on-primary hover:brightness-110"
                 >
                   <Camera className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                 </motion.button>
@@ -161,20 +161,20 @@ export const Profile: React.FC = () => {
                 />
               </div>
               <div className="text-center space-y-1.5 sm:space-y-2">
-                <h3 className={`text-xl sm:text-2xl font-display uppercase tracking-tight transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{displayName}</h3>
-                <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>@{userHandle}</p>
+                <h3 className="text-xl sm:text-2xl font-display uppercase tracking-tight text-on-surface">{displayName}</h3>
+                <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant/60">@{userHandle}</p>
               </div>
             </div>
 
             {error && (
-              <div className="p-4 sm:p-6 bg-red-500/10 border border-red-500/20 rounded-xl sm:rounded-2xl flex items-center text-red-400 text-xs sm:text-sm">
+              <div className="p-4 sm:p-6 bg-error-container text-on-error-container border border-error/20 rounded-xl sm:rounded-2xl flex items-center text-xs sm:text-sm font-bold uppercase tracking-widest">
                 <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 flex-shrink-0" />
                 {error}
               </div>
             )}
 
             {success && (
-              <div className={`p-4 sm:p-6 border rounded-xl sm:rounded-2xl flex items-center text-xs sm:text-sm transition-all duration-500 ${theme === 'light' ? 'bg-green-50 border-green-100 text-green-600' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
+              <div className="p-4 sm:p-6 bg-secondary-container text-on-secondary-container border border-outline-variant rounded-xl sm:rounded-2xl flex items-center text-xs sm:text-sm font-bold uppercase tracking-widest">
                 <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 flex-shrink-0" />
                 {success}
               </div>
@@ -183,16 +183,16 @@ export const Profile: React.FC = () => {
             <div className="space-y-8 sm:space-y-10">
               {/* Basic Info */}
               <div className="space-y-4 sm:space-y-6">
-                <h4 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Basic Information</h4>
+                <h4 className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] text-on-surface-variant/40">Basic Information</h4>
                 <div className="space-y-2 sm:space-y-3">
-                  <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Full Name</label>
+                  <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant/60">Full Name</label>
                   <div className="relative">
-                    <User className={`absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`} />
+                    <User className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-on-surface-variant/40" />
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className={`w-full pl-11 sm:pl-16 pr-5 sm:pr-6 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border focus:ring-1 transition-all outline-none text-xs sm:text-sm font-sans ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-300 focus:ring-slate-300' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:ring-white/30'}`}
+                      className="w-full pl-11 sm:pl-16 pr-5 sm:pr-6 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border border-outline-variant bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/30 focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs sm:text-sm font-sans"
                       placeholder="Enter your name"
                       required
                     />
@@ -200,7 +200,7 @@ export const Profile: React.FC = () => {
                 </div>
               </div>
 
-              <p className={`text-[10px] pt-6 border-t ${theme === "light" ? "border-slate-200 text-slate-500" : "border-white/5 text-white/40"}`}>
+              <p className="text-[10px] pt-6 border-t border-outline-variant text-on-surface-variant/40">
                 Password changes use InsForge: sign out and use “Forgot password” on the login page, or your workspace password policy.
               </p>
             </div>
@@ -209,7 +209,7 @@ export const Profile: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-4 sm:py-6 rounded-full font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] transition-all duration-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600' : 'bg-white text-black hover:bg-indigo-500 hover:text-white'}`}
+                className="w-full py-4 sm:py-6 rounded-full font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] bg-primary text-on-primary hover:brightness-110 active:scale-95 transition-all duration-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />

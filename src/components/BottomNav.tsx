@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { LayoutDashboard, Image, Rocket, Settings, Home, Info, Mail, LogIn, User as UserIcon, MoreHorizontal, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Image, Rocket, Settings, Home, Info, Mail, LogIn, User as UserIcon, MoreHorizontal, ChevronRight, MessageSquare, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -22,7 +22,7 @@ import { useSmartNavigate } from "../hooks/useSmartNavigate";
  */
 const BottomNav: React.FC = memo(() => {
   const { user } = useAuth();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const smartNavigate = useSmartNavigate();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -30,6 +30,7 @@ const BottomNav: React.FC = memo(() => {
   const guestItems = [
     { path: "/", icon: Home, label: "Home" },
     { path: "/gallery", icon: Image, label: "Gallery" },
+    { path: "/pricing", icon: MessageSquare, label: "Pricing" },
     { path: "/about", icon: Info, label: "About" },
     { path: "/contact", icon: Mail, label: "Contact" },
     { path: "/login", icon: LogIn, label: "Login" },
@@ -44,6 +45,7 @@ const BottomNav: React.FC = memo(() => {
 
   const userOverflowItems = [
     { path: "/gallery", icon: Image, label: "Gallery" },
+    { path: "/pricing", icon: MessageSquare, label: "Pricing" },
     { path: "/about", icon: Info, label: "About" },
     { path: "/contact", icon: Mail, label: "Contact" },
     ...(user?.role === "ADMIN" ? [{ path: "/admin", icon: Settings, label: "Admin" }] : []),
@@ -182,6 +184,32 @@ const BottomNav: React.FC = memo(() => {
                   </button>
                 );
               })}
+
+              {/* Theme Toggle row in BottomNav Overflow Drawer */}
+              <div className="h-px bg-outline-variant/10 my-1" />
+              <button
+                type="button"
+                onClick={() => {
+                  toggleTheme();
+                }}
+                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors ${
+                  theme === "light"
+                    ? "text-slate-700 hover:bg-slate-100"
+                    : "text-white/80 hover:bg-white/10"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  {theme === "light" ? (
+                    <Moon className="h-4.5 w-4.5 text-primary" />
+                  ) : (
+                    <Sun className="h-4.5 w-4.5 text-amber-400" />
+                  )}
+                  <span className="text-[11px] font-bold uppercase tracking-widest">
+                    {theme === "light" ? "Dark Mode" : "Light Mode"}
+                  </span>
+                </span>
+                <span className="text-[9px] font-mono tracking-widest opacity-60 uppercase">Switch</span>
+              </button>
             </motion.div>
           </>
         )}

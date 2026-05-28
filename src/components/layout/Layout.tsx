@@ -45,6 +45,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => mq.removeEventListener("change", update);
   }, []);
 
+  // Mouse tracking parallax for hero-glow
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth) - 0.5;
+      const y = (e.clientY / window.innerHeight) - 0.5;
+      const glow = document.getElementById("layoutHeroGlow");
+      if (glow) {
+        glow.style.transform = `translate(${x * 60}px, ${y * 60}px) translateX(-50%)`;
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   const closeMenu = useCallback(() => {
     setIsMenuOpen(false);
   }, []);
@@ -80,7 +95,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const footerPlatformLinks = useMemo(() => {
     const items: { name: string; path: string }[] = [
-      { name: "Public Gallery", path: "/gallery" },
+      { name: "Archives", path: "/gallery" },
       { name: "Pricing", path: "/pricing" },
     ];
     if (user) {
@@ -95,7 +110,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <MotionConfig reducedMotion={shouldForceReducedMotion ? "always" : "user"}>
-      <div className="relative min-h-screen min-h-[100dvh] text-foreground flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+      <div className="relative min-h-screen min-h-[100dvh] text-foreground flex flex-col selection:bg-primary/30 selection:text-primary-fixed transition-colors duration-300 film-grain">
+      <div className="starfield pointer-events-none" />
+      <div id="layoutHeroGlow" className="fixed top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-[1440px] pointer-events-none hero-glow z-0 transition-transform duration-300 ease-out" />
       <HeroRingBackdrop theme={theme} variant="global" />
       <Helmet>
         <title>Maker's Lab | Where Ideas Merge with Execution</title>
@@ -104,7 +121,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <meta property="og:description" content="Where ideas merge with execution." />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="theme-color" content={theme === 'dark' ? '#050505' : '#ffffff'} />
+        <meta name="theme-color" content={theme === 'dark' ? '#11131d' : '#f7f9fb'} />
       </Helmet>
 
       <RouteTransition />
@@ -128,56 +145,43 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <PWAInstallPrompt />
       {!isDesktopViewport && <BottomNav />}
 
-      <footer className={`relative z-[1] border-t py-12 sm:py-24 backdrop-blur-md ${theme === 'light' ? 'border-slate-200 bg-white/80' : 'border-border/80 bg-card/45'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 mb-16">
-            <div className="col-span-1 sm:col-span-2 space-y-6">
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-xl ${theme === 'light' ? 'bg-slate-900' : 'bg-foreground'}`}>
-                  <Rocket className={`h-5 w-5 ${theme === 'light' ? 'text-white' : 'text-background'}`} />
-                </div>
-                <span className="text-xl sm:text-2xl font-display font-bold text-foreground tracking-tighter uppercase">Maker's Lab</span>
-              </div>
-              <p className="text-muted-foreground text-sm font-light leading-relaxed max-w-sm">
-                A high-end creative platform where ideas merge with execution. We blend technical excellence with avant-garde design. Based in Tesano, Accra, Ghana.
-              </p>
-            </div>
-            <div className="sm:col-span-1">
-              <h4 className="text-foreground text-[10px] font-bold uppercase tracking-[0.3em] mb-6">Platform</h4>
-              <ul className="space-y-4">
-                {footerPlatformLinks.map((item) => (
-                  <li key={item.path}>
-                    <Link
-                      to={item.path}
-                      replace
-                      onClick={(e) => {
-                        e.preventDefault();
-                        smartNavigate(item.path, { asSectionSwitch: true });
-                      }}
-                      className="text-muted-foreground hover:text-foreground text-[10px] font-bold uppercase tracking-widest transition-colors"
-                    >
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="sm:col-span-1">
-              <h4 className="text-foreground text-[10px] font-bold uppercase tracking-[0.3em] mb-6">Connect</h4>
-              <div className="flex flex-wrap gap-4">
-                {["Twitter", "Instagram", "LinkedIn", "GitHub"].map(social => (
-                  <a key={social} href="#" className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors">{social}</a>
-                ))}
-              </div>
-            </div>
+      <footer className="w-full py-16 px-4 md:px-12 flex flex-col lg:flex-row justify-between items-center gap-10 bg-surface-container-lowest/90 backdrop-blur-3xl border-t border-outline-variant/10 relative z-10">
+        <div className="flex flex-col gap-3 items-center lg:items-start">
+          <div className="flex items-center gap-3">
+            <img alt="Maker's Lab Logo" className="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/ADBb0ui-0VxsqXUOE7_HNmreItHOBGqQH2kZmQy6RxVrj1n5P74BJjO8zxN-9yGTXbsYfj40jqzKMUhclpDIPYsfD0uKdrTaek0hLiP0KcV9hBwkRq6SCbHY7JdrEApwlfhFm31CyQrm7_0PNITo53qV4w9hoqXiEUeSc0R12nyw_Yt69vakmrC6hKObv7p9rLRSlXj8gKEQtC9O-Dpk9TzxmlCgO99QKe4Czx9BktNvfUMtOi0a_N6AnuvYKQ8r"/>
+            <span className="font-headline-md text-headline-md text-on-surface font-extrabold tracking-tighter uppercase">MAKER'S LAB</span>
           </div>
-          <div className={`pt-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4 ${theme === 'light' ? 'border-slate-200' : 'border-border'}`}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground text-center sm:text-left">© 2026 Maker's Lab. Tesano, Accra, Ghana.</p>
-            <div className="flex space-x-4 sm:space-x-8">
-              <a href="#" className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a>
-              <a href="#" className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors">Terms of Service</a>
-            </div>
-          </div>
+          <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-[0.2em] opacity-60">© 2026 MAKER'S LAB. ALL ARCHIVES RESERVED.</span>
+        </div>
+        <div className="flex flex-wrap justify-center gap-12">
+          {footerPlatformLinks.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              replace
+              onClick={(e) => {
+                e.preventDefault();
+                smartNavigate(item.path, { asSectionSwitch: true });
+              }}
+              className="text-on-surface-variant hover:text-primary font-label-sm uppercase tracking-[0.25em] text-[11px] transition-colors"
+            >
+              {item.name}
+            </Link>
+          ))}
+          {["Twitter", "LinkedIn"].map(social => (
+            <a key={social} href="#" className="text-on-surface-variant hover:text-primary transition-colors font-label-sm uppercase tracking-[0.25em] text-[11px]">{social}</a>
+          ))}
+          <Link
+            to="/contact"
+            replace
+            onClick={(e) => {
+              e.preventDefault();
+              smartNavigate("/contact", { asSectionSwitch: true });
+            }}
+            className="text-on-surface-variant hover:text-primary transition-colors font-label-sm uppercase tracking-[0.25em] text-[11px]"
+          >
+            Contact
+          </Link>
         </div>
       </footer>
       </div>

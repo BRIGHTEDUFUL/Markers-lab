@@ -81,19 +81,14 @@ export async function validateEmailPasswordLogin(identity: string, password: str
 
     const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedIdentity);
     if (!looksLikeEmail) {
-      const { data: profile, error: profileError } = await insforge.database
-        .from("profiles")
-        .select("email")
-        .ilike("display_name", trimmedIdentity)
-        .not("email", "is", null)
-        .limit(1)
-        .maybeSingle();
+      const { data: resolvedEmailAddress, error: rpcError } = await insforge.database
+        .rpc("resolve_username_to_email", { username_input: trimmedIdentity });
 
-      if (profileError || !profile?.email) {
+      if (rpcError || !resolvedEmailAddress) {
         return { success: false, error: "Invalid email/username or password" };
       }
 
-      resolvedEmail = profile.email;
+      resolvedEmail = resolvedEmailAddress as string;
     }
 
     const { data, error } = await insforge.auth.signInWithPassword({

@@ -12,7 +12,9 @@ import { SHOWCASE_CARD_DURATION, SHOWCASE_CARD_STAGGER, SHOWCASE_EASE } from "..
 import { mediaSrc } from "../lib/media-url";
 import { Project } from "../types";
 import StarField from "../components/StarField";
+import HeroRingBackdrop from "../components/HeroRingBackdrop";
 import { useAdaptiveMotion } from "../hooks/useAdaptiveMotion";
+import { useSmartNavigate } from "../hooks/useSmartNavigate";
 
 const FadeUp: React.FC<{ children: React.ReactNode; delay?: number; className?: string }> = ({
   children, delay = 0, className = "",
@@ -40,12 +42,13 @@ export const Home = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { shouldReduceMotion } = useAdaptiveMotion();
+  const smartNavigate = useSmartNavigate();
   const isDark = theme === "dark";
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const portfolioProjects = pickFeaturedShowcase(featuredProjects, 3);
+  const portfolioProjects = pickFeaturedShowcase(featuredProjects, 4);
   const lightboxSlides = useMemo(() => {
     if (!selectedProject) return [] as Array<{ src: string }>;
     const imageFiles = (selectedProject.files || []).filter((f) => f.mimeType?.startsWith("image/"));
@@ -57,183 +60,273 @@ export const Home = () => {
 
   useEffect(() => {
     fetchFeaturedGallery()
-      .then((d) => setFeaturedProjects(Array.isArray(d) ? d.slice(0, 3) : []))
+      .then((d) => setFeaturedProjects(Array.isArray(d) ? d.slice(0, 4) : []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  return (
-    <div className="relative">
+  const GRID_LAYOUTS = [
+    { colSpan: "md:col-span-8", height: "h-[640px]", imgOpacity: "opacity-40 group-hover:opacity-70", textCol: "max-w-xl", tagColor: "text-primary" },
+    { colSpan: "md:col-span-4", height: "h-[640px]", imgOpacity: "opacity-30 group-hover:opacity-60", textCol: "", tagColor: "text-secondary" },
+    { colSpan: "md:col-span-5", height: "h-[440px]", imgOpacity: "opacity-30 group-hover:opacity-50", textCol: "", tagColor: "text-on-surface-variant" },
+    { colSpan: "md:col-span-7", height: "h-[440px]", imgOpacity: "opacity-40 group-hover:opacity-60", textCol: "text-right max-w-sm ml-auto", tagColor: "text-tertiary" }
+  ];
 
-      {/* HERO */}
-      <section className="relative z-10 flex flex-col items-center justify-center min-h-screen min-h-[100dvh] px-4 pt-20 text-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <div className={`absolute inset-0 mask-radial opacity-[0.08] ${isDark ? "bg-grid-white" : "bg-grid-slate-900"}`} />
-          <div className={`absolute inset-0 ${isDark ? "bg-[radial-gradient(ellipse_70%_55%_at_50%_45%,transparent_25%,rgba(3,3,3,0.5)_100%)]" : "bg-[radial-gradient(ellipse_70%_55%_at_50%_45%,transparent_25%,rgba(248,250,252,0.55)_100%)]"}`} />
+  return (
+    <div className="relative w-full overflow-hidden">
+      
+      {/* HERO SECTION */}
+      <section className="relative min-h-screen min-h-[100dvh] flex flex-col justify-center items-center text-center mb-16 sm:mb-24 md:mb-32 pt-24 sm:pt-28 md:pt-36 px-5 sm:px-8 md:px-16 overflow-visible max-w-[1440px] mx-auto">
+        {/* Visual Backdrop Rings and Stars */}
+        <HeroRingBackdrop theme={theme} variant="page" className="absolute inset-0 z-0" />
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <StarField count={shouldReduceMotion ? 18 : 44} theme={theme} salt={1000} />
+          <div className={`absolute inset-0 mask-radial opacity-[0.08] ${isDark ? "bg-grid-white" : "bg-grid-dark"}`} />
         </div>
-        <StarField count={shouldReduceMotion ? 18 : 44} theme={theme} salt={1000} />
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative z-10 mb-8">
-          <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-md text-[10px] font-bold uppercase tracking-[0.25em] transition-colors duration-500 ${isDark ? "border-white/10 bg-white/5 text-indigo-400" : "border-indigo-200 bg-white/60 text-indigo-600"}`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            Maker's Lab
+
+        {/* Decorative Bento Floating Widgets — Desktop-only, hidden on mobile/tablet */}
+        <div className="absolute -right-8 top-1/2 -translate-y-1/2 hidden xl:block animate-float pointer-events-none z-10">
+          <div className="glass-card p-8 rounded-[40px] w-72 space-y-8 shadow-2xl border border-outline-variant/10">
+            <div className="flex justify-between items-center">
+              <span className="font-label-sm text-[11px] tracking-widest text-primary font-bold">PROJECT_SYNC</span>
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(73,75,214,0.5)]"></span>
+            </div>
+            <div className="space-y-4">
+              <div className="h-[2px] w-full bg-foreground/5 rounded-full overflow-hidden">
+                <div className="h-full w-4/5 bg-primary rounded-full shadow-[0_0_15px_rgba(73,75,214,0.5)]"></div>
+              </div>
+              <div className="flex justify-between text-[10px] font-label-sm opacity-40 tracking-widest">
+                <span>LATENCY</span>
+                <span>0.002MS</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-foreground/5 h-14 rounded-2xl border border-outline-variant/5"></div>
+              <div className="bg-foreground/5 h-14 rounded-2xl border border-outline-variant/5"></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute -left-8 bottom-24 hidden xl:block animate-float pointer-events-none z-10" style={{ animationDelay: "-4s" }}>
+          <div className="glass-card p-7 rounded-[32px] w-64 space-y-5 border border-outline-variant/10 shadow-2xl">
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/30 to-secondary/30 flex items-center justify-center border border-outline-variant/10">
+                <span className="material-symbols-outlined text-primary scale-75">auto_awesome_motion</span>
+              </div>
+              <div className="space-y-1.5">
+                <div className="w-24 h-2 bg-foreground/15 rounded-full"></div>
+                <div className="w-16 h-2 bg-foreground/5 rounded-full"></div>
+              </div>
+            </div>
+            <div className="text-on-surface-variant font-label-sm text-[10px] tracking-widest opacity-40 px-1 uppercase">
+              Status: Beyond Operational
+            </div>
+          </div>
+        </div>
+
+        {/* Hero Text Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center gap-3 sm:gap-4 w-full max-w-5xl mx-auto">
+          <span className="font-label-sm text-[10px] sm:text-label-sm text-primary tracking-[0.25em] sm:tracking-[0.3em] uppercase opacity-80 mb-2 sm:mb-4 block">
+            Established 2024
           </span>
-        </motion.div>
-        <div className="relative z-10 mb-10 w-full max-w-6xl mx-auto">
-          <motion.h1
-            initial={{ opacity: 0, scale: 0.92, filter: "blur(18px)" }}
-            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-            className={`font-display text-[17vw] sm:text-[14vw] md:text-[12vw] lg:text-[10vw] leading-[0.84] uppercase tracking-tighter ${isDark ? "text-white" : "text-slate-900"}`}
-          >
-            <motion.span animate={shouldReduceMotion ? undefined : { rotate: [-1.5, 1.5] }} transition={shouldReduceMotion ? undefined : { duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }} style={{ originX: 0.5, originY: 0, display: "inline-block" }} className={`bg-clip-text text-transparent ${isDark ? "bg-gradient-to-b from-white via-white to-white/40" : "text-slate-900"}`}>
-              Websites
-            </motion.span>
-            <br />
-            <span className="text-transparent" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.35)" : "1.5px #0f172a" }}>Web Apps</span>
-            <br />
-            <motion.span animate={shouldReduceMotion ? undefined : { scaleX: [1, 1.06, 0.96, 1.03, 0.99, 1], scaleY: [1, 0.96, 1.06, 0.97, 1.01, 1] }} transition={shouldReduceMotion ? undefined : { duration: 2, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }} style={{ display: "inline-block", willChange: "transform" }} className={`bg-clip-text text-transparent ${isDark ? "bg-gradient-to-t from-white/40 via-white to-white" : "bg-gradient-to-t from-slate-900/40 via-slate-900 to-slate-900"}`}>
-              &amp; More
-            </motion.span>
-          </motion.h1>
-          <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ delay: 0.8, duration: 1.8, ease: "circOut" }} className="mt-6 mx-auto h-px w-48 bg-gradient-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_16px_rgba(99,102,241,0.6)]" />
+          <h1 className="font-headline-xl text-[clamp(36px,9vw,110px)] leading-[0.88] uppercase tracking-tighter font-black text-on-surface text-center w-full">
+            <span className="block text-on-surface">Websites,</span>
+            <span className={`block ${isDark ? "text-outline" : "text-on-surface"}`}>Web Apps</span>
+            <span className={`block ${isDark ? "bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent font-black" : "text-primary italic font-light"}`}>
+              &amp; Beyond
+            </span>
+          </h1>
+          <p className="max-w-xs sm:max-w-md md:max-w-2xl mx-auto font-body-lg text-base sm:text-lg md:text-body-lg text-on-surface-variant mt-6 sm:mt-10 leading-relaxed font-light opacity-80 tracking-wide">
+            Engineering cinematic digital landscapes for the next generation of founders. Where technical precision meets high-end studio aesthetics.
+          </p>
         </div>
-        <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }} className={`relative z-10 max-w-xl font-heading text-lg md:text-xl font-light leading-relaxed mb-12 ${isDark ? "text-white/70" : "text-slate-600"}`}>
-          Where <span className="text-indigo-500 font-semibold italic">ideas</span> merge with <span className="text-purple-500 font-semibold italic">execution</span>.
-        </motion.p>
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }} className="relative z-10 flex flex-col sm:flex-row items-center gap-4">
-          <Link to={user ? "/submit-project" : "/register"} className={`group relative flex items-center gap-3 px-8 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-[11px] overflow-hidden shadow-2xl transition-all duration-300 active:scale-95 ${isDark ? "bg-white text-black shadow-white/10" : "bg-slate-900 text-white shadow-slate-900/20"}`}>
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 translate-y-full group-hover:translate-y-0 transition-transform duration-500 rounded-full" />
-            <span className="relative z-10 group-hover:text-white transition-colors duration-300">{user ? "Start Project" : "Join Maker's Lab"}</span>
-            <ArrowRight className="relative z-10 h-4 w-4 group-hover:translate-x-1 group-hover:text-white transition-all duration-300" />
-          </Link>
-          <Link to="/gallery" className={`flex items-center gap-2 px-8 py-4 rounded-full border font-bold uppercase tracking-[0.2em] text-[11px] transition-all duration-300 active:scale-95 ${isDark ? "border-white/20 text-white hover:border-white/50 hover:bg-white/5" : "border-slate-300 text-slate-700 hover:border-slate-900 hover:bg-slate-50"}`}>
-            View Archive <ArrowUpRight className="h-4 w-4" />
-          </Link>
-        </motion.div>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
-          <motion.div animate={shouldReduceMotion ? undefined : { y: [0, 8, 0] }} transition={shouldReduceMotion ? undefined : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }} className={`w-5 h-8 rounded-full border-2 flex items-start justify-center pt-1.5 ${isDark ? "border-white/20" : "border-slate-300"}`}>
-            <div className={`w-1 h-2 rounded-full ${isDark ? "bg-white/40" : "bg-slate-400"}`} />
-          </motion.div>
-        </motion.div>
+        
+        {/* CTA Buttons — stacked on mobile, side-by-side on sm+ */}
+        <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row gap-4 sm:gap-5 justify-center relative z-10 w-full max-w-sm sm:max-w-md mx-auto px-4">
+          <button
+            onClick={() => smartNavigate(user ? "/submit-project" : "/register")}
+            className="w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-primary text-on-primary rounded-full font-label-sm text-[11px] font-bold tracking-widest uppercase shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all text-center"
+          >
+            START BUILD
+          </button>
+          <button
+            onClick={() => smartNavigate("/gallery")}
+            className="w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 border border-outline-variant/30 glass-card text-on-surface rounded-full font-label-sm text-[11px] font-bold tracking-widest uppercase hover:bg-foreground/5 transition-all hover:scale-105 active:scale-95 text-center"
+          >
+            VIEW ARCHIVE
+          </button>
+        </div>
+
+        {/* Scroll Indicator — hidden on mobile */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-30 pointer-events-none">
+          <span className="font-label-sm text-[9px] tracking-[0.6em] uppercase">Scroll</span>
+          <div className="w-px h-12 bg-gradient-to-b from-primary to-transparent"></div>
+        </div>
       </section>
 
+      <div className="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 md:px-16 overflow-hidden">
+
       {/* MARQUEE */}
-      <section className={`relative z-10 py-5 border-y overflow-hidden transition-colors duration-500 ${isDark ? "border-white/5 bg-white/[0.02]" : "border-slate-200 bg-slate-100/40"}`}>
+      <section className="relative z-10 py-6 sm:py-8 border-y border-outline-variant/15 overflow-hidden mb-16 sm:mb-24 md:mb-32 bg-foreground/[0.01]">
         <div className={`flex whitespace-nowrap ${shouldReduceMotion ? "" : "animate-marquee"}`}>
           {[...Array(12)].map((_, i) => (
-            <span key={i} className={`mx-10 font-display text-sm uppercase tracking-[0.3em] ${isDark ? "text-white/15" : "text-slate-900/10"}`}>
+            <span key={i} className="mx-6 sm:mx-10 font-headline-md text-[14px] sm:text-headline-md uppercase tracking-[0.2em] sm:tracking-[0.3em] text-on-surface-variant opacity-15">
               Websites &nbsp;·&nbsp; Web Apps &nbsp;·&nbsp; Digital Experiences &nbsp;·&nbsp; Innovation &nbsp;·&nbsp;
             </span>
           ))}
         </div>
       </section>
 
-      {/* SERVICES */}
-      <section className="relative z-10 py-24 sm:py-36 px-4">
-        <div className="max-w-7xl mx-auto">
-          <FadeUp className="text-center mb-16 sm:mb-20">
-            <p className="text-indigo-500 text-[10px] font-bold uppercase tracking-[0.5em] mb-4">What We Build</p>
-            <h2 className={`font-display text-5xl sm:text-7xl md:text-8xl uppercase tracking-tighter leading-[0.9] ${isDark ? "text-white" : "text-slate-900"}`}>
-              Our <span className="text-transparent italic" style={{ WebkitTextStroke: isDark ? "1px rgba(255,255,255,0.4)" : "1px rgba(15,23,42,0.35)" }}>Craft</span>
-            </h2>
-          </FadeUp>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-            {([
-              { icon: Globe, number: "01", title: "Bespoke Websites", desc: "Digital experiences that tell your brand's story with uncompromising precision and elite motion design.", accent: "from-indigo-500/20 to-indigo-500/0", iconColor: "text-indigo-400", iconBg: isDark ? "bg-indigo-500/10 border-indigo-500/20" : "bg-indigo-50 border-indigo-100" },
-              { icon: Zap, number: "02", title: "High-End Web Apps", desc: "Scalable, high-performance applications built with cutting-edge tech stacks and fluid UX.", accent: "from-purple-500/20 to-purple-500/0", iconColor: "text-purple-400", iconBg: isDark ? "bg-purple-500/10 border-purple-500/20" : "bg-purple-50 border-purple-100" },
-              { icon: Shield, number: "03", title: "Beyond Limits", desc: "From immersive 3D environments to custom digital tools — we build beyond the traditional browser.", accent: "from-blue-500/20 to-blue-500/0", iconColor: "text-blue-400", iconBg: isDark ? "bg-blue-500/10 border-blue-500/20" : "bg-blue-50 border-blue-100" },
-            ] as const).map((s, i) => (
-              <FadeUp key={i} delay={i * 0.12}>
-                <div className={`group relative h-full p-8 sm:p-10 rounded-3xl border overflow-hidden transition-all duration-500 hover:-translate-y-1 ${isDark ? "bg-white/[0.03] border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.06]" : "bg-white border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-xl hover:shadow-slate-200/60"}`}>
-                  <div className={`absolute inset-0 bg-gradient-to-br ${s.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                  <span className={`absolute top-6 right-8 font-display text-6xl font-bold leading-none select-none ${isDark ? "text-white/5" : "text-slate-900/5"}`}>{s.number}</span>
-                  <div className={`relative z-10 inline-flex p-3 rounded-2xl border mb-8 transition-all duration-500 group-hover:scale-110 ${s.iconBg}`}>
-                    <s.icon className={`h-6 w-6 ${s.iconColor}`} />
-                  </div>
-                  <h3 className={`relative z-10 font-heading text-xl sm:text-2xl font-bold mb-4 ${isDark ? "text-white" : "text-slate-900"}`}>{s.title}</h3>
-                  <p className={`relative z-10 text-sm sm:text-base leading-relaxed font-light ${isDark ? "text-white/50" : "text-slate-500"}`}>{s.desc}</p>
-                </div>
-              </FadeUp>
-            ))}
+      {/* PROJECT GRID */}
+      <section className="mb-16 sm:mb-24 md:mb-32">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
+            <div className="md:col-span-8 h-[320px] sm:h-[480px] md:h-[640px] rounded-[1.5rem] sm:rounded-[2.5rem] bg-foreground/5 animate-pulse" />
+            <div className="md:col-span-4 h-[320px] sm:h-[480px] md:h-[640px] rounded-[1.5rem] sm:rounded-[2.5rem] bg-foreground/5 animate-pulse" />
           </div>
-        </div>
-      </section>
-
-      {/* FEATURED PROJECTS */}
-      <section className={`relative z-10 py-24 sm:py-36 px-4 border-t transition-colors duration-500 ${isDark ? "border-white/5" : "border-slate-200"}`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14 sm:mb-20">
-            <FadeUp>
-              <p className="text-indigo-500 text-[10px] font-bold uppercase tracking-[0.5em] mb-3">The Portfolio</p>
-              <h2 className={`font-display text-5xl sm:text-7xl md:text-8xl uppercase tracking-tighter leading-[0.9] ${isDark ? "text-white" : "text-slate-900"}`}>
-                Selected<br />
-                <span className="text-transparent italic" style={{ WebkitTextStroke: isDark ? "1px rgba(255,255,255,0.4)" : "1px rgba(15,23,42,0.35)" }}>Creations</span>
-              </h2>
-            </FadeUp>
-            <FadeUp delay={0.1}>
-              <Link to="/gallery" className={`group inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] transition-colors duration-300 ${isDark ? "text-white/50 hover:text-white" : "text-slate-500 hover:text-slate-900"}`}>
-                <span>Full Archive</span>
-                <span className={`h-px w-10 transition-all duration-300 group-hover:w-16 ${isDark ? "bg-white/30 group-hover:bg-white" : "bg-slate-400 group-hover:bg-slate-900"}`} />
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </FadeUp>
-          </div>
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className={`aspect-[4/3] rounded-3xl animate-pulse ${isDark ? "bg-white/5" : "bg-slate-200"}`} />
-              ))}
-            </div>
-          ) : portfolioProjects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {portfolioProjects.map((project, i) => {
-                return (
-                  <FadeUp key={project.id} delay={i * SHOWCASE_CARD_STAGGER}>
-                    <div
-                      className={`group showcase-interactive relative overflow-hidden rounded-3xl border transition-all duration-700 hover:-translate-y-1 cursor-pointer ${isDark ? "border-white/[0.08] hover:border-white/20" : "border-slate-200 hover:border-indigo-200/60 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60"}`}
-                      onClick={() => {
-                        setSelectedProject(project);
-                        setLightboxOpen(true);
-                      }}
-                    >
-                      <div className="aspect-[4/3] overflow-hidden">
-                        <img src={resolveProjectShowcaseImage(project)} alt={project.title} loading={i === 0 ? "eager" : "lazy"} decoding="async" fetchPriority={i === 0 ? "high" : "low"} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                      </div>
-                      <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? "from-black/80 via-black/20 to-transparent" : "from-white/90 via-white/20 to-transparent"}`} />
-                      <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                        <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-indigo-400 mb-2 block">{project.category}</span>
-                        <h3 className={`font-display text-2xl sm:text-3xl uppercase tracking-tight leading-none ${isDark ? "text-white" : "text-slate-900"}`}>{project.title}</h3>
-                        <p className={`mt-3 text-[11px] font-medium leading-relaxed line-clamp-2 ${isDark ? "text-white/70" : "text-slate-600"}`}>
-                          {stripMarkdown(project.description)}
-                        </p>
-                        <div className="mt-3 flex items-center gap-4">
-                          <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${isDark ? "text-white/45" : "text-slate-500"}`}>
-                            {project.user?.name || "Creator"}
+        ) : portfolioProjects.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
+            {portfolioProjects.map((project, idx) => {
+              const layout = GRID_LAYOUTS[idx] || GRID_LAYOUTS[0];
+              const isRightAlign = layout.textCol.includes("text-right");
+              const mobileHeight = idx === 0 ? "h-[340px] sm:h-[480px]" : "h-[280px] sm:h-[380px]";
+              return (
+                <div
+                  key={project.id}
+                  className={`${layout.colSpan} group`}
+                  onClick={() => {
+                    setSelectedProject(project);
+                    setLightboxOpen(true);
+                  }}
+                >
+                  <div className={`glass-card rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden transition-all duration-1000 relative ${mobileHeight} md:${layout.height} cursor-pointer`}>
+                    <img
+                      alt={project.title}
+                      className={`absolute inset-0 w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-[2000ms] ease-out ${layout.imgOpacity}`}
+                      src={resolveProjectShowcaseImage(project)}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/25 to-transparent"></div>
+                    <div className="absolute bottom-0 left-0 p-6 sm:p-10 md:p-12 w-full">
+                      <div className={`flex justify-between items-end`}>
+                        <div className={layout.textCol}>
+                          <span className={`font-label-sm text-[10px] sm:text-label-sm ${layout.tagColor} mb-2 sm:mb-4 block tracking-[0.15em] sm:tracking-[0.2em] uppercase`}>
+                            {project.category}
                           </span>
-                          <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${isDark ? "text-white/45" : "text-slate-500"}`}>
-                            {project.budget}
-                          </span>
+                          <h3 className="font-headline-lg text-[20px] sm:text-[28px] md:text-headline-lg text-on-surface uppercase tracking-tight leading-none mb-3 sm:mb-6">
+                            {project.title}
+                          </h3>
+                          <p className="font-body-md text-on-surface-variant opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-700 delay-100 line-clamp-2 hidden sm:block">
+                            {stripMarkdown(project.description)}
+                          </p>
                         </div>
-                        <span className="mt-4 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-400 opacity-0 group-hover:opacity-100 transition-colors">
-                          Open Lightbox <ArrowUpRight className="h-3.5 w-3.5" />
-                        </span>
-                        {project.repoUrl && (
-                          <a href={project.repoUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="mt-4 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors opacity-0 group-hover:opacity-100">
-                            View Project <ArrowUpRight className="h-3.5 w-3.5" />
-                          </a>
+                        {!isRightAlign && (
+                          <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-all duration-500 group-hover:rotate-45 flex-shrink-0">
+                            <span className="material-symbols-outlined text-on-surface group-hover:text-on-primary text-[18px] sm:text-[24px]">arrow_outward</span>
+                          </div>
                         )}
                       </div>
                     </div>
-                  </FadeUp>
-                );
-              })}
-            </div>
-          ) : (
-            <div className={`py-24 text-center rounded-3xl border border-dashed ${isDark ? "border-white/10" : "border-slate-200"}`}>
-              <p className={`text-xs uppercase tracking-widest ${isDark ? "text-white/30" : "text-slate-400"}`}>No featured projects yet.</p>
-            </div>
-          )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="py-16 sm:py-24 text-center glass-card rounded-[1.5rem] sm:rounded-[2.5rem]">
+            <p className="font-label-sm text-on-surface-variant uppercase tracking-widest">No featured works found.</p>
+          </div>
+        )}
+      </section>
+
+      {/* METRICS DISPLAY */}
+      <section className="mb-16 sm:mb-24 md:mb-32 border-y border-outline-variant/10 py-10 sm:py-16 grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-10 md:gap-12 text-center md:text-left">
+        <div className="flex flex-col gap-3">
+          <span className="font-label-sm text-on-surface-variant tracking-[0.3em] uppercase text-[10px]">Strategic Units</span>
+          <span className="font-headline-md text-headline-md text-primary tracking-tighter uppercase">14 ACTIVE LABS</span>
         </div>
+        <div className="flex flex-col gap-3">
+          <span className="font-label-sm text-on-surface-variant tracking-[0.3em] uppercase text-[10px]">Infrastructure Reliability</span>
+          <span className="font-headline-md text-headline-md text-on-surface tracking-tighter uppercase">99.999% UP</span>
+        </div>
+        <div className="flex flex-col gap-3">
+          <span className="font-label-sm text-on-surface-variant tracking-[0.3em] uppercase text-[10px]">Global Throughput</span>
+          <span className="font-headline-md text-headline-md text-on-surface tracking-tighter uppercase">8.4 PB / DAY</span>
+        </div>
+        <div className="flex flex-col gap-3">
+          <span className="font-label-sm text-on-surface-variant tracking-[0.3em] uppercase text-[10px]">Operational Protocol</span>
+          <span className="font-headline-md text-headline-md text-secondary tracking-tighter uppercase">BEYOND_V4.0</span>
+        </div>
+      </section>
+
+      {/* SERVICES / CRAFT */}
+      <section className="mb-16 sm:mb-24 md:mb-32">
+        <div className="text-center mb-10 sm:mb-16 md:mb-20">
+          <span className="font-label-sm text-label-sm text-primary tracking-[0.4em] uppercase opacity-80">Our Offerings</span>
+          <h2 className="font-headline-lg text-[clamp(24px,6vw,48px)] leading-tight text-on-surface uppercase mt-2">TECHNICAL SERVICES</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+          {([
+            { number: "01", category: "Architecture", title: "Technical Infrastructure", desc: "We engineer high-performance backends that scale with your ambition. From decentralized protocols to low-latency cloud systems, our architectures are built to endure." },
+            { number: "02", category: "Experience", title: "Cinematic UI Design", desc: "Interfaces that feel like a film. We prioritize motion, depth, and atmospheric lighting to create digital experiences that resonate emotionally and command attention." },
+            { number: "03", category: "Growth", title: "Strategic Launch", desc: "We don't just build; we deploy with intent. Our methodology includes market positioning, narrative crafting, and community engineering for orbit entry." },
+          ]).map((s, i) => (
+            <div key={i} className="group bg-surface-container-low/30 backdrop-blur-sm p-6 sm:p-8 md:p-10 rounded-[1.5rem] sm:rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant/10 hover:border-primary/30 transition-all duration-500 hover:-translate-y-2">
+              <span className="text-[64px] font-headline-xl text-primary/10 select-none block leading-none mb-6">{s.number}</span>
+              <div className="mb-2 text-primary font-label-sm text-label-sm tracking-[0.2em] uppercase">{s.category}</div>
+              <h3 className="font-headline-md text-headline-md text-on-surface mb-4">{s.title}</h3>
+              <p className="font-body-md text-on-surface-variant leading-relaxed opacity-70">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="mb-16 sm:mb-24 md:mb-32">
+        <div className="text-center mb-10 sm:mb-16 md:mb-20">
+          <span className="font-label-sm text-label-sm text-primary tracking-[0.4em] uppercase opacity-80">Client Stories</span>
+          <h2 className="font-headline-lg text-[clamp(24px,6vw,48px)] leading-tight text-on-surface uppercase mt-2">TRUSTED BY VISIONARIES</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+          {[
+            { quote: "Bright's architectural vision transformed a complex project into an elegant, scalable system. His attention to detail and commitment to execution excellence is what sets Maker's Lab apart.", author: "Bright Eduful", role: "Founder & Lead Engineer", img: "/team/bright-eduful.png" },
+            { quote: "Abena's strategic approach to growth marketing helped us reach the right audience at the right time. Her campaigns are data-driven yet creative — exactly what we needed.", author: "Abena Antwiwaa Quarshie", role: "Head of Marketing & Growth", img: "/team/abena-antwiwaa-quarshie.png" },
+            { quote: "Ralph's engineering discipline ensured our systems remained performant and maintainable through every iteration. His integrations were flawless and his code was pristine.", author: "Ralph Andy Menz", role: "Senior Software Developer", img: "/team/ralph-andy-menz.png" },
+          ].map((t, i) => (
+            <div key={i} className="glass-card p-10 rounded-[2.5rem] border border-outline-variant/10 flex flex-col justify-between hover:border-primary/20 transition-all duration-500">
+              <div className="flex gap-1 mb-6">
+                {[...Array(5)].map((_, s) => (
+                  <Star key={s} className="h-3.5 w-3.5 fill-primary text-primary" />
+                ))}
+              </div>
+              <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed italic mb-8">"{t.quote}"</p>
+              <div className="flex items-center gap-4 border-t border-outline-variant/10 pt-6">
+                <img src={t.img} alt={t.author} className="h-12 w-12 rounded-full object-cover border border-outline-variant/10" />
+                <div>
+                  <div className="text-sm font-bold text-on-surface uppercase">{t.author}</div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">{t.role}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FINAL CTA SECTION */}
+      <section className="mb-16 sm:mb-24 md:mb-32 text-center relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] md:rounded-[3.5rem] py-20 sm:py-28 md:py-40 px-5 sm:px-8 glass-card">
+        <div className="relative z-10 flex flex-col items-center gap-6 sm:gap-8 md:gap-10">
+          <h2 className="font-headline-lg text-[clamp(22px,5vw,48px)] leading-[1.1] max-w-3xl uppercase tracking-tight">
+            Engineering the <span className="text-primary italic font-light">Future Presence.</span><br/>
+            Start Your Manifestation.
+          </h2>
+          <button
+            onClick={() => smartNavigate(user ? "/submit-project" : "/register")}
+            className="group flex items-center gap-4 sm:gap-6 bg-primary text-on-primary px-8 sm:px-12 py-4 sm:py-5 rounded-full font-headline-md text-base sm:text-headline-md transition-all hover:scale-105 shadow-2xl shadow-primary/20"
+          >
+            INITIATE PROTOCOL
+            <span className="material-symbols-outlined transition-transform group-hover:translate-x-2">arrow_forward</span>
+          </button>
+        </div>
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_50%_50%,_var(--tw-gradient-stops))] from-primary via-transparent to-transparent pointer-events-none"></div>
       </section>
 
       <Lightbox
@@ -247,90 +340,7 @@ export const Home = () => {
           buttonNext: lightboxSlides.length > 1 ? undefined : () => null,
         }}
       />
-
-      {/* STATS */}
-      <section className={`relative z-10 py-20 sm:py-28 px-4 border-t transition-colors duration-500 ${isDark ? "border-white/5 bg-white/[0.015]" : "border-slate-200 bg-slate-50/60"}`}>
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12">
-          {[
-            { value: "1.2k", label: "Deployments" },
-            { value: "500+", label: "Partners" },
-            { value: "99%", label: "Retention" },
-            { value: "24", label: "Accolades" },
-          ].map((stat, i) => (
-            <FadeUp key={i} delay={i * 0.08} className="text-center">
-              <div className={`font-display text-5xl sm:text-6xl md:text-7xl mb-2 ${isDark ? "text-white" : "text-slate-900"}`}>{stat.value}</div>
-              <div className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.35em] ${isDark ? "text-white/30" : "text-slate-400"}`}>{stat.label}</div>
-            </FadeUp>
-          ))}
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <section className={`relative z-10 py-24 sm:py-36 px-4 border-t overflow-hidden transition-colors duration-500 ${isDark ? "border-white/5" : "border-slate-200"}`}>
-        <div className="max-w-7xl mx-auto">
-          <FadeUp className="text-center mb-16 sm:mb-20">
-            <p className="text-indigo-500 text-[10px] font-bold uppercase tracking-[0.5em] mb-4">Client Stories</p>
-            <h2 className={`font-display text-5xl sm:text-7xl md:text-8xl uppercase tracking-tighter leading-[0.9] ${isDark ? "text-white" : "text-slate-900"}`}>
-              Trusted by <span className="text-transparent italic" style={{ WebkitTextStroke: isDark ? "1px rgba(255,255,255,0.4)" : "1px rgba(15,23,42,0.35)" }}>Visionaries</span>
-            </h2>
-          </FadeUp>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
-            {([
-              { quote: "Bright's architectural vision transformed a complex project into an elegant, scalable system. His attention to detail and commitment to execution excellence is what sets Maker's Lab apart.", author: "Bright Eduful", role: "Founder & Lead Engineer", img: "/team/bright-eduful.png" },
-              { quote: "Abena's strategic approach to growth marketing helped us reach the right audience at the right time. Her campaigns are data-driven yet creative — exactly what we needed.", author: "Abena Antwiwaa Quarshie", role: "Head of Marketing & Growth", img: "/team/abena-antwiwaa-quarshie-v2.png?v=2026-04-12-4" },
-              { quote: "Ralph's engineering discipline ensured our systems remained performant and maintainable through every iteration. His integrations were flawless and his code was pristine.", author: "Ralph Andy Menz", role: "Senior Software Developer", img: "/team/ralph-andy-menz.png" },
-            ] as const).map((t, i) => (
-              <FadeUp key={i} delay={i * 0.1}>
-                <div className={`group relative h-full p-7 sm:p-9 rounded-3xl border transition-all duration-500 hover:-translate-y-1 ${isDark ? "bg-white/[0.03] border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.06]" : "bg-white border-slate-200 hover:border-indigo-200/60 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-indigo-100/60"}`}>
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, s) => (
-                      <Star key={s} className="h-3.5 w-3.5 fill-indigo-500 text-indigo-500" />
-                    ))}
-                  </div>
-                  <Quote className={`h-7 w-7 mb-4 opacity-15 ${isDark ? "text-white" : "text-slate-900"}`} />
-                  <p className={`text-base sm:text-lg font-light leading-relaxed italic mb-8 ${isDark ? "text-white/70" : "text-slate-600"}`}>{t.quote}</p>
-                  <div className="flex items-center gap-4">
-                    <img src={t.img} alt={t.author} loading="lazy" decoding="async" fetchPriority="low" referrerPolicy="no-referrer" className={`h-11 w-11 rounded-full object-cover border-2 transition-all duration-500 group-hover:border-indigo-500 ${isDark ? "border-white/20" : "border-slate-200"}`} />
-                    <div>
-                      <div className={`text-sm font-bold uppercase tracking-wider ${isDark ? "text-white" : "text-slate-900"}`}>{t.author}</div>
-                      <div className={`text-[10px] uppercase tracking-[0.2em] ${isDark ? "text-white/35" : "text-slate-400"}`}>{t.role}</div>
-                    </div>
-                  </div>
-                </div>
-              </FadeUp>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className={`relative z-10 py-24 sm:py-36 px-4 border-t overflow-hidden transition-colors duration-500 ${isDark ? "border-white/5" : "border-slate-200"}`}>
-        <div className="absolute inset-0 pointer-events-none">
-          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full blur-[120px] ${isDark ? "bg-indigo-600/15" : "bg-indigo-400/10"}`} />
-        </div>
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <FadeUp>
-            <h2 className={`font-display text-6xl sm:text-8xl md:text-[10vw] uppercase tracking-tighter leading-[0.85] mb-8 ${isDark ? "text-white" : "text-slate-900"}`}>
-              Start Your<br />
-              <span className="text-transparent italic" style={{ WebkitTextStroke: isDark ? "1.5px rgba(255,255,255,0.35)" : "1.5px rgba(15,23,42,0.3)" }}>Legacy</span>
-            </h2>
-            <p className={`text-lg sm:text-xl font-light max-w-xl mx-auto mb-12 ${isDark ? "text-white/50" : "text-slate-500"}`}>
-              Ready to build something that matters? Let's turn your vision into a digital masterpiece.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to={user ? "/submit-project" : "/register"} className={`group relative flex items-center gap-3 px-10 py-5 rounded-full font-bold uppercase tracking-[0.2em] text-[11px] overflow-hidden shadow-2xl transition-all duration-300 active:scale-95 ${isDark ? "bg-white text-black" : "bg-slate-900 text-white"}`}>
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 translate-y-full group-hover:translate-y-0 transition-transform duration-500 rounded-full" />
-                <span className="relative z-10 group-hover:text-white transition-colors duration-300">{user ? "Submit Project" : "Get Started"}</span>
-                <ArrowRight className="relative z-10 h-4 w-4 group-hover:translate-x-1 group-hover:text-white transition-all duration-300" />
-              </Link>
-              <Link to="/gallery" className={`flex items-center gap-2 px-10 py-5 rounded-full border font-bold uppercase tracking-[0.2em] text-[11px] transition-all duration-300 active:scale-95 ${isDark ? "border-white/20 text-white hover:border-white/50 hover:bg-white/5" : "border-slate-300 text-slate-700 hover:border-slate-900 hover:bg-slate-50"}`}>
-                View Gallery
-              </Link>
-            </div>
-          </FadeUp>
-        </div>
-      </section>
-
+      </div> {/* Closing responsive container */}
     </div>
   );
 };

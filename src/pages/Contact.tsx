@@ -85,20 +85,20 @@ export const Contact: React.FC = () => {
                 { icon: Phone, label: "Direct Line", value: "+233 (0) 55 000 0000" }
               ].map((item, i) => (
                 <div key={i} className="flex items-center space-x-4 sm:space-x-6 group">
-                  <div className={`w-10 sm:w-12 h-10 sm:h-12 rounded-xl flex items-center justify-center border transition-all duration-500 group-hover:border-indigo-500/50 ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`}>
-                    <item.icon className={`h-4 sm:h-5 w-4 sm:w-5 transition-colors duration-500 ${theme === 'light' ? 'text-slate-400 group-hover:text-indigo-600' : 'text-white/40 group-hover:text-indigo-400'}`} />
+                  <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-xl flex items-center justify-center border border-outline-variant bg-surface-container-low transition-all duration-500 group-hover:border-primary/50 group-hover:bg-surface-container">
+                    <item.icon className="h-4 sm:h-5 w-4 sm:w-5 text-on-surface-variant/60 group-hover:text-primary transition-colors duration-500" />
                   </div>
                   <div className="space-y-1">
-                    <div className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>{item.label}</div>
-                    <div className={`text-sm sm:text-base font-sans transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{item.value}</div>
+                    <div className="text-label-sm font-label-sm uppercase tracking-widest text-on-surface-variant/70">{item.label}</div>
+                    <div className="text-body-md text-on-surface">{item.value}</div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className={`flex space-x-4 sm:space-x-6 pt-8 sm:pt-12 border-t transition-colors duration-500 ${theme === 'light' ? 'border-slate-200' : 'border-white/5'}`}>
+            <div className="flex space-x-4 sm:space-x-6 pt-8 sm:pt-12 border-t border-outline-variant">
               {["Twitter", "Instagram", "LinkedIn", "GitHub"].map(social => (
-                <a key={social} href="#" className={`text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400 hover:text-slate-900' : 'text-gray-500 hover:text-white'}`}>{social}</a>
+                <a key={social} href="#" className="text-label-sm font-label-sm uppercase tracking-[0.2em] text-on-surface-variant hover:text-primary transition-all">{social}</a>
               ))}
             </div>
           </motion.div>
@@ -106,37 +106,36 @@ export const Contact: React.FC = () => {
           {/* Right Column: Form */}
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
-            
-            {success ? (
+                      {success ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`text-center space-y-6 sm:space-y-8 p-6 sm:p-12 backdrop-blur-xl rounded-2xl sm:rounded-[2.5rem] border transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}
+                className="text-center space-y-6 sm:space-y-8 p-6 sm:p-12 glass-card rounded-[2.5rem]"
               >
                 <div className={`w-16 sm:w-20 h-16 sm:h-20 rounded-full flex items-center justify-center mx-auto border transition-colors duration-500 ${theme === 'light' ? 'bg-green-50 border-green-100' : 'bg-green-500/10 border-green-500/20'}`}>
                   <CheckCircle className="h-8 sm:h-10 w-8 sm:w-10 text-green-400" />
                 </div>
                 <div className="space-y-3 sm:space-y-4">
-                  <h2 className={`text-2xl sm:text-3xl font-display uppercase transition-colors duration-500 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Transmission <br /> Received</h2>
-                  <p className={`text-sm sm:text-base font-sans leading-relaxed transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                  <h2 className="text-headline-md font-headline-md uppercase text-on-surface">Transmission <br /> Received</h2>
+                  <p className="text-body-md text-on-surface-variant/80 leading-relaxed">
                     Your default email app should open with this message ready to send. If nothing opened, email us at{" "}
-                    <a href={`mailto:${CONTACT_EMAIL}`} className="text-indigo-500 hover:underline">{CONTACT_EMAIL}</a>.
+                    <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">{CONTACT_EMAIL}</a>.
                   </p>
                 </div>
                 <button 
                   type="button"
                   onClick={resetForm}
-                  className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 hover:text-white transition-colors"
+                  className="text-label-sm font-label-sm uppercase tracking-widest text-primary hover:brightness-110 transition-all"
                 >
                   Send Another Transmission
                 </button>
               </motion.div>
             ) : (
-              <form onSubmit={handleSubmit} className={`space-y-5 sm:space-y-8 backdrop-blur-3xl border p-5 sm:p-12 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/50' : 'bg-slate-950/72 border-white/10'}`}>
+              <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-8 glass-card p-5 sm:p-12 rounded-[2.5rem]">
                 <div className="space-y-4 sm:space-y-6">
                   {/* Name Input */}
                   <div className="space-y-2 sm:space-y-3">
-                    <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 block ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Full Name</label>
+                    <label className="text-label-sm font-label-sm uppercase tracking-[0.2em] block text-on-surface-variant/80">Full Name</label>
                     <input 
                       type="text" 
                       required 
@@ -145,13 +144,13 @@ export const Contact: React.FC = () => {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. ALEXANDER VANCE"
-                      className={`w-full px-4 sm:px-6 py-3.5 sm:py-5 rounded-lg sm:rounded-2xl border focus:ring-2 transition-all outline-none font-sans text-sm sm:text-base ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:border-indigo-400 focus:ring-indigo-400/20'}`}
+                      className="w-full px-4 sm:px-6 py-3.5 sm:py-5 rounded-2xl border border-outline-variant focus:ring-2 focus:ring-primary/20 transition-all outline-none font-sans text-body-md bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/45 focus:border-primary"
                     />
                   </div>
 
                   {/* Email Input */}
                   <div className="space-y-2 sm:space-y-3">
-                    <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 block ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Email Address</label>
+                    <label className="text-label-sm font-label-sm uppercase tracking-[0.2em] block text-on-surface-variant/80">Email Address</label>
                     <input 
                       type="email" 
                       required 
@@ -160,13 +159,13 @@ export const Contact: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="alexander@vance.com"
-                      className={`w-full px-4 sm:px-6 py-3.5 sm:py-5 rounded-lg sm:rounded-2xl border focus:ring-2 transition-all outline-none font-sans text-sm sm:text-base ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:border-indigo-400 focus:ring-indigo-400/20'}`}
+                      className="w-full px-4 sm:px-6 py-3.5 sm:py-5 rounded-2xl border border-outline-variant focus:ring-2 focus:ring-primary/20 transition-all outline-none font-sans text-body-md bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/45 focus:border-primary"
                     />
                   </div>
 
                   {/* Message Input */}
                   <div className="space-y-2 sm:space-y-3">
-                    <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 block ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Inquiry Brief</label>
+                    <label className="text-label-sm font-label-sm uppercase tracking-[0.2em] block text-on-surface-variant/80">Inquiry Brief</label>
                     <textarea 
                       required 
                       name="message"
@@ -174,7 +173,7 @@ export const Contact: React.FC = () => {
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="Describe your project vision or inquiry..."
-                      className={`w-full px-4 sm:px-6 py-3.5 sm:py-5 rounded-lg sm:rounded-2xl border focus:ring-2 transition-all outline-none resize-none font-sans text-sm sm:text-base ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500/20' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10 focus:border-indigo-400 focus:ring-indigo-400/20'}`}
+                      className="w-full px-4 sm:px-6 py-3.5 sm:py-5 rounded-2xl border border-outline-variant focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none font-sans text-body-md bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/45 focus:border-primary"
                     />
                   </div>
                 </div>
@@ -185,15 +184,15 @@ export const Contact: React.FC = () => {
                   type="submit"
                   disabled={loading}
                   whileTap={isSubmitPressed ? { scale: 0.95 } : { scale: 1 }}
-                  className={`w-full py-4 sm:py-6 rounded-lg sm:rounded-full font-bold text-xs sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.3em] transition-all duration-500 flex items-center justify-center group shadow-lg ${theme === 'light' ? 'bg-slate-900 text-white hover:bg-indigo-600 shadow-slate-900/20 hover:shadow-indigo-600/30' : 'bg-white text-black hover:bg-indigo-500 hover:text-white shadow-white/10 hover:shadow-indigo-500/30'}`}
+                  className="w-full py-4 sm:py-6 rounded-full font-label-sm text-label-sm uppercase tracking-[0.2em] transition-all duration-500 flex items-center justify-center group bg-primary text-on-primary hover:brightness-110 active:scale-95 shadow-lg shadow-primary/25"
                   aria-busy={loading}
                 >
                   {loading ? (
-                    <Loader2 className="animate-spin h-4 sm:h-5 w-4 sm:w-5" />
+                    <Loader2 className="animate-spin h-5 w-5" />
                   ) : (
                     <>
                       <span>Transmit Inquiry</span>
-                      <Send className="ml-2 sm:ml-4 h-3.5 sm:h-4 w-3.5 sm:w-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                      <Send className="ml-2 sm:ml-4 h-4 w-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                     </>
                   )}
                 </motion.button>

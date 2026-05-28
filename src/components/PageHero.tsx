@@ -48,8 +48,8 @@ const PageHero: React.FC<PageHeroProps> = memo(({ title, subtitle, category, com
         text-center overflow-hidden border-b
         transition-all duration-500
         ${isDark 
-          ? "border-indigo-500/10 bg-gradient-to-br from-slate-950 via-slate-900 to-black" 
-          : "border-slate-200/50 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100"}
+          ? "border-outline-variant/10 bg-gradient-to-br from-background via-surface-container-low to-surface-container-lowest" 
+          : "border-outline-variant/10 bg-gradient-to-br from-background via-surface-container-low to-surface-container-lowest"}
         ${compact
           ? "min-h-[40vh] pt-20 pb-12 px-4"
           : "min-h-screen min-h-[100dvh] pt-24 pb-20 px-4"}

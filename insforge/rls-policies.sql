@@ -7,15 +7,37 @@
 -- ========== HELPER FUNCTION ==========
 CREATE OR REPLACE FUNCTION public.makers_is_admin()
 RETURNS BOOLEAN AS $$
+DECLARE
+  uid_str TEXT;
 BEGIN
-  RETURN (
-    SELECT role = 'ADMIN' 
+  uid_str := auth.uid()::text;
+  IF uid_str IS NULL OR NOT (uid_str ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') THEN
+    RETURN FALSE;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1 
     FROM public.profiles 
-    WHERE id = (SELECT auth.uid())
-    LIMIT 1
+    WHERE id = uid_str::uuid AND role = 'ADMIN'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ========== RESOLVE USERNAME TO EMAIL (FOR LOGIN) ==========
+CREATE OR REPLACE FUNCTION public.resolve_username_to_email(username_input TEXT)
+RETURNS TEXT AS $$
+DECLARE
+  resolved_email TEXT;
+BEGIN
+  SELECT email INTO resolved_email
+  FROM public.profiles
+  WHERE display_name ILIKE username_input
+  LIMIT 1;
+
+  RETURN resolved_email;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 
 -- ========== PROFILES TABLE RLS ==========
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;

@@ -254,7 +254,7 @@ export const SubmitProject: React.FC = () => {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              className="w-32 h-32 sm:w-48 sm:h-48 rounded-full border-t-2 border-indigo-500/30 border-r-2 border-indigo-500"
+              className="w-32 h-32 sm:w-48 sm:h-48 rounded-full border-t-2 border-primary/30 border-r-2 border-primary"
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
@@ -264,35 +264,35 @@ export const SubmitProject: React.FC = () => {
                 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
-                <Rocket className="h-10 w-10 sm:h-16 sm:w-16 text-indigo-500" />
+                <Rocket className="h-10 w-10 sm:h-16 sm:w-16 text-primary" />
               </motion.div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <h2 className={`text-2xl sm:text-4xl font-display uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+            <h2 className="text-2xl sm:text-4xl font-display uppercase tracking-tight text-on-surface">
               Transmitting Vision
             </h2>
-            <p className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.4em] ${theme === 'light' ? 'text-slate-400' : 'text-white/40'}`}>
+            <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.4em] text-on-surface-variant/40">
               Architecting your digital masterpiece...
             </p>
           </div>
 
           {files.length > 0 && (
             <div className="space-y-4">
-              <div className={`h-1.5 w-full rounded-full overflow-hidden ${theme === 'light' ? 'bg-slate-200' : 'bg-white/5'}`}>
+              <div className="h-1.5 w-full rounded-full overflow-hidden bg-surface-container-low">
                 <motion.div 
-                  className="h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+                  className="h-full bg-primary shadow-[0_0_20px_rgba(99,102,241,0.5)]"
                   initial={{ width: 0 }}
                   animate={{ width: `${totalFileProgress}%` }}
                   transition={{ type: "spring", bounce: 0, duration: 0.5 }}
                 />
               </div>
               <div className="flex justify-between items-center">
-                <p className={`text-[9px] font-black uppercase tracking-widest ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/40">
                   Asset Synchronization
                 </p>
-                <p className={`text-[9px] font-black uppercase tracking-widest text-indigo-500`}>
+                <p className="text-[9px] font-black uppercase tracking-widest text-primary">
                   {totalFileProgress}%
                 </p>
               </div>
@@ -305,7 +305,7 @@ export const SubmitProject: React.FC = () => {
                 key={i}
                 animate={{ opacity: [0.2, 1, 0.2] }}
                 transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
-                className="w-1.5 h-1.5 rounded-full bg-indigo-500"
+                className="w-1.5 h-1.5 rounded-full bg-primary"
               />
             ))}
           </div>
@@ -320,17 +320,13 @@ export const SubmitProject: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`text-center space-y-6 max-w-md p-12 backdrop-blur-3xl rounded-[2.5rem] border shadow-2xl ${
-            theme === 'light' ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'
-          }`}
+          className="text-center space-y-6 max-w-md p-12 glass-card rounded-[2.5rem]"
         >
-          <div className={`inline-flex items-center justify-center p-6 rounded-full border ${
-            theme === 'light' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-green-500/10 text-green-400 border-green-500/20'
-          }`}>
+          <div className="inline-flex items-center justify-center p-6 rounded-full border border-outline-variant bg-secondary-container text-on-secondary-container">
             <CheckCircle className="h-16 w-16" />
           </div>
-          <h2 className={`text-4xl font-display uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Project Initiated</h2>
-          <p className={`font-sans ${theme === 'light' ? 'text-slate-500' : 'text-white/60'}`}>Your proposal has been successfully transmitted to our creative terminal. Redirecting to dashboard...</p>
+          <h2 className="text-4xl font-display uppercase tracking-tight text-on-surface">Project Initiated</h2>
+          <p className="font-sans text-on-surface-variant/70">Your proposal has been successfully transmitted to our creative terminal. Redirecting to dashboard...</p>
         </motion.div>
       </div>
     );
@@ -348,7 +344,7 @@ export const SubmitProject: React.FC = () => {
       <div className="max-w-7xl mx-auto relative z-10 py-6 sm:py-20 px-4 sm:px-6 lg:px-8">
         {/* Step Indicator */}
         <div className="flex justify-between items-center mb-12 sm:mb-20 max-w-3xl mx-auto relative">
-          <div className={`absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 z-0 transition-colors duration-500 ${theme === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
+          <div className="absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 z-0 bg-outline-variant/30" />
           {[
             { step: 1, label: "Core Specs", active: !showReview },
             { step: 2, label: "Review & Launch", active: showReview }
@@ -356,12 +352,12 @@ export const SubmitProject: React.FC = () => {
             <div key={i} className="relative z-10 flex flex-col items-center gap-4">
               <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-500 ${
                 s.active 
-                  ? "bg-indigo-500 border-indigo-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.5)]" 
-                  : theme === 'light' ? "bg-white border-slate-200 text-slate-400" : "bg-[#050505] border-white/10 text-white/20"
+                  ? "bg-primary border-primary text-on-primary shadow-[0_0_20px_rgba(99,102,241,0.5)]" 
+                  : "bg-surface-container-low border-outline-variant text-on-surface-variant/40"
               }`}>
                 {s.step}
               </div>
-              <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] transition-colors duration-500 ${s.active ? 'text-indigo-500' : theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+              <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-[0.3em] transition-colors duration-500 ${s.active ? 'text-primary' : 'text-on-surface-variant/40'}`}>
                 {s.label}
               </span>
             </div>
@@ -379,38 +375,38 @@ export const SubmitProject: React.FC = () => {
             >
               {/* Left Column: Core Specs */}
               <div className="lg:col-span-7 space-y-6 sm:space-y-10">
-                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-lg shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
-                  <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-10 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
-                    <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
+                <div className="glass-card p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem]">
+                  <h2 className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-10 flex items-center text-on-surface-variant/40">
+                    <div className="h-px w-6 sm:w-8 bg-primary mr-3 sm:mr-4" />
                     Core Specifications
                   </h2>
                   
                   <div className="space-y-5 sm:space-y-8">
                     {/* Title */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Project Title</label>
+                      <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 text-on-surface-variant/60">Project Title</label>
                       <input
                         type="text"
                         required
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="e.g., Quantum Commerce Platform"
-                        className={`w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
+                        className="w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border border-outline-variant text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary transition-all duration-300"
                       />
                     </div>
 
                     {/* Category Selection */}
                     <div className="space-y-2 sm:space-y-3 relative">
-                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Category</label>
+                      <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 text-on-surface-variant/60">Category</label>
                       <button
                         type="button"
                         onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                        className={`w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium flex items-center justify-between transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 focus:border-indigo-500' : 'bg-white/5 border-white/10 text-white'}`}
+                        className="w-full px-5 sm:px-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border border-outline-variant text-xs sm:text-sm font-medium flex items-center justify-between bg-surface-container-low text-on-surface focus:border-primary transition-all duration-300"
                       >
-                        <span className={category ? "" : theme === 'light' ? "text-slate-300" : "text-white/10"}>
+                        <span className={category ? "" : "text-on-surface-variant/30"}>
                           {category || "Select Project Category"}
                         </span>
-                        <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-500 ${isCategoryOpen ? "rotate-180" : ""} ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`} />
+                        <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-500 ${isCategoryOpen ? "rotate-180" : ""} text-on-surface-variant/40`} />
                       </button>
 
                       <AnimatePresence>
@@ -419,7 +415,7 @@ export const SubmitProject: React.FC = () => {
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className={`absolute z-50 left-0 right-0 mt-2 sm:mt-3 border rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl transition-colors duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-slate-200' : 'bg-[#0a0a0a] border-white/10 shadow-black'}`}
+                            className="absolute z-50 left-0 right-0 mt-2 sm:mt-3 border border-outline-variant rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl bg-surface-container shadow-black/40"
                           >
                             <div className="max-h-48 sm:max-h-64 overflow-y-auto p-1.5 sm:p-2">
                               {CATEGORIES.map((cat) => (
@@ -432,8 +428,8 @@ export const SubmitProject: React.FC = () => {
                                   }}
                                   className={`w-full text-left px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all ${
                                     category === cat.id 
-                                      ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
-                                      : theme === 'light' ? "text-slate-600 hover:bg-slate-50" : "text-white/60 hover:bg-white/5"
+                                      ? "bg-primary text-on-primary shadow-lg shadow-primary/20" 
+                                      : "text-on-surface-variant hover:bg-surface-container-low"
                                   }`}
                                 >
                                   {cat.id}
@@ -448,11 +444,11 @@ export const SubmitProject: React.FC = () => {
                     {/* Description */}
                     <div className="space-y-2 sm:space-y-3">
                       <div className="flex justify-between items-center ml-3 sm:ml-4">
-                        <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Detailed Brief</label>
+                        <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Detailed Brief</label>
                         <button
                           type="button"
                           onClick={() => setShowDescriptionPreview(!showDescriptionPreview)}
-                          className={`text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-colors ${theme === 'light' ? 'text-indigo-600 hover:text-indigo-800' : 'text-indigo-400 hover:text-indigo-300'}`}
+                          className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-colors text-primary hover:brightness-110"
                         >
                           {showDescriptionPreview ? "Edit Mode" : "Preview Markdown"}
                         </button>
@@ -466,34 +462,34 @@ export const SubmitProject: React.FC = () => {
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Describe your vision, technical requirements, and goals..."
-                            className={`w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 resize-none ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
+                            className="w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border border-outline-variant text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary transition-all duration-300 resize-none"
                           />
                         ) : (
-                          <div className={`w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border min-h-[200px] sm:min-h-[260px] prose prose-sm max-w-none transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200 prose-slate' : 'bg-white/2 border-white/10 prose-invert'}`}>
+                          <div className="w-full px-5 sm:px-8 py-4 sm:py-6 rounded-2xl sm:rounded-3xl border border-outline-variant min-h-[200px] sm:min-h-[260px] prose prose-sm max-w-none transition-all duration-500 bg-surface-container-low prose-invert">
                             <LazyMarkdown>{deferredDescription || "*No description provided yet.*"}</LazyMarkdown>
                           </div>
                         )}
                       </div>
-                      <p className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/10'}`}>Supports GitHub Flavored Markdown</p>
+                      <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest ml-3 sm:ml-4 text-on-surface-variant/20">Supports GitHub Flavored Markdown</p>
                     </div>
 
                     {/* Tags */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Technology Tags</label>
-                      <div className={`flex flex-wrap gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/10'}`}>
+                      <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 text-on-surface-variant/60">Technology Tags</label>
+                      <div className="flex flex-wrap gap-2 sm:gap-3 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-outline-variant bg-surface-container-low">
                         {tags.map((tag) => (
                           <motion.span
                             layout
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             key={tag}
-                            className={`inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all ${theme === 'light' ? 'bg-white text-slate-900 border border-slate-200 shadow-sm' : 'bg-white/10 text-white border border-white/10'}`}
+                            className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest transition-all bg-surface-container text-on-surface border border-outline-variant shadow-sm"
                           >
                             {tag}
                             <button
                               type="button"
                               onClick={() => removeTag(tag)}
-                              className="ml-1.5 sm:ml-2 hover:text-red-500 transition-colors"
+                              className="ml-1.5 sm:ml-2 hover:text-error transition-colors"
                             >
                               <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                             </button>
@@ -505,22 +501,22 @@ export const SubmitProject: React.FC = () => {
                           onChange={(e) => setTagInput(e.target.value)}
                           onKeyDown={handleAddTag}
                           placeholder={tags.length === 0 ? "Add tags" : "Add more..."}
-                          className={`flex-1 min-w-[100px] sm:min-w-[150px] bg-transparent border-none focus:ring-0 text-xs sm:text-sm font-medium transition-colors duration-500 ${theme === 'light' ? 'text-slate-900 placeholder:text-slate-400' : 'text-white placeholder:text-white/10'}`}
+                          className="flex-1 min-w-[100px] sm:min-w-[150px] bg-transparent border-none focus:ring-0 text-xs sm:text-sm font-medium text-on-surface placeholder:text-on-surface-variant/30 transition-colors"
                         />
                       </div>
                     </div>
 
                     {/* Repo URL */}
                     <div className="space-y-2 sm:space-y-3">
-                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Repository URL (Optional)</label>
+                      <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 text-on-surface-variant/60">Repository URL (Optional)</label>
                       <div className="relative">
-                        <LinkIcon className={`absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-300' : 'text-white/10'}`} />
+                        <LinkIcon className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-on-surface-variant/30" />
                         <input
                           type="url"
                           value={repoUrl}
                           onChange={(e) => setRepoUrl(e.target.value)}
                           placeholder="https://github.com/your-username/project"
-                          className={`w-full pl-11 sm:pl-16 pr-5 sm:pr-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 ${theme === 'light' ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-indigo-500' : 'bg-white/5 border-white/10 text-white placeholder:text-white/10'}`}
+                          className="w-full pl-11 sm:pl-16 pr-5 sm:pr-8 py-3.5 sm:py-5 rounded-xl sm:rounded-2xl border border-outline-variant text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary transition-all duration-300"
                         />
                       </div>
                     </div>
@@ -531,13 +527,13 @@ export const SubmitProject: React.FC = () => {
               {/* Right Column: Logistics & Assets */}
               <div className="lg:col-span-5 space-y-6 lg:space-y-12">
                 {/* Live Preview Card */}
-                <div className={`backdrop-blur-3xl border p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 overflow-hidden group ${theme === 'light' ? (shouldReduceMotion ? 'bg-white border-slate-200 shadow-sm shadow-slate-200/30' : 'bg-white border-slate-200 shadow-xl') : 'bg-white/5 border-white/10'}`}>
-                  <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-8 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
-                    <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
+                <div className="glass-card p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] overflow-hidden group">
+                  <h2 className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-8 flex items-center text-on-surface-variant/40">
+                    <div className="h-px w-6 sm:w-8 bg-primary mr-3 sm:mr-4" />
                     Live Preview
                   </h2>
                   
-                  <div className={`aspect-[16/10] relative overflow-hidden rounded-2xl sm:rounded-[2rem] border transition-all duration-500 ${theme === 'light' ? 'bg-slate-50 border-slate-100' : 'bg-black/40 border-white/5'}`}>
+                  <div className="aspect-[16/10] relative overflow-hidden rounded-2xl sm:rounded-[2rem] border border-outline-variant bg-surface-container-lowest transition-all duration-500">
                     {previewImageFile && previewImageUrl ? (
                       <img 
                         src={previewImageUrl}
@@ -546,13 +542,13 @@ export const SubmitProject: React.FC = () => {
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <Rocket className={`h-12 w-12 transition-colors duration-500 ${theme === 'light' ? 'text-slate-200' : 'text-white/5'}`} />
+                        <Rocket className="h-12 w-12 text-on-surface-variant/20" />
                       </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     <div className="absolute bottom-6 left-6 right-6">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="px-3 py-1 bg-indigo-500 text-white rounded-full text-[8px] font-bold uppercase tracking-widest">
+                        <span className="px-3 py-1 bg-primary text-on-primary rounded-full text-[8px] font-bold uppercase tracking-widest">
                           {category}
                         </span>
                       </div>
@@ -565,20 +561,20 @@ export const SubmitProject: React.FC = () => {
                   <div className="mt-6 space-y-4">
                     <div className="flex flex-wrap gap-2">
                       {tags.length > 0 ? tags.map(tag => (
-                        <span key={tag} className="text-[8px] font-bold uppercase tracking-widest text-indigo-400">#{tag}</span>
+                        <span key={tag} className="text-[8px] font-bold uppercase tracking-widest text-primary">#{tag}</span>
                       )) : (
-                        <span className={`text-[8px] font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-300' : 'text-white/10'}`}>No tags added</span>
+                        <span className="text-[8px] font-bold uppercase tracking-widest text-on-surface-variant/20">No tags added</span>
                       )}
                     </div>
-                    <p className={`text-[10px] font-medium leading-relaxed line-clamp-2 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                    <p className="text-[10px] font-medium leading-relaxed line-clamp-2 text-on-surface-variant/70">
                       {description || "Your project description will appear here..."}
                     </p>
                   </div>
                 </div>
 
-                <div className={`backdrop-blur-3xl border p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem] transition-all duration-500 ${theme === 'light' ? (shouldReduceMotion ? 'bg-white border-slate-200 shadow-sm shadow-slate-200/30' : 'bg-white border-slate-200 shadow-lg shadow-slate-200/50') : 'bg-white/5 border-white/10'}`}>
-                  <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-10 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
-                    <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
+                <div className="glass-card p-5 sm:p-10 rounded-2xl sm:rounded-[2.5rem]">
+                  <h2 className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-6 sm:mb-10 flex items-center text-on-surface-variant/40">
+                    <div className="h-px w-6 sm:w-8 bg-primary mr-3 sm:mr-4" />
                     Planning, Budget & Assets
                   </h2>
 
@@ -586,13 +582,13 @@ export const SubmitProject: React.FC = () => {
                     {/* Package Selection */}
                     <div className="space-y-4 sm:space-y-6">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 ml-3 sm:ml-4">
-                        <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                        <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">
                           Preferred Package
                         </label>
                         <button
                           type="button"
                           onClick={() => navigate("/pricing")}
-                          className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors ${theme === 'light' ? 'text-indigo-600 hover:text-indigo-800' : 'text-indigo-400 hover:text-indigo-300'}`}
+                          className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors text-primary hover:brightness-110"
                         >
                           View Full Pricing
                         </button>
@@ -610,19 +606,15 @@ export const SubmitProject: React.FC = () => {
                             }}
                             className={`text-left px-4 sm:px-5 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl border transition-all duration-300 ${
                               selectedPackage === pkg.tier
-                                ? shouldReduceMotion
-                                  ? "bg-indigo-500 text-white border-indigo-500 shadow-sm shadow-indigo-500/15"
-                                  : "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20"
-                                : theme === 'light'
-                                ? "bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300"
-                                : "bg-white/5 border-white/10 text-white/70 hover:border-white/20"
+                                ? "bg-primary text-on-primary border-primary shadow-lg shadow-primary/20"
+                                : "bg-surface-container-low border-outline-variant text-on-surface hover:bg-surface-container-high"
                             }`}
                           >
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                               <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em]">{pkg.tier}</p>
                               <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em]">GH₵ {pkg.priceGhs.toLocaleString("en-GH")}</p>
                             </div>
-                            <p className={`mt-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] ${selectedPackage === pkg.tier ? 'text-white/90' : theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>
+                            <p className={`mt-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] ${selectedPackage === pkg.tier ? 'text-white/90' : 'text-on-surface-variant/60'}`}>
                               {pkg.bestFor}
                             </p>
                           </button>
@@ -633,8 +625,8 @@ export const SubmitProject: React.FC = () => {
                     {/* Estimated Budget (GH₵ default) */}
                     <div className="space-y-4 sm:space-y-6">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 ml-3 sm:ml-4">
-                        <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Estimated Budget</label>
-                        <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${theme === 'light' ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-white/60'}`}>
+                        <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">Estimated Budget</label>
+                        <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-outline-variant bg-surface-container-low text-on-surface-variant">
                           GH₵ Default
                         </span>
                       </div>
@@ -647,10 +639,8 @@ export const SubmitProject: React.FC = () => {
                             onClick={() => setBudget(range)}
                             className={`px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
                               budget === range 
-                                ? shouldReduceMotion
-                                  ? "bg-indigo-500 text-white border-indigo-500 shadow-sm shadow-indigo-500/15"
-                                  : "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
-                                : theme === 'light' ? "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300" : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                                ? "bg-primary text-on-primary border-primary shadow-lg shadow-primary/20" 
+                                : "bg-surface-container-low border-outline-variant text-on-surface-variant/60 hover:bg-surface-container-high"
                             }`}
                           >
                             {range}
@@ -661,7 +651,7 @@ export const SubmitProject: React.FC = () => {
 
                     {/* Timeline */}
                     <div className="space-y-4 sm:space-y-6">
-                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Target Timeline</label>
+                      <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 text-on-surface-variant/60">Target Timeline</label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         {TIMELINES.map((time) => (
                           <button
@@ -670,10 +660,8 @@ export const SubmitProject: React.FC = () => {
                             onClick={() => setTimeline(time as Timeline)}
                             className={`px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
                               timeline === time 
-                                ? shouldReduceMotion
-                                  ? "bg-indigo-500 text-white border-indigo-500 shadow-sm shadow-indigo-500/15"
-                                  : "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" 
-                                : theme === 'light' ? "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300" : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                                ? "bg-primary text-on-primary border-primary shadow-lg shadow-primary/20" 
+                                : "bg-surface-container-low border-outline-variant text-on-surface-variant/60 hover:bg-surface-container-high"
                             }`}
                           >
                             {time}
@@ -684,15 +672,15 @@ export const SubmitProject: React.FC = () => {
 
                     {/* File Upload */}
                     <div className="space-y-4 sm:space-y-6">
-                      <label className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 transition-colors duration-500 ${theme === 'light' ? 'text-slate-500' : 'text-white/40'}`}>Supporting Assets</label>
+                      <label className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ml-3 sm:ml-4 text-on-surface-variant/60">Supporting Assets</label>
                       <div
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         className={`relative group cursor-pointer border-2 border-dashed rounded-2xl sm:rounded-[2.5rem] p-8 sm:p-12 text-center transition-all duration-500 ${
                           isDragging 
-                            ? "border-indigo-500 bg-indigo-500/5 scale-[0.98]" 
-                            : theme === 'light' ? "border-slate-200 bg-slate-50 hover:border-slate-300" : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                            ? "border-primary bg-primary/5 scale-[0.98]" 
+                            : "border-outline-variant bg-surface-container-low/40 hover:bg-surface-container-low hover:border-primary/50"
                         }`}
                         onClick={() => fileInputRef.current?.click()}
                       >
@@ -704,12 +692,12 @@ export const SubmitProject: React.FC = () => {
                           className="hidden"
                         />
                         <div className="space-y-4 sm:space-y-6">
-                          <div className={`w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto border transition-all duration-500 ${isDragging ? "bg-indigo-500 border-indigo-500" : theme === 'light' ? "bg-white border-slate-200" : "bg-white/5 border-white/10"}`}>
-                            <Upload className={`h-6 w-6 sm:h-8 sm:w-8 transition-colors duration-500 ${isDragging ? "text-white" : theme === 'light' ? "text-slate-300" : "text-white/20"}`} />
+                          <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto border border-outline-variant bg-surface-container-low transition-all duration-500">
+                            <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-on-surface-variant/40" />
                           </div>
                           <div className="space-y-1.5 sm:space-y-2">
-                            <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? "text-slate-900" : "text-white"}`}>Drop Assets Here</p>
-                            <p className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-colors duration-500 ${theme === 'light' ? "text-slate-400" : "text-white/20"}`}>PDF, Images, or ZIP (Max 50MB)</p>
+                            <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-on-surface">Drop Assets Here</p>
+                            <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest text-on-surface-variant/40">PDF, Images, or ZIP (Max 50MB)</p>
                           </div>
                         </div>
                       </div>
@@ -725,11 +713,11 @@ export const SubmitProject: React.FC = () => {
                           >
                             <div className="flex justify-between items-center px-4">
                               <div className="flex items-center gap-3">
-                                <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">
                                   {files.length} {files.length === 1 ? 'Asset' : 'Assets'} Attached
                                 </p>
-                                <div className={`w-1 h-1 rounded-full ${theme === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
-                                <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                                <div className="w-1 h-1 rounded-full bg-outline-variant" />
+                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40">
                                   {totalFilesSizeMB} MB Total
                                 </p>
                               </div>
@@ -739,7 +727,7 @@ export const SubmitProject: React.FC = () => {
                                   setFiles([]);
                                   setShowAllFiles(false);
                                 }}
-                                className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${theme === 'light' ? 'text-red-500 hover:text-red-700' : 'text-red-400 hover:text-red-300'}`}
+                                className="text-[9px] font-black uppercase tracking-[0.2em] transition-colors text-error hover:brightness-110"
                               >
                                 Clear All
                               </button>
@@ -751,17 +739,17 @@ export const SubmitProject: React.FC = () => {
                                   initial={{ x: -20, opacity: 0 }}
                                   animate={{ x: 0, opacity: 1 }}
                                   exit={{ x: 20, opacity: 0 }}
-                                  className={`flex items-center justify-between p-4 border rounded-2xl transition-all duration-300 group ${theme === 'light' ? 'bg-white border-slate-100 hover:border-slate-200 shadow-sm' : 'bg-white/[0.03] border-white/5 hover:border-white/10'}`}
+                                  className="flex items-center justify-between p-4 border border-outline-variant rounded-2xl transition-all duration-300 bg-surface-container-low/40 hover:border-outline-variant/60 shadow-sm"
                                 >
                                   <div className="flex items-center space-x-4 overflow-hidden">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${theme === 'light' ? 'bg-slate-50 text-indigo-500' : 'bg-white/5 text-indigo-400'}`}>
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-surface-container text-primary">
                                       <FileText className="h-5 w-5" />
                                     </div>
                                     <div className="overflow-hidden">
-                                      <p className={`text-[10px] font-bold uppercase tracking-widest truncate transition-colors ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                                      <p className="text-[10px] font-bold uppercase tracking-widest truncate text-on-surface">
                                         {file.name}
                                       </p>
-                                      <p className={`text-[9px] font-bold uppercase tracking-widest transition-colors ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                                      <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant/40">
                                         {(file.size / 1024 / 1024).toFixed(2)} MB
                                       </p>
                                     </div>
@@ -769,7 +757,7 @@ export const SubmitProject: React.FC = () => {
                                   <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${theme === 'light' ? 'bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500' : 'bg-white/5 text-white/20 hover:bg-red-500/10 hover:text-red-400'}`}
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all bg-surface-container text-on-surface-variant/60 hover:bg-error-container hover:text-error"
                                   >
                                     <span>Remove</span>
                                     <X className="h-3 w-3" />
@@ -780,7 +768,7 @@ export const SubmitProject: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => setShowAllFiles((prev) => !prev)}
-                                  className={`w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${theme === 'light' ? 'bg-slate-50 text-slate-600 hover:bg-slate-100' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                                  className="w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-colors bg-surface-container-low text-on-surface-variant/60 hover:bg-surface-container-high"
                                 >
                                   {showAllFiles ? "Show Fewer Files" : `Show All ${files.length} Files`}
                                 </button>
@@ -799,18 +787,14 @@ export const SubmitProject: React.FC = () => {
                     type="button"
                     onClick={() => setShowReview(true)}
                     disabled={loading || !title || !category || !description}
-                    className={`w-full py-6 sm:py-8 rounded-2xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] transition-all duration-500 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed ${
-                      theme === 'light' 
-                        ? "bg-slate-900 text-white hover:bg-indigo-600 shadow-2xl shadow-slate-200" 
-                        : "bg-white text-black hover:bg-indigo-500 hover:text-white shadow-[0_0_50px_rgba(255,255,255,0.1)]"
-                    }`}
+                    className="w-full py-6 sm:py-8 rounded-2xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] bg-primary text-on-primary hover:brightness-110 active:scale-95 shadow-lg shadow-primary/20 transition-all duration-500 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span className="relative z-10 flex items-center justify-center">
                       Review Proposal
                       <ChevronDown className="ml-3 sm:ml-4 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-y-1 transition-transform" />
                     </span>
                   </button>
-                  <p className={`text-center text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.2em] transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                  <p className="text-center text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.2em] text-on-surface-variant/40">
                     By submitting, you agree to our creative partnership terms.
                   </p>
                 </div>
@@ -824,18 +808,18 @@ export const SubmitProject: React.FC = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="max-w-4xl mx-auto"
             >
-              <div className={`backdrop-blur-3xl border p-6 sm:p-12 rounded-2xl sm:rounded-[3rem] transition-all duration-500 ${theme === 'light' ? 'bg-white border-slate-200 shadow-2xl shadow-slate-200/50' : 'bg-white/5 border-white/10'}`}>
+              <div className="glass-card p-6 sm:p-12 rounded-2xl sm:rounded-[3rem]">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-6 mb-8 sm:mb-12">
                   <div>
-                    <h2 className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-3 sm:mb-4 flex items-center transition-colors duration-500 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
-                      <div className="h-px w-6 sm:w-8 bg-indigo-500 mr-3 sm:mr-4" />
+                    <h2 className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] sm:tracking-[0.4em] mb-3 sm:mb-4 flex items-center text-on-surface-variant/40">
+                      <div className="h-px w-6 sm:w-8 bg-primary mr-3 sm:mr-4" />
                       Review Transmission
                     </h2>
-                    <h3 className={`text-xl sm:text-4xl font-display uppercase tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{title}</h3>
+                    <h3 className="text-xl sm:text-4xl font-display uppercase tracking-tight text-on-surface">{title}</h3>
                   </div>
                   <button
                     onClick={() => setShowReview(false)}
-                    className={`p-2 sm:p-4 rounded-full border transition-all ${theme === 'light' ? 'bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-900' : 'bg-white/5 border-white/10 text-white/20 hover:text-white'}`}
+                    className="p-2 sm:p-4 rounded-full border border-outline-variant transition-all bg-surface-container-low text-on-surface-variant/40 hover:text-on-surface"
                   >
                     <X className="h-4 w-4 sm:h-6 sm:w-6" />
                   </button>
@@ -844,34 +828,34 @@ export const SubmitProject: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-12 mb-8 sm:mb-12">
                   <div className="space-y-6 sm:space-y-8">
                     <div>
-                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Category</p>
-                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{category}</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 text-on-surface-variant/40">Category</p>
+                      <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-on-surface">{category}</p>
                     </div>
                     <div>
-                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Budget Allocation</p>
-                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{budget}</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 text-on-surface-variant/40">Budget Allocation</p>
+                      <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-on-surface">{budget}</p>
                     </div>
                     <div>
-                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Selected Package</p>
-                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{selectedPackage}</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 text-on-surface-variant/40">Selected Package</p>
+                      <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-on-surface">{selectedPackage}</p>
                     </div>
                     <div>
-                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Target Timeline</p>
-                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{timeline}</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 text-on-surface-variant/40">Target Timeline</p>
+                      <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-on-surface">{timeline}</p>
                     </div>
                   </div>
                   <div className="space-y-6 sm:space-y-8">
                     <div>
-                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Technology Stack</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 text-on-surface-variant/40">Technology Stack</p>
                       <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         {tags.map(tag => (
-                          <span key={tag} className={`px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest ${theme === 'light' ? 'bg-slate-100 text-slate-900' : 'bg-white/10 text-white'}`}>{tag}</span>
+                          <span key={tag} className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest bg-surface-container text-on-surface border border-outline-variant">{tag}</span>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>Attached Assets</p>
-                      <p className={`text-xs sm:text-sm font-bold uppercase tracking-widest ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{files.length} Files Ready</p>
+                      <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1.5 sm:mb-2 text-on-surface-variant/40">Attached Assets</p>
+                      <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-on-surface">{files.length} Files Ready</p>
                     </div>
                   </div>
                 </div>
@@ -880,11 +864,7 @@ export const SubmitProject: React.FC = () => {
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className={`w-full py-6 sm:py-8 rounded-2xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] transition-all duration-500 relative overflow-hidden group ${
-                      theme === 'light'
-                        ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xl shadow-indigo-200"
-                        : "bg-white text-black hover:bg-indigo-500 hover:text-white shadow-[0_0_50px_rgba(255,255,255,0.1)]"
-                    }`}
+                    className="w-full py-6 sm:py-8 rounded-2xl sm:rounded-[2rem] text-xs sm:text-sm font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] bg-primary text-on-primary hover:brightness-110 active:scale-95 shadow-lg shadow-primary/20 transition-all duration-500 relative overflow-hidden group"
                   >
                     <span className="relative z-10 flex items-center justify-center">
                       {loading ? (
@@ -899,7 +879,7 @@ export const SubmitProject: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setShowReview(false)}
-                    className={`w-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors ${theme === 'light' ? 'text-slate-400 hover:text-slate-900' : 'text-white/20 hover:text-white'}`}
+                    className="w-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-colors text-on-surface-variant/40 hover:text-on-surface py-2"
                   >
                     Back to Edit Mode
                   </button>
