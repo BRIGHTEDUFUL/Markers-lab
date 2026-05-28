@@ -35,7 +35,7 @@ export function GoogleSignInButton({
         type="button"
         onClick={handleClick}
         disabled={isLoading}
-        className="w-full flex items-center justify-center gap-3 py-3.5 px-5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-on-surface hover:text-white font-label-sm text-[12px] tracking-wide transition-all duration-300 disabled:opacity-50 active:scale-[0.97] group"
+        className="w-full flex items-center justify-center gap-3 py-3.5 px-5 bg-foreground/[0.04] hover:bg-foreground/[0.08] border border-outline-variant/15 dark:border-white/10 rounded-2xl text-on-surface hover:text-primary font-label-sm text-[12px] tracking-wide transition-all duration-300 disabled:opacity-50 active:scale-[0.97] group"
       >
         {/* Official multi-color Google logo */}
         <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

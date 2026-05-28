@@ -514,15 +514,15 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden bg-[#0c0e17]">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden bg-background text-on-surface transition-colors duration-500">
       {/* Global starfield background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <StarField count={shouldReduceMotion ? 14 : 48} theme="dark" salt={2000} />
+        <StarField count={shouldReduceMotion ? 14 : 48} theme={theme} salt={2000} />
       </div>
 
       {/* Ambient aura glow */}
       <div
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full opacity-30 z-0 pointer-events-none"
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full opacity-20 dark:opacity-30 z-0 pointer-events-none"
         style={{ filter: "blur(120px)", background: "radial-gradient(circle, rgba(73,75,214,0.18) 0%, rgba(111,0,190,0.12) 100%)" }}
       />
 
@@ -534,20 +534,20 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
           e.preventDefault();
           smartNavigate("/", { asSectionSwitch: true });
         }}
-        className="lg:hidden fixed top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 rounded-full border backdrop-blur-md text-[10px] font-bold uppercase tracking-widest transition-colors bg-black/40 border-white/10 text-white/80 hover:text-white"
+        className="lg:hidden fixed top-4 left-4 z-50 flex items-center gap-2 px-3 py-2 rounded-full border backdrop-blur-md text-[10px] font-bold uppercase tracking-widest transition-colors bg-surface-container-lowest/60 dark:bg-black/40 border-outline-variant/20 dark:border-white/10 text-on-surface-variant hover:text-primary"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         <span>Home</span>
       </Link>
 
       {/* LEFT PANEL — Hero Branding (desktop only) */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center overflow-hidden border-r border-white/[0.05]">
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center overflow-hidden border-r border-outline-variant/10">
         {/* Full-bleed cinematic ring backdrop */}
-        <HeroRingBackdrop theme="dark" variant="authPanel" className="absolute inset-0 z-0" />
+        <HeroRingBackdrop theme={theme} variant="authPanel" className="absolute inset-0 z-0" />
 
         {/* Floating star layer */}
         <div className="absolute inset-0 z-[1] pointer-events-none">
-          <StarField count={shouldReduceMotion ? 10 : 24} theme="dark" salt={3500} />
+          <StarField count={shouldReduceMotion ? 10 : 24} theme={theme} salt={3500} />
         </div>
 
         {/* Content */}
@@ -594,7 +594,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="flex items-center gap-6 pt-8 border-t border-white/[0.06]"
+            className="flex items-center gap-6 pt-8 border-t border-outline-variant/10"
           >
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -630,8 +630,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               exit={{ opacity: 0, y: -20, filter: "blur(10px)" }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-3xl p-8 sm:p-10 space-y-7 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.7)] border border-white/[0.06]"
-              style={{ backdropFilter: "blur(40px)", background: "rgba(17,19,29,0.55)" }}
+              className="rounded-3xl p-8 sm:p-10 space-y-7 shadow-[0_32px_80px_-16px_rgba(0,0,0,0.12)] dark:shadow-[0_40px_100px_-20px_rgba(0,0,0,0.7)] border border-outline-variant/10 dark:border-white/[0.06] bg-surface-container-lowest/80 dark:bg-[rgba(17,19,29,0.55)] backdrop-blur-[40px]"
             >
               {/* Header */}
               <div className="space-y-2 text-center">
@@ -641,7 +640,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     {mode === "login" ? "Laboratory Access" : "Network Registration"}
                   </span>
                 </div>
-                <h2 className="font-headline-lg text-[clamp(28px,4vw,42px)] tracking-tight leading-none" style={{ background: "linear-gradient(135deg,#fff 0%,#c0c1ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                <h2 className="font-headline-lg text-[clamp(28px,4vw,42px)] tracking-tight leading-none bg-gradient-to-br from-on-surface to-primary bg-clip-text text-transparent">
                   {mode === "login" ? "Access Studio" : "Join the Network"}
                 </h2>
                 <p className="font-body-md text-[13px] text-on-surface-variant/50">
@@ -669,7 +668,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     autoComplete="one-time-code"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="block w-full px-4 py-4 border border-white/10 text-sm text-center tracking-[0.5em] font-mono outline-none rounded-2xl bg-white/5 text-on-surface placeholder:text-on-surface-variant/25 focus:border-primary/50 focus:bg-white/8 focus:ring-1 focus:ring-primary/30 transition-all"
+                    className="block w-full px-4 py-4 border border-outline-variant/15 text-sm text-center tracking-[0.5em] font-mono outline-none rounded-2xl bg-foreground/[0.04] text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary/50 focus:bg-foreground/[0.06] focus:ring-1 focus:ring-primary/30 transition-all"
                     placeholder="000000"
                     maxLength={6}
                     required
@@ -738,7 +737,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                         onBlur={() => setTouched({ ...touched, forgotEmail: true })}
                         autoComplete="email"
                         inputMode="email"
-                        className="block w-full pl-12 pr-4 py-4 border border-white/10 text-sm transition-all outline-none rounded-2xl bg-white/5 text-on-surface placeholder:text-on-surface-variant/25 focus:border-primary/50 focus:bg-white/8 focus:ring-1 focus:ring-primary/30"
+                        className="block w-full pl-12 pr-4 py-4 border border-outline-variant/15 text-sm transition-all outline-none rounded-2xl bg-foreground/[0.04] text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary/50 focus:bg-foreground/[0.06] focus:ring-1 focus:ring-primary/30"
                         placeholder="name@domain.com"
                         aria-label="Email address for password reset"
                       />
@@ -750,7 +749,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     type="submit"
                     disabled={loading || !email || !!successMessage}
                     whileTap={isSubmitPressed && !successMessage ? { scale: 0.97 } : { scale: 1 }}
-                    className="group relative w-full flex justify-center items-center gap-3 py-4 px-4 text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 rounded-2xl overflow-hidden shadow-xl active:scale-[0.97] text-white bg-gradient-to-r from-[#8083ff] to-[#6f00be] hover:brightness-110 shadow-primary/10 hover:shadow-primary/20 border border-white/10"
+                    className="group relative w-full flex justify-center items-center gap-3 py-4 px-4 text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 rounded-2xl overflow-hidden shadow-xl active:scale-[0.97] text-on-primary bg-gradient-to-r from-primary-container to-primary dark:from-[#8083ff] dark:to-[#6f00be] hover:brightness-110 shadow-primary/10 hover:shadow-primary/20 border border-primary/20 dark:border-white/10"
                   >
                     {loading ? (
                       <Loader2 className="animate-spin h-4 w-4 relative z-10" />
@@ -824,7 +823,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                           onChange={(e) => setNewPassword(e.target.value)}
                           onBlur={() => setTouched({ ...touched, newPassword: true })}
                           autoComplete="new-password"
-                          className="block w-full pl-12 pr-12 py-4 border border-white/10 text-sm transition-all outline-none rounded-2xl bg-white/5 text-on-surface placeholder:text-on-surface-variant/25 focus:border-primary/50 focus:bg-white/8 focus:ring-1 focus:ring-primary/30"
+                          className="block w-full pl-12 pr-12 py-4 border border-outline-variant/15 text-sm transition-all outline-none rounded-2xl bg-foreground/[0.04] text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary/50 focus:bg-foreground/[0.06] focus:ring-1 focus:ring-primary/30"
                           placeholder="New password"
                           aria-label="New password"
                         />
@@ -886,7 +885,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           onBlur={() => setTouched({ ...touched, confirmPassword: true })}
                           autoComplete="new-password"
-                          className="block w-full pl-12 pr-4 py-4 border border-white/10 text-sm transition-all outline-none rounded-2xl bg-white/5 text-on-surface placeholder:text-on-surface-variant/25 focus:border-primary/50 focus:bg-white/8 focus:ring-1 focus:ring-primary/30"
+                          className="block w-full pl-12 pr-4 py-4 border border-outline-variant/15 text-sm transition-all outline-none rounded-2xl bg-foreground/[0.04] text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary/50 focus:bg-foreground/[0.06] focus:ring-1 focus:ring-primary/30"
                           placeholder="Confirm password"
                           aria-label="Confirm password"
                         />
@@ -920,7 +919,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     type="submit"
                     disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPasswordStrength === "weak"}
                     whileTap={isSubmitPressed ? { scale: 0.97 } : { scale: 1 }}
-                    className="group relative w-full flex justify-center items-center gap-3 py-4 px-4 text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 rounded-2xl overflow-hidden shadow-xl active:scale-[0.97] text-white bg-gradient-to-r from-[#8083ff] to-[#6f00be] hover:brightness-110 shadow-primary/10 hover:shadow-primary/20 border border-white/10"
+                    className="group relative w-full flex justify-center items-center gap-3 py-4 px-4 text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 rounded-2xl overflow-hidden shadow-xl active:scale-[0.97] text-on-primary bg-gradient-to-r from-primary-container to-primary dark:from-[#8083ff] dark:to-[#6f00be] hover:brightness-110 shadow-primary/10 hover:shadow-primary/20 border border-primary/20 dark:border-white/10"
                   >
                     {loading ? (
                       <Loader2 className="animate-spin h-4 w-4 relative z-10" />
@@ -954,9 +953,9 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
 
                 {/* Divider */}
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-white/[0.06]" />
-                  <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-on-surface-variant/30">Or Identity</span>
-                  <div className="flex-1 h-px bg-white/[0.06]" />
+                  <div className="flex-1 h-px bg-outline-variant/20" />
+                  <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-on-surface-variant/40">Or Identity</span>
+                  <div className="flex-1 h-px bg-outline-variant/20" />
                 </div>
 
                 {error && (
@@ -996,7 +995,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                           autoComplete="name"
                           autoCapitalize="words"
                           enterKeyHint="next"
-                          className="block w-full pl-12 pr-4 py-4 border border-white/10 text-sm transition-all outline-none rounded-2xl bg-white/5 text-on-surface placeholder:text-on-surface-variant/25 focus:border-primary/50 focus:bg-white/8 focus:ring-1 focus:ring-primary/30"
+                          className="block w-full pl-12 pr-4 py-4 border border-outline-variant/15 text-sm transition-all outline-none rounded-2xl bg-foreground/[0.04] text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary/50 focus:bg-foreground/[0.06] focus:ring-1 focus:ring-primary/30"
                           placeholder="Full name"
                           aria-label="Full name"
                         />
@@ -1024,7 +1023,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                         autoComplete={mode === "login" ? "username" : "email"}
                         inputMode={mode === "login" ? "text" : "email"}
                         enterKeyHint="next"
-                        className="block w-full pl-12 pr-4 py-4 border border-white/10 text-sm transition-all outline-none rounded-2xl bg-white/5 text-on-surface placeholder:text-on-surface-variant/25 focus:border-primary/50 focus:bg-white/8 focus:ring-1 focus:ring-primary/30"
+                        className="block w-full pl-12 pr-4 py-4 border border-outline-variant/15 text-sm transition-all outline-none rounded-2xl bg-foreground/[0.04] text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary/50 focus:bg-foreground/[0.06] focus:ring-1 focus:ring-primary/30"
                         placeholder={mode === "login" ? "Email or username" : "name@domain.com"}
                         aria-label={mode === "login" ? "Email or username" : "Email address"}
                       />
@@ -1058,7 +1057,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                         onBlur={() => setTouched({ ...touched, password: true })}
                         autoComplete={mode === "login" ? "current-password" : "new-password"}
                         enterKeyHint="done"
-                        className="block w-full pl-12 pr-12 py-4 border border-white/10 text-sm transition-all outline-none rounded-2xl bg-white/5 text-on-surface placeholder:text-on-surface-variant/25 focus:border-primary/50 focus:bg-white/8 focus:ring-1 focus:ring-primary/30"
+                        className="block w-full pl-12 pr-12 py-4 border border-outline-variant/15 text-sm transition-all outline-none rounded-2xl bg-foreground/[0.04] text-on-surface placeholder:text-on-surface-variant/30 focus:border-primary/50 focus:bg-foreground/[0.06] focus:ring-1 focus:ring-primary/30"
                         placeholder="••••••••"
                         aria-label="Password"
                       />
@@ -1149,7 +1148,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
                     type="submit"
                     disabled={loading}
                     whileTap={isSubmitPressed ? { scale: 0.97 } : { scale: 1 }}
-                    className="group relative w-full flex justify-center items-center gap-3 py-4 px-4 text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 rounded-2xl overflow-hidden shadow-xl active:scale-[0.97] text-white bg-gradient-to-r from-[#8083ff] to-[#6f00be] hover:brightness-110 shadow-primary/10 hover:shadow-primary/20 border border-white/10"
+                    className="group relative w-full flex justify-center items-center gap-3 py-4 px-4 text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 disabled:opacity-50 rounded-2xl overflow-hidden shadow-xl active:scale-[0.97] text-on-primary bg-gradient-to-r from-primary-container to-primary dark:from-[#8083ff] dark:to-[#6f00be] hover:brightness-110 shadow-primary/10 hover:shadow-primary/20 border border-primary/20 dark:border-white/10"
                   >
                     {loading ? (
                       <Loader2 className="animate-spin h-4 w-4" />
@@ -1164,7 +1163,7 @@ export const AuthPage: React.FC<{ initialMode?: "login" | "register" }> = ({ ini
               </form>
               )}
 
-              <div className="text-center pt-4 border-t border-white/[0.06]">
+              <div className="text-center pt-4 border-t border-outline-variant/10">
                 <p className="text-[11px] text-on-surface-variant/50">
                   {mode === "login" ? "New to the Lab?" : "Already Registered?"}{" "}
                   <button 
